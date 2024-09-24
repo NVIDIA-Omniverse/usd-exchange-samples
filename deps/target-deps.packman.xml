@@ -1,0 +1,10 @@
+<project toolsVersion="5.6">
+
+  <dependency name="usd-exchange" linkPath="../_build/target-deps/usd-exchange/$config">
+    <package name="usd-exchange_usd_24.08_py_3.10" version="1.0.0-rc1+${platform_target_abi}.${config}" />
+  </dependency>
+  <dependency name="omni_core_materials" linkPath="../_build/target-deps/omni_core_materials">
+    <package name="omni_core_materials" version="1.1.2.1-0881c257" />
+  </dependency>
+
+</project>

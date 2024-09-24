@@ -1,0 +1,70 @@
+[repo]
+name = "usd-exchange-sample"
+extra_tool_paths = [
+    "_build/target-deps/usd-exchange/release/dev/tools/repoman",
+    "_build/target-deps/usd-exchange/debug/dev/tools/repoman",
+]
+
+
+[repo.folders]
+version_file = "CHANGELOG.md"
+
+[repo_install_usdex]
+enabled = true
+usd_flavor = "usd"
+usd_ver = "24.08"
+python_ver = "3.10"
+
+[repo.tokens]
+abi = "2.35"
+
+[repo_build]
+premake.linux_x86_64_cxx_abi = true
+vscode.generate_python_setup_shell_script = false
+
+# add OpenUSD Exchange SDK deps
+fetch.packman_target_files_to_pull."++" = [
+    "${root}/deps/usd-exchange-deps.packman.xml",  # Most converters should define this file
+]
+
+default_build_config = ["debug", "release"]
+
+# pre_build.commands happens after project generation, this is too late
+fetch.after_pull_commands = [
+    # stages the usd-exchange runtime for the prebuild step
+    [
+        "$root/repo${shell_ext}",
+        "install_usdex",
+        "-c", "$config",
+        "--install-python-libs",
+        "--install-rtx",
+        "--install-test",
+        "--staging-dir", "_build",
+        "--install-dir", "_build/intermediate/usdex-runtime/$config",
+    ],
+]
+
+msbuild.sln_file = "USD-Exchange-Samples.sln"
+msbuild.vs_version = 'vs2019'
+docker.enabled = false
+telemetry.enabled = false
+
+fetch.generated_packman_file = "${root}/_build/${platform}/${config}/dev/deps/all-deps.packman.xml"
+
+[repo_test]
+default_config = "release"
+test_root = "${root}/_build/${platform}/${config}"
+aggregated_log_file = "$root/_build/tests/test_results.xml"
+library_paths = [
+    "${test_root}",
+]
+
+[repo_test.suites.main]
+kind = "unittest"
+log_file = "${test_root}/tests/usd.exchange.samples.results.xml"
+discover_path = "$root/source/tests"
+verbosity = 2
+python_paths = [
+    "$root/source",
+]
+
