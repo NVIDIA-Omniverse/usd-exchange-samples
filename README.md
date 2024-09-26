@@ -142,7 +142,7 @@ tools\packman\python.bat -m pip install python-certifi-win32 --trusted-host pypi
 
 ## External Support
 
-First search the existing [GitHub Issues](https://github.com/NVIDIA-Omniverse/usd-exchange-samples/issues) and the [USD Exchange Samples Forum](https://forums.developer.nvidia.com/c/omniverse/connectors/sample) to see if anyone has reported something similar.
+First search the existing [GitHub Issues](https://github.com/NVIDIA-Omniverse/usd-exchange-samples/issues) and the [OpenUSD Exchange SDK Discussions](https://github.com/NVIDIA-Omniverse/usd-exchange/discussions) to see if anyone has reported something similar.
 
 If not, create a new [GitHub Issue](https://github.com/NVIDIA-Omniverse/usd-exchange-samples/issues/new) or forum topic explaining your bug or feature request.
 
