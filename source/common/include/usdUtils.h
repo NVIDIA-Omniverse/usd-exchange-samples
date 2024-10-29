@@ -42,7 +42,7 @@ TF_DEFINE_PRIVATE_TOKENS(
 //! @returns A string signifying the author or a layer
 std::string getSamplesAuthoringMetadata()
 {
-    return fmt::format("OpenUSD Exchange Samples");
+    return std::string("OpenUSD Exchange Samples");
 }
 
 

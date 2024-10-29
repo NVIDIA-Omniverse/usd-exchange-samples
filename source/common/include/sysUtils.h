@@ -5,8 +5,6 @@
 
 #pragma once
 
-#include <fmt/format.h>
-
 #include <pxr/base/arch/env.h>
 #if defined(ARCH_OS_WINDOWS)
 #pragma warning(push)
@@ -38,7 +36,7 @@ namespace samples
 std::string getDefaultStagePath(const char* extension)
 {
     std::string tempDir = pxr::ArchNormPath(pxr::ArchGetTmpDir());
-    return fmt::format("{0}/usdex/sample{1}", tempDir, extension);
+    return pxr::TfStringPrintf("%s/usdex/sample%s", tempDir.c_str(), extension);
 }
 
 
@@ -55,7 +53,9 @@ std::string copyTextureToStagePath(const std::string& stagePath, const std::stri
 {
     // Copy the HDRI texture to the stage path "textures" subdirectory
     const std::string texturesSubDir("textures");
-    std::string textureSourcePath(fmt::format("{0}../../../resources/Materials/{1}", pxr::TfGetPathName(pxr::ArchGetExecutablePath()), textureFile));
+    std::string textureSourcePath(
+        pxr::TfStringPrintf("%s../../../resources/Materials/%s", pxr::TfGetPathName(pxr::ArchGetExecutablePath()).c_str(), textureFile.c_str())
+    );
     std::string stagePathParent(pxr::TfGetPathName(stagePath));
     std::string textureTargetPath;
 
@@ -63,11 +63,11 @@ std::string copyTextureToStagePath(const std::string& stagePath, const std::stri
     std::error_code ec;
     if (stagePathParent.empty())
     {
-        textureTargetPath = fmt::format("{0}/{1}", texturesSubDir, textureFile);
+        textureTargetPath = pxr::TfStringPrintf("%s/%s", texturesSubDir.c_str(), textureFile.c_str());
     }
     else
     {
-        textureTargetPath = fmt::format("{0}/{1}/{2}", stagePathParent, texturesSubDir, textureFile);
+        textureTargetPath = pxr::TfStringPrintf("%s/%s/%s", stagePathParent.c_str(), texturesSubDir.c_str(), textureFile.c_str());
     }
 
     std::filesystem::create_directories(std::filesystem::path(textureTargetPath).parent_path(), ec);
@@ -80,7 +80,7 @@ std::string copyTextureToStagePath(const std::string& stagePath, const std::stri
     {
         std::cout << "Error copying file: " << ec.message() << std::endl;
     }
-    return fmt::format("./{0}/{1}", texturesSubDir, textureFile);
+    return pxr::TfStringPrintf("./%s/%s", texturesSubDir.c_str(), textureFile.c_str());
 }
 
 } // namespace samples

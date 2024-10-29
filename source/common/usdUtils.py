@@ -10,7 +10,7 @@ from pxr import Gf, Sdf, Tf, Usd, UsdGeom
 
 
 def getSamplesAuthoringMetadata():
-    return f"OpenUSD Exchange Samples"
+    return "OpenUSD Exchange Samples"
 
 
 def openOrCreateStage(identifier: str, defaultPrimName: str = "World", fileFormatArgs: Optional[dict] = None) -> Optional[Usd.Stage]:

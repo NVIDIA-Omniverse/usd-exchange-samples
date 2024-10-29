@@ -44,8 +44,10 @@ fetch.after_pull_commands = [
     ],
 ]
 
+msbuild.link_host_toolchain = true
 msbuild.sln_file = "USD-Exchange-Samples.sln"
-msbuild.vs_version = 'vs2019'
+msbuild.vs_version = ''
+
 docker.enabled = false
 telemetry.enabled = false
 

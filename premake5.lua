@@ -21,7 +21,6 @@ function sample(projectName)
 
     -- setup all paths, links, and carb dependencies to enable usdex_core
     usdex_build.use_cxxopts()
-    usdex_build.use_fmt()
     usdex_build.use_usd({
         "arch",
         "gf",

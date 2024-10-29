@@ -57,14 +57,12 @@ IncludeCategories:
     Priority:        2
   - Regex:           '<cxxopts.+>'
     Priority:        3
-  - Regex:           '<fmt\/.+>'
-    Priority:        4
   - Regex:           '<pxr\/.+>'
-    Priority:        5
+    Priority:        4
   - Regex:           '<pybind11\/.+>'
-    Priority:        6
+    Priority:        5
   - Regex:           '<.+>'
-    Priority:        7
+    Priority:        6
 IndentCaseLabels: true
 IndentPPDirectives: None
 IndentFunctionDeclarationAfterType: false

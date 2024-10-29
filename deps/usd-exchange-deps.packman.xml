@@ -1,15 +1,9 @@
 <project toolsVersion="5.0">
   <import path="../_build/target-deps/usd-exchange/$config/dev/deps/all-deps.packman.xml">
     <filter include="cxxopts"/>
-    <filter include="fmt"/>
-    <filter include="msvc"/>
     <filter include="premake"/>
-    <filter include="winsdk"/>
   </import>
 
-  <dependency name="msvc" linkPath="../_build/host-deps/msvc" />
   <dependency name="premake" linkPath="../_build/host-deps/premake" />
-  <dependency name="winsdk" linkPath="../_build/host-deps/winsdk" />
   <dependency name="cxxopts" linkPath="../_build/target-deps/cxxopts" />
-  <dependency name="fmt" linkPath="../_build/target-deps/fmt" />
 </project>

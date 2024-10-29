@@ -50,6 +50,8 @@ For command line argument help, use `--help`
 
 ### Windows
 #### Building
+This project requires Microsoft Visual Studio 2019 or newer. Download & install [Visual Studio with C++](https://visualstudio.microsoft.com/vs/features/cplusplus).
+
 Use the provided build script to download all dependencies (e.g USD), create the projects, and compile the code.
 ```bash
 .\repo.bat build
@@ -77,17 +79,13 @@ For command line argument help, use `--help`
 
 #### Building within the Visual Studio IDE
 
-To build within the VS IDE, open `_compiler\vs2019\USD-Exchange-Samples.sln` in Visual Studio 2019.  The sample C++ code can then be tweaked, debugged, rebuilt, etc. from there.
+To build within the VS IDE, open the solution found in the `_compiler` folder in Visual Studio.  The sample C++ code can then be tweaked, debugged, rebuilt, etc. from there.
 
 > Note : If the user installs the OpenUSD Exchange Samples into the `%LOCALAPPDATA%` folder, Visual Studio will not "Build" properly when changes are made because there is something wrong with picking up source changes.  Do one of these things to address the issue:
 >  - `Rebuild` the project with every source change rather than `Build`
 >  - Copy the OpenUSD Exchange Samples folder into another folder outside of `%LOCALAPPDATA%`
 >  - Make a junction to a folder outside of %LOCALAPPDATA% and open the solution from there:
 >    - `mklink /J C:\usd-exchange-samples %LOCALAPPDATA%\cloned-repos\usd-exchange-samples`
-
-#### Changing the MSVC Compiler [Advanced]
-
-When `repo.bat build` is run, a version of the Microsoft Visual Studio Compiler and the Windows 10 SDK are downloaded and referenced by the generated Visual Studio projects.  If a user wants the projects to use an installed version of Visual Studio 2019 then run `repo.bat build --use-devenv`.  Note, the build scripts are configured to tell `premake` to generate VS 2019 project files.  Some plumbing is required to support other Visual Studio versions.  Also, sometimes the projects are setup to use a particular Windows 10 SDK and MSVC build tools version, so it might be required to run the Visual Studio Installer to install the missing versions.
 
 ### Build and CI/CD Tools
 The Samples repository uses the [Repo Tools Framework (`repo_man`)](https://docs.omniverse.nvidia.com/kit/docs/repo_man) to configure premake, packman, build and runtime dependencies, testing, formatting, and other tools. Packman is used as a dependency manager for packages like OpenUSD, the Omniverse Asset Validator, the OpenUSD Exchange SDK, and other items. The Samples use OpenUSD Exchange SDK's repo_man, premake, and packman tooling as templates for including and linking against OpenUSD, the OpenUSD Exchange SDK, and other dependencies.  These can serve as an example for the build and runtime configuration that a customer's application might require.  Here's a list of interesting files:

@@ -11,9 +11,8 @@
 #include <usdex/core/StageAlgo.h>
 #include <usdex/core/XformAlgo.h>
 
-#include <fmt/format.h>
-
 #include <pxr/base/gf/transform.h>
+#include <pxr/base/tf/stringUtils.h>
 #include <pxr/usd/usd/payloads.h>
 #include <pxr/usd/usd/references.h>
 #include <pxr/usd/usd/stage.h>
@@ -34,11 +33,11 @@ std::string createComponentStage(const samples::Args& args)
     // Make a component stage path that is in the same folder as the root stage path with the same extension
     if (stageDir.empty())
     {
-        stagePath = fmt::format("{0}{1}", componentName, extension.string());
+        stagePath = pxr::TfStringPrintf("%s%s", componentName, extension.string().c_str());
     }
     else
     {
-        stagePath = fmt::format("{0}/{1}{2}", stageDir.string(), componentName, extension.string());
+        stagePath = pxr::TfStringPrintf("%s/%s%s", stageDir.string().c_str(), componentName, extension.string().c_str());
     }
 
     // Create a USD component stage in memory, ensuring that key metadata is set
@@ -69,7 +68,7 @@ std::string createComponentStage(const samples::Args& args)
         {
             for (int k = 0; k < 2; k++)
             {
-                std::string cubeName = fmt::format("Cube_{0}_{1}_{2}", i, j, k);
+                std::string cubeName = pxr::TfStringPrintf("Cube_%i_%i_%i", i, j, k);
                 // clang-format off
                 pxr::GfVec3d pos(
                     i * (cubeSize + cubeSpacing) + offset,
@@ -87,7 +86,7 @@ std::string createComponentStage(const samples::Args& args)
         /* layer */ componentStage->GetRootLayer(),
         /* identifier */ stagePath,
         /* authoringMetadata */ samples::getSamplesAuthoringMetadata(),
-        /* comment */ fmt::format("{0} component", componentName).c_str(),
+        /* comment */ pxr::TfStringPrintf("%s component", componentName).c_str(),
         /* file format args */ args.fileFormatArgs
     );
     if (!success)
@@ -142,7 +141,7 @@ int main(int argc, char* argv[])
     {
         relativeComponentPath = std::filesystem::proximate(componentStagePath, stageParentPath).string();
     }
-    std::string referencePath = fmt::format("./{0}", relativeComponentPath);
+    std::string referencePath = pxr::TfStringPrintf("./%s", relativeComponentPath.c_str());
 
     // Create a reference prim
     pxr::TfTokenVector primNames = usdex::core::getValidChildNames(defaultPrim, std::vector<std::string>{ "referencePrim" });
