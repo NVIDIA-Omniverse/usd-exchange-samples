@@ -7,7 +7,6 @@
 # By default it will build against the release version of OpenUSD, to build against the debug version run `make CONFIG=debug`.
 
 # The expectation is that OpenUSD, the OpenUSD Exchange SDK, and other dependencies are present in the `$project_root/usdex/target-deps` directory
-BOOSTVER = boost-1_78
 DEPSDIR = $(CURDIR)/usdex/target-deps
 PYTHONVER = python3.10
 PROGRAMNAME = UsdTraverse
@@ -40,12 +39,10 @@ endif
 # Include search directories
 USDEX_INCLUDE_DIRS = \
  -isystem $(DEPSDIR)/usd-exchange/$(CONFIG)/include \
- -isystem $(DEPSDIR)/usd/$(CONFIG)/include \
- -isystem $(DEPSDIR)/usd/$(CONFIG)/include/$(BOOSTVER)
+ -isystem $(DEPSDIR)/usd/$(CONFIG)/include
 
 # USD libs (most of these not required, but this is a proper set for a fully featured converter)
 USD_LIBS = \
- -lboost_python310 \
  -lusd_ar \
  -lusd_arch \
  -lusd_gf \
@@ -63,6 +60,17 @@ USD_LIBS = \
  -lusd_usdUtils \
  -lusd_vt \
  -lusd_work
+
+# For USD 24.11 and newer
+# USD_LIBS += \
+#  -lusd_python \
+#  -lusd_ts
+
+# For USD 24.08 and older. Remove if using USD 24.11 and replace with the block above.
+USDEX_INCLUDE_DIRS += \
+ -isystem $(DEPSDIR)/usd/$(CONFIG)/include/boost-1_78
+USD_LIBS += \
+ -lboost_python310
 
 USDEX_LIBS = \
  -lusdex_core \

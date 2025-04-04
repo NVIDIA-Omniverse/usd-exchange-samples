@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: Copyright (c) 2024 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-FileCopyrightText: Copyright (c) 2024-2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: MIT
 #
 
@@ -19,9 +19,5 @@ class UsdViewTestCase(unittest.TestCase):
             return_code, output = utils.shell.run_shell_script("run", "createStage", "-p", stagePath)
             self.assertEqual(return_code, 0, output)
 
-            # This path to `usdview_gui` must match what's in usdview.bat|sh to be a valid test
-            # repo_test hangs on Windows when `usdview.bat` is used here
-            return_code, output = utils.shell.run_shell_script(
-                "_build/target-deps/usd/release/scripts/usdview_gui", "--quitAfterStartup", "--norender", stagePath
-            )
+            return_code, output = utils.shell.run_shell_script("./usdview", "--quitAfterStartup", "--norender", stagePath)
             self.assertEqual(return_code, 0, output)
