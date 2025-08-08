@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright (c) 2024 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+// SPDX-FileCopyrightText: Copyright (c) 2024-2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 // SPDX-License-Identifier: MIT
 //
 
@@ -65,11 +65,11 @@ int main(int argc, char* argv[])
     pxr::GfVec3f rotation(0);
     usdex::core::RotationOrder rotationOrder;
     pxr::GfVec3f scale(1);
-    usdex::core::getLocalTransformComponents(xformable.GetPrim(), position, pivot, rotation, rotationOrder, scale);
+    usdex::core::getLocalTransformComponents(xformable, position, pivot, rotation, rotationOrder, scale);
 
     rotation += pxr::GfVec3f(0, 45, 0);
     usdex::core::setLocalTransform(
-        xformable.GetPrim(), /* parent prim */
+        xformable, /* xformable */
         position, /* translation */
         pivot, /* pivot */
         rotation, /* rotation */
@@ -87,7 +87,19 @@ int main(int argc, char* argv[])
     transform = pxr::GfTransform();
     transform.SetScale(pxr::GfVec3d(20, 0.1, 20));
     pxr::UsdGeomCube cube = samples::createCube(xformPrim.GetPrim(), "groundCube");
-    usdex::core::setLocalTransform(cube.GetPrim(), transform.GetMatrix());
+    usdex::core::setLocalTransform(cube, transform.GetMatrix());
+
+    // Create a cube with translation-orientation-scale xformOps
+    pxr::UsdGeomCube quatCube = samples::createCube(stage->GetDefaultPrim(), "quatCube");
+    // Calculate the height of the cube over the ground plane
+    double edgeLength;
+    quatCube.GetSizeAttr().Get(&edgeLength);
+    const double centerHeight = sqrt((edgeLength * edgeLength) / 2.0);
+    const double cubeHeight = centerHeight - 50.0; // Adjust for the height and thickness of the ground plane
+
+    // Set the orientation as a quaternion with a 45 degree rotation around the X axis - GfQuatf(real, i, j, k)
+    const pxr::GfQuatf quat(0.9238795f, 0.38268343f, 0, 0);
+    usdex::core::setLocalTransform(quatCube, pxr::GfVec3d(300, cubeHeight, -300), quat);
 
     // Save the stage to disk
     usdex::core::saveStage(stage, "OpenUSD Exchange Samples");

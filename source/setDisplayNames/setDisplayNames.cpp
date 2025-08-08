@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright (c) 2024 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+// SPDX-FileCopyrightText: Copyright (c) 2024-2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 // SPDX-License-Identifier: MIT
 //
 
@@ -36,14 +36,14 @@ void createRocket(pxr::UsdStageRefPtr stage)
     ///////////////////////////////////
     pxr::UsdGeomCylinder cylinder = samples::createCylinder(xformPrim.GetPrim(), "tube");
     transform.SetTranslation(pxr::GfVec3d(0, 150, 0));
-    usdex::core::setLocalTransform(cylinder.GetPrim(), transform);
+    usdex::core::setLocalTransform(cylinder, transform);
 
     ///////////////////////////////////
     // Create nose cone
     ///////////////////////////////////
     pxr::UsdGeomCone cone = samples::createCone(xformPrim.GetPrim(), "nose");
     transform.SetTranslation(pxr::GfVec3d(0, 400, 0));
-    usdex::core::setLocalTransform(cone.GetPrim(), transform);
+    usdex::core::setLocalTransform(cone, transform);
 
     ///////////////////////////////////
     // Create cube fin 1
@@ -51,7 +51,7 @@ void createRocket(pxr::UsdStageRefPtr stage)
     pxr::UsdGeomCube fin1 = samples::createCube(xformPrim.GetPrim(), "fin");
     transform.SetIdentity();
     transform.SetScale(pxr::GfVec3d(0.01, 1, 2));
-    usdex::core::setLocalTransform(fin1.GetPrim(), transform);
+    usdex::core::setLocalTransform(fin1, transform);
 
     ///////////////////////////////////
     // Create cube fin 2
@@ -59,7 +59,7 @@ void createRocket(pxr::UsdStageRefPtr stage)
     pxr::UsdGeomCube fin2 = samples::createCube(xformPrim.GetPrim(), "fin");
     transform.SetIdentity();
     transform.SetScale(pxr::GfVec3d(2, 1, 0.01));
-    usdex::core::setLocalTransform(fin2.GetPrim(), transform);
+    usdex::core::setLocalTransform(fin2, transform);
 
     ///////////////////////////////////
     // Access prim display names

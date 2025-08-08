@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright (c) 2024 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+// SPDX-FileCopyrightText: Copyright (c) 2024-2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 // SPDX-License-Identifier: MIT
 //
 
@@ -60,7 +60,7 @@ int main(int argc, char* argv[])
 
     // We could configure the xform in the GfCamera, but we can also do so with:
     usdex::core::setLocalTransform(
-        telephotoCamera.GetPrim(), /* prim */
+        telephotoCamera, /* xformable */
         pxr::GfVec3d(2531.459, 49.592, 1707.792), /* translation */
         pxr::GfVec3d(0.0), /* pivot */
         pxr::GfVec3f(-0.379f, 56.203f, 0.565f), /* rotation */
@@ -78,7 +78,7 @@ int main(int argc, char* argv[])
 
     // We could configure the xform in the GfCamera, but we can also do so with:
     usdex::core::setLocalTransform(
-        wideCamera.GetPrim(), /* prim */
+        wideCamera, /* xformable */
         pxr::GfVec3d(-283.657, 12.826, 140.9), /* translation */
         pxr::GfVec3d(0.0), /* pivot */
         pxr::GfVec3f(-1.234f, -64.0f, -2.53f), /* rotation */

@@ -12,8 +12,6 @@ When creating the component stage the sample uses a pattern that's different tha
 
 This sample abuses mesh duplication by creating 8 mesh cubes in the component stage. A future optimization could use internal references or even scenegraph instances.
 
-Note that OpenUSD Exchange doesn't currently have any functions for authoring references or payloads, so all of that functionality within the sample is accomplished with only the OpenUSD API.
-
 ## USD Modules
 
 The Gf, Sdf, Usd, and UsdGeom modules are used.
@@ -22,11 +20,13 @@ The Gf, Sdf, Usd, and UsdGeom modules are used.
 
 - configureStage()
 - createStage()
-- definePolyMesh()
+- defineXform()
 - exportLayer()
 - getValidChildNames()
 - saveStage()
 - Vec3fPrimvarData()
+- defineReference()
+- definePayload()
 
 ## Languages
 

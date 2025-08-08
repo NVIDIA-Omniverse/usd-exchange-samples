@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: Copyright (c) 2024 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-FileCopyrightText: Copyright (c) 2024-2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: MIT
 #
 
@@ -48,10 +48,10 @@ def main(args):
         xformable = UsdGeom.Xformable(common.usdUtils.createCube(stage.GetDefaultPrim(), "cube"))
 
     print(f"Rotating xformable <{xformable.GetPrim().GetPath()}> 45 degrees in the Y axis")
-    translation, pivot, rotation, rotationOrder, scale = usdex.core.getLocalTransformComponents(xformable.GetPrim())
+    translation, pivot, rotation, rotationOrder, scale = usdex.core.getLocalTransformComponents(xformable)
     rotation += Gf.Vec3f(0, 45, 0)
     usdex.core.setLocalTransform(
-        prim=xformable.GetPrim(),
+        xformable=xformable,
         translation=translation,
         pivot=pivot,
         rotation=rotation,
@@ -68,7 +68,24 @@ def main(args):
     transform = Gf.Transform()
     transform.SetScale(Gf.Vec3d(20, 0.1, 20))
     cube = common.usdUtils.createCube(xformPrim.GetPrim(), "groundCube")
-    usdex.core.setLocalTransform(prim=cube.GetPrim(), matrix=transform.GetMatrix())
+    usdex.core.setLocalTransform(xformable=cube, matrix=transform.GetMatrix())
+
+    # Create a cube with translation-orientation-scale xformOps
+    quatCube = common.usdUtils.createCube(stage.GetDefaultPrim(), "quatCube")
+    # Calculate the height of the cube over the ground plane
+    #     /\
+    #    /  \
+    #   /    \ ___
+    #   \    /  |
+    #    \  /   | centerHeight
+    #   __\/____|_
+    edgeLength = quatCube.GetSizeAttr().Get()
+    centerHeight = pow((edgeLength * edgeLength) / 2, 0.5)
+    cubeHeight = centerHeight - 50  # Adjust for the height and thickness of the ground plane
+
+    # Set the orientation as a quaternion with a 45 degree rotation around the X axis - Gf.Quatf(real, i, j, k)
+    quat = Gf.Quatf(0.9238795, 0.38268343, 0, 0)
+    usdex.core.setLocalTransform(xformable=quatCube, translation=Gf.Vec3d(300, cubeHeight, -300), orientation=quat)
 
     usdex.core.saveStage(stage, "OpenUSD Exchange Samples")
 

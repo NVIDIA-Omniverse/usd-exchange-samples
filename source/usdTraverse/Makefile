@@ -56,30 +56,29 @@ USD_LIBS = \
  -lusd_usd \
  -lusd_usdGeom \
  -lusd_usdLux \
+ -lusd_usdPhysics \
  -lusd_usdShade \
  -lusd_usdUtils \
  -lusd_vt \
  -lusd_work
 
 # For USD 24.11 and newer
-# USD_LIBS += \
-#  -lusd_python \
-#  -lusd_ts
-
-# For USD 24.08 and older. Remove if using USD 24.11 and replace with the block above.
-USDEX_INCLUDE_DIRS += \
- -isystem $(DEPSDIR)/usd/$(CONFIG)/include/boost-1_78
 USD_LIBS += \
- -lboost_python310
+ -lusd_python \
+ -lusd_ts
+
+# For USD 24.08 and older, uncomment and remove the block above.
+# USDEX_INCLUDE_DIRS += \
+#  -isystem $(DEPSDIR)/usd/$(CONFIG)/include/boost-1_78
+# USD_LIBS += \
+#  -lboost_python310
 
 USDEX_LIBS = \
- -lusdex_core \
- -lomni_transcoding
+ -lusdex_core
 
 # Library dependency directories
 USDEX_LIB_DIRS = \
  -L$(DEPSDIR)/usd-exchange/$(CONFIG)/lib \
- -L$(DEPSDIR)/omni_transcoding/$(CONFIG)/lib \
  -L$(DEPSDIR)/usd/$(CONFIG)/lib
 
 # Python specifics

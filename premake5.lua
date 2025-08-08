@@ -33,10 +33,12 @@ function sample(projectName)
         "usdGeom",
         "usdLux",
         "usdPhysics",
+        "usdSemantics",
         "usdShade",
         "usdSkel",
         "usdUtils",
         "vt",
+        "work"
     })
     usdex_build.use_usdex_core()
     usdex_build.use_usdex_rtx()
@@ -54,12 +56,16 @@ function sample(projectName)
     })
 end
 
-sample("createStage")
-sample("createMesh")
-sample("createLights")
-sample("createTransforms")
-sample("createCameras")
-sample("createReferences")
-sample("createSkeleton")
-sample("createMaterials")
-sample("setDisplayNames")
+-- Read samples from allSamples.txt and call sample() for each
+local allSamplesFile = io.open("allSamples.txt", "r")
+if allSamplesFile then
+    for line in allSamplesFile:lines() do
+        local sampleName = line:match("^%s*(.-)%s*$") -- trim whitespace
+        if sampleName and sampleName ~= "" then
+            sample(sampleName)
+        end
+    end
+    allSamplesFile:close()
+else
+    print("Warning: allSamples.txt not found, no samples will be built")
+end

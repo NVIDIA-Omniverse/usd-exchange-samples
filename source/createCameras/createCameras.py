@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: Copyright (c) 2024 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-FileCopyrightText: Copyright (c) 2024-2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: MIT
 #
 
@@ -44,7 +44,7 @@ def main(args):
 
     # We could configure the xform in the GfCamera, but we can also do so with:
     usdex.core.setLocalTransform(
-        prim=telephotoCamera.GetPrim(),
+        xformable=telephotoCamera,
         translation=Gf.Vec3d(2531.459, 49.592, 1707.792),
         pivot=Gf.Vec3d(0.0),
         rotation=Gf.Vec3f(-0.379, 56.203, 0.565),
@@ -62,7 +62,7 @@ def main(args):
 
     # We could configure the xform in the GfCamera, but we can also do so with:
     usdex.core.setLocalTransform(
-        prim=wideCamera.GetPrim(),
+        xformable=wideCamera,
         translation=Gf.Vec3d(-283.657, 12.826, 140.9),
         pivot=Gf.Vec3d(0.0),
         rotation=Gf.Vec3f(-1.234, -64.0, -2.53),

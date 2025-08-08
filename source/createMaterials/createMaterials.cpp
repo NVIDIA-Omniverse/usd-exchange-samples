@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright (c) 2024 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+// SPDX-FileCopyrightText: Copyright (c) 2024-2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 // SPDX-License-Identifier: MIT
 //
 
@@ -93,7 +93,7 @@ int main(int argc, char* argv[])
     samples::setOmniverseRefinement(sphere.GetPrim());
     samples::setExtents(sphere);
     usdex::core::setLocalTransform(
-        sphere.GetPrim(), /* prim */
+        sphere, /* xformable */
         pxr::GfVec3d(-400.0, 0.0, -400.0), /* translation */
         pxr::GfVec3d(0), /* pivot */
         pxr::GfVec3f(0), /* rotation */

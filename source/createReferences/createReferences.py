@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: Copyright (c) 2024 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-FileCopyrightText: Copyright (c) 2024-2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: MIT
 #
 
@@ -18,7 +18,7 @@ import usdex.core
 from pxr import Gf, Usd, UsdGeom
 
 
-def createComponentStage(args) -> str:
+def createComponentStage(args) -> Usd.Stage:
     """Create a stage with a 2x2x2 grouping of mesh cubes"""
     componentName = "Cube_2x2x2"
     stageDir = pathlib.Path(args.path).parent
@@ -28,7 +28,7 @@ def createComponentStage(args) -> str:
     # Create a USD component stage in memory, ensuring that key metadata is set
     componentStage = Usd.Stage.CreateInMemory()
     if not componentStage:
-        return ""
+        return None
 
     usdex.core.configureStage(
         stage=componentStage,
@@ -68,9 +68,9 @@ def createComponentStage(args) -> str:
         fileFormatArgs=args.fileFormatArgs,
     )
     if not success:
-        return ""
+        return None
 
-    return stagePath.as_posix()
+    return Usd.Stage.Open(stagePath.as_posix())
 
 
 def main(args):
@@ -83,35 +83,34 @@ def main(args):
 
     defaultPrim = stage.GetDefaultPrim()
 
-    componentStagePath = createComponentStage(args)
-    if not len(componentStagePath):
+    componentStage = createComponentStage(args)
+    if not componentStage:
         print("Error creating component stage, exiting")
         sys.exit(-1)
 
-    print(f"Component stage: {componentStagePath}")
-
-    # Make a relative path from the stage's folder to the component's stage
-    relativeComponentPath = pathlib.Path(componentStagePath).relative_to(pathlib.Path(args.path).parent)
-    referencePath = f"./{relativeComponentPath.as_posix()}"
+    print(f"Component stage: {componentStage.GetRootLayer().identifier}")
 
     # Create a reference prim
-    primNames = usdex.core.getValidChildNames(stage.GetDefaultPrim(), ["referencePrim"])
+    primNames = usdex.core.getValidChildNames(stage.GetDefaultPrim(), ["referencePrim", "payloadPrim"])
     refTransform = Gf.Transform()
     refTransform.SetTranslation(Gf.Vec3d(0, 2.5, 300))
-    xform = usdex.core.defineXform(parent=defaultPrim, name=primNames[0], transform=refTransform)
-    xform.GetPrim().GetReferences().AddReference(referencePath)
+    prim = usdex.core.defineReference(parent=defaultPrim, source=componentStage.GetDefaultPrim(), name=primNames[0])
+    xform = UsdGeom.Xform(prim)
+    usdex.core.setLocalTransform(xform, refTransform)
+
     # Override the mesh scale from the reference
     xformable = UsdGeom.Xformable(xform.GetPrim().GetChildren()[-1])
     if xformable:
-        transform = usdex.core.getLocalTransform(xformable.GetPrim())
+        transform = usdex.core.getLocalTransform(xformable)
         transform.SetScale(Gf.Vec3d(0.5))
-        usdex.core.setLocalTransform(xformable.GetPrim(), transform)
+        usdex.core.setLocalTransform(xformable, transform)
 
     # Create a payload prim
-    primNames = usdex.core.getValidChildNames(stage.GetDefaultPrim(), ["payloadPrim"])
     refTransform.SetTranslation(Gf.Vec3d(300, 2.5, 0))
-    xform = usdex.core.defineXform(parent=defaultPrim, name=primNames[0], transform=refTransform)
-    xform.GetPrim().GetPayloads().AddPayload(referencePath)
+    prim = usdex.core.definePayload(parent=defaultPrim, source=componentStage.GetDefaultPrim(), name=primNames[1])
+    xform = UsdGeom.Xform(prim)
+    usdex.core.setLocalTransform(xform, refTransform)
+
     # Override the mesh constant color primvar from the payload
     mesh = UsdGeom.Mesh(xform.GetPrim().GetChildren()[-1])
     if mesh:

@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: Copyright (c) 2024 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-FileCopyrightText: Copyright (c) 2024-2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: MIT
 #
 
@@ -39,7 +39,7 @@ def createRectLight(stage):
 
     # Move the light up and rotate it so it shines down onto the stage
     usdex.core.setLocalTransform(
-        prim=rectLightPrim.GetPrim(),
+        xformable=rectLightPrim,
         translation=Gf.Vec3d(0.0, 300.0, 0.0),
         pivot=Gf.Vec3d(0.0),
         rotation=Gf.Vec3f(-90.0, 0.0, 0.0),  # pointing -z down
@@ -78,7 +78,7 @@ def createDomeLight(stage, texturePath):
 
     # Rotate the dome light if using Kit/RTX for rendering
     # usdex.core.setLocalTransform(
-    #    prim=domeLightPrim.GetPrim(),
+    #    xformable=domeLightPrim,
     #    translation=Gf.Vec3d(0.0),
     #    pivot=Gf.Vec3d(0.0),
     #    rotation=Gf.Vec3f(-90.0, 0.0, 0.0),  # pointing -z down

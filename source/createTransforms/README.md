@@ -2,9 +2,10 @@
 
 This sample demonstrates how to open/create a stage with key metadata and apply transforms to prims using the OpenUSD Exchange SDK.
 
-- Find or create a [UsdGeomXformable](https://openusd.org/dev/api/class_usd_geom_xformable.html#details) https://openusd.org/dev/api/class_usd_geom_cube.html#details, read its tranform and rotate it 45 degrees on the stage's up-axis.
+- Find or create a [UsdGeomXformable](https://openusd.org/dev/api/class_usd_geom_xformable.html#details) https://openusd.org/dev/api/class_usd_geom_cube.html#details, read its transform and rotate it 45 degrees on the stage's up-axis.
 - Create a [UsdGeomXform](https://openusd.org/dev/api/class_usd_geom_xform.html#details) prim and adjust its translation
 - Create a [UsdGeomCube](https://openusd.org/dev/api/class_usd_geom_cube.html#details) prim as a child of the Xform prim and adjust its scale to make a floor
+- Create a [UsdGeomCube](https://openusd.org/dev/api/class_usd_geom_cube.html#details) prim use the quaternion transform function to set its translation and orientation with default scale
 
 ## USD Modules
 
@@ -36,6 +37,7 @@ This sample is implemented in both C++ and Python.  To run:
     - Note that the typical rotation order is XYZ, so the expectation is that the sample rotates the prim on the Y axis
 - A Xform prim named "groundXform" is created and lowered 55 cm
 - A cube prim named "groundCube" is created as a child of "groundXform" with a scale of (20, 0.1, 20)
+- A cube prim named "quatCube" is created with a quaternion orientation
 
 ## Command Line Arguments
 

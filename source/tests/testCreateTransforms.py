@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: Copyright (c) 2024 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-FileCopyrightText: Copyright (c) 2024-2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: MIT
 #
 
@@ -20,7 +20,7 @@ from utils.BaseTestCase import BaseTestCase
 
 
 class CreateTransformsTestCase(BaseTestCase):
-    def _checkStageContents(self, stagePath, cubeName, xformName, groundName):
+    def _checkStageContents(self, stagePath, cubeName, xformName, groundName, quatName):
         self.runAssetValidator(stagePath)
 
         stage = Usd.Stage.Open(stagePath)
@@ -56,6 +56,16 @@ class CreateTransformsTestCase(BaseTestCase):
         translation, pivot, rotation, rotationOrder, scale = usdex.core.getLocalTransformComponents(prim)
         self.assertAlmostEqual(scale, Gf.Vec3f(20, 0.1, 20))
 
+        # check the quat cube
+        prim = stage.GetPrimAtPath(defaultPrim.GetPath().AppendChild(quatName))
+        self.assertTrue(prim)
+        typedPrim = UsdGeom.Cube(prim)
+        self.assertTrue(typedPrim)
+        self.assertIsInstance(typedPrim, UsdGeom.Cube)
+        translation, pivot, quat, scale = usdex.core.getLocalTransformComponentsQuat(prim)
+        expectedQuat = Gf.Quatf(Gf.Rotation(Gf.Vec3d(1, 0, 0), 45).GetQuat())
+        self.assertEqual(quat, expectedQuat)
+
         stage = None
 
     def _runSampleOptions(self, script, programPath):
@@ -70,6 +80,7 @@ class CreateTransformsTestCase(BaseTestCase):
             cubeNames = ["cube", "cube"]
             xformNames = ["groundXform", "groundXform_1"]
             groundNames = ["groundCube", "groundCube"]
+            quatNames = ["quatCube", "quatCube_1"]
 
             for args in argsRuns:
                 for idx in range(len(cubeNames)):
@@ -79,7 +90,7 @@ class CreateTransformsTestCase(BaseTestCase):
                         return_code, output = utils.shell.run_shell_script(script, programPath, "-p", args[0])
 
                     self.assertEqual(return_code, 0, output)
-                    self._checkStageContents(args[0], cubeNames[idx], xformNames[idx], groundNames[idx])
+                    self._checkStageContents(args[0], cubeNames[idx], xformNames[idx], groundNames[idx], quatNames[idx])
                     utils.fileFormat.checkLayerFormat(self, args[0], args[1])
 
             # Test invalid options

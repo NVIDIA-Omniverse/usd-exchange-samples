@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: Copyright (c) 2024 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-FileCopyrightText: Copyright (c) 2024-2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: MIT
 #
 
@@ -33,7 +33,7 @@ def createRocket(stage):
     cylinder = common.usdUtils.createCylinder(xformPrim.GetPrim(), "tube")
     # Set the translation
     transform.SetTranslation(Gf.Vec3d(0, 150, 0))
-    usdex.core.setLocalTransform(cylinder.GetPrim(), transform)
+    usdex.core.setLocalTransform(cylinder, transform)
 
     #################################
     # Create nose cone
@@ -42,7 +42,7 @@ def createRocket(stage):
     # Set the translation
     transform.SetIdentity()
     transform.SetTranslation(Gf.Vec3d(0, 400, 0))
-    usdex.core.setLocalTransform(cone.GetPrim(), transform)
+    usdex.core.setLocalTransform(cone, transform)
 
     #################################
     # Create cube fin 1
@@ -51,7 +51,7 @@ def createRocket(stage):
     # Set the scale
     transform.SetIdentity()
     transform.SetScale(Gf.Vec3d(0.01, 1, 2))
-    usdex.core.setLocalTransform(fin1.GetPrim(), transform)
+    usdex.core.setLocalTransform(fin1, transform)
 
     #################################
     # Create cube fin 2
@@ -60,7 +60,7 @@ def createRocket(stage):
     # Set the scale
     transform.SetIdentity()
     transform.SetScale(Gf.Vec3d(2, 1, 0.01))
-    usdex.core.setLocalTransform(fin2.GetPrim(), transform)
+    usdex.core.setLocalTransform(fin2, transform)
 
     #################################
     # Access prim display names

@@ -20,5 +20,35 @@ if [ ! -f "${PYTHON}" ]; then
     exit
 fi
 
+# Read samples from allSamples.txt
+samples=()
+while IFS= read -r line; do
+    # Skip empty lines and lines starting with #
+    if [[ -n "$line" && ! "$line" =~ ^[[:space:]]*# ]]; then
+        samples+=("$line")
+    fi
+done < "${SCRIPT_DIR}/allSamples.txt"
+
+# Check if user wants to run all samples
+if [ "$1" = "all" ]; then
+    echo "Running all samples in order..."
+
+    for sample in "${samples[@]}"; do
+        echo ""
+        echo "=== Running $sample ==="
+        SAMPLE_PATH=source/${sample}/${sample}.py
+        if [ -f "${SAMPLE_PATH}" ]; then
+            "${PYTHON}" -s "${SAMPLE_PATH}" "${@:2}"
+        else
+            echo "WARNING: ${sample} not found at ${SAMPLE_PATH}"
+        fi
+    done
+
+    echo ""
+    echo "=== All samples completed ==="
+    popd > /dev/null
+    exit 0
+fi
+
 "${PYTHON}" -s "$@"
 popd > /dev/null

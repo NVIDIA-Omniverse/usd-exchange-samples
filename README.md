@@ -1,17 +1,20 @@
-# OpenUSD Exchange Samples for the OpenUSD Exchange SDK
+# Samples for the OpenUSD Exchange SDK
 
-These samples demonstrate some key concepts for writing OpenUSD converters. The samples use the OpenUSD and the OpenUSD Exchange SDK ([docs](https://docs.omniverse.nvidia.com/usd/code-docs/usd-exchange-sdk/latest/index.html), [github](https://github.com/NVIDIA-Omniverse/usd-exchange)) to demonstrate how to author consistent and correct USD:
+These samples demonstrate some key concepts for writing OpenUSD converters. The samples use OpenUSD and the OpenUSD Exchange SDK ([docs](https://docs.omniverse.nvidia.com/usd/code-docs/usd-exchange-sdk/latest/index.html), [github](https://github.com/NVIDIA-Omniverse/usd-exchange)) to demonstrate how to author consistent and correct USD:
 
 - [`Asset Validator`](./source/assetValidator/README.md)
 - [`createStage`](./source/createStage/README.md)
+- [`createTransforms`](./source/createTransforms/README.md)
+- [`createMesh`](./source/createMesh/README.md)
+- [`createMaterials`](./source/createMaterials/README.md)
+- [`createReferences`](./source/createReferences/README.md)
+- [`createAsset`](./source/createAsset/README.md)
 - [`createCameras`](./source/createCameras/README.md)
 - [`createLights`](./source/createLights/README.md)
-- [`createMaterials`](./source/createMaterials/README.md)
-- [`createMesh`](./source/createMesh/README.md)
-- [`createReferences`](./source/createReferences/README.md)
+- [`createPhysics`](./source/createPhysics/README.md)
 - [`createSkeleton`](./source/createSkeleton/README.md)
-- [`createTransforms`](./source/createTransforms/README.md)
 - [`setDisplayNames`](./source/setDisplayNames/README.md)
+- [`setSemantics`](./source/setSemantics/README.md)
 
 ## How to Build and Run Samples
 
@@ -28,6 +31,8 @@ Use the provided build script to download all other dependencies (e.g USD), crea
 ./repo.sh build
 ```
 
+For debug builds, use `./repo.sh build -d`
+
 #### C++ Samples
 
 Use the `run.sh` script (e.g. `./run.sh createStage`) to execute each program with a pre-configured environment.
@@ -38,6 +43,8 @@ For command line argument help, use `--help`
 ```bash
 ./run.sh createStage --help
 ```
+
+You can also [run all samples together](#running-all-samples-together), saved into a single layer.
 
 #### Python Samples
 
@@ -57,6 +64,8 @@ Use the provided build script to download all dependencies (e.g USD), create the
 .\repo.bat build
 ```
 
+For debug builds, use `.\repo.bat build -d`
+
 #### C++ Samples
 
 Use the `run.bat` script (e.g. `.\run.bat createStage`) to execute each program with a pre-configured environment.
@@ -66,6 +75,8 @@ For command line argument help, use `--help`
 ```bash
 .\run.bat createStage --help
 ```
+
+You can also [run all samples together](#running-all-samples-together), saved into a single layer.
 
 #### Python Samples
 
@@ -87,6 +98,44 @@ To build within the VS IDE, open the solution found in the `_compiler` folder in
 >  - Make a junction to a folder outside of %LOCALAPPDATA% and open the solution from there:
 >    - `mklink /J C:\usd-exchange-samples %LOCALAPPDATA%\cloned-repos\usd-exchange-samples`
 
+
+#### Issues with Self-Signed Certs
+If the scripts from the Samples fail due to self-signed cert issues, a possible workaround would be to do this:
+
+Install python-certifi-win32 which allows the windows certificate store to be used for TLS/SSL requests:
+
+```bash
+tools\packman\python.bat -m pip install python-certifi-win32 --trusted-host pypi.org --trusted-host files.pythonhosted.org
+```
+
+### Running All Samples Together
+
+The samples are intended to be run sequentially and will build up the USD stage that is originally created in the [`createStage`](./source/createStage/README.md) sample.  The can also be run independently and will either open or create a stage depending on whether it exists.  To run all of the samples sequentially with one command, type this in the command line after building:
+
+```
+Linux:
+./run.sh all
+./python.sh all
+
+Windows:
+.\run.bat all
+.\python.bat all
+```
+
+This will output a single layer file after all of the samples have run sequentially. This output layer can be passed as the first command line argument to the `usdview.[bat|sh]` script to view it.
+
+#### Run the C++ and Python Samples
+
+The unittests have a similar process, but run both C++ and Python Samples:
+
+```
+Linux:
+./repo.sh test -f testRunAll -e keep
+
+Windows:
+.\repo.bat test -f testRunAll -e keep
+```
+
 ### Build and CI/CD Tools
 The Samples repository uses the [Repo Tools Framework (`repo_man`)](https://docs.omniverse.nvidia.com/kit/docs/repo_man) to configure premake, packman, build and runtime dependencies, testing, formatting, and other tools. Packman is used as a dependency manager for packages like OpenUSD, the Omniverse Asset Validator, the OpenUSD Exchange SDK, and other items. The Samples use OpenUSD Exchange SDK's repo_man, premake, and packman tooling as templates for including and linking against OpenUSD, the OpenUSD Exchange SDK, and other dependencies.  These can serve as an example for the build and runtime configuration that a customer's application might require.  Here's a list of interesting files:
 
@@ -99,44 +148,7 @@ For details on choosing and installing the OpenUSD Exchange SDK build flavors, f
 
 ## Using the OpenUSD Exchange SDK in an Application
 
-See the [OpenUSD Exchange SDK Getting Started docs](https://docs.omniverse.nvidia.com/usd/code-docs/usd-exchange-sdk/latest/docs/getting-started.html#integrate-into-an-application) for a walkthrough of how use the OpenUSD Exchange SDK and OpenUSD in your application.
-
-## Sample Details
-
-The samples listed are focused on these key concepts:
-- OpenUSD
-    - USD Cameras
-    - USD Display Names
-    - USD Lights
-    - USD Materials
-    - USD Meshes
-    - USD Prim Names
-    - USD Primvars
-    - USD Stages
-    - USD Xforms
-
-### Running All Samples Together
-
-The samples are intended to be run sequentially and will build up the USD stage that is originally created in the [`createStage`](./source/createStage/README.md) sample.  The can also be run independently and will either open or create a stage depending on whether it exists.  To run all of the samples sequentially with one command, type this in the command line after building:
-
-```
-Linux:
-./repo.sh test -f testRunAll -e keep
-
-Windows:
-.\repo.bat test -f testRunAll -e keep
-```
-
-This will output the location of the C++ and Python generated stages after all of the samples have run sequentially.
-
-## Issues with Self-Signed Certs
-If the scripts from the Samples fail due to self-signed cert issues, a possible workaround would be to do this:
-
-Install python-certifi-win32 which allows the windows certificate store to be used for TLS/SSL requests:
-
-```bash
-tools\packman\python.bat -m pip install python-certifi-win32 --trusted-host pypi.org --trusted-host files.pythonhosted.org
-```
+See the [OpenUSD Exchange SDK Native Application Guide](https://docs.omniverse.nvidia.com/usd/code-docs/usd-exchange-sdk/latest/docs/native-application.html) for a walkthrough of how use the OpenUSD Exchange SDK and OpenUSD in a native application.
 
 ## External Support
 

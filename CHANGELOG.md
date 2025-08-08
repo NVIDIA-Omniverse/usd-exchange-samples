@@ -1,14 +1,20 @@
-1.2.0
+2.0.0
 -----
-Release: July 2025
+Release: August 2025
 
-OpenUSD Exchange SDK v1.2.0
+OpenUSD Exchange SDK v2.0.0
 
+* Samples
+    * Switch to USD 25.05
+    * Add an "all" argument to `run.bat|sh` and `python.bat|sh` to run all of the samples in proper order
+    * Add new samples
+        * [Asset Structure](./source/createAsset/README.md)
+        * [Physics](./source/createPhysics/README.md)
+        * [Semantics](./source/setSemantics/README.md)
 * Dependencies
-    * OpenUSD [v24.08](https://github.com/PixarAnimationStudios/OpenUSD/blob/v24.08/CHANGELOG.md)
-    * OpenUSD Exchange SDK [v1.2.0](https://docs.omniverse.nvidia.com/usd/code-docs/usd-exchange-sdk)
-    * Omniverse Asset Validator [v0.16.2](https://docs.omniverse.nvidia.com/kit/docs/asset-validator)
-    * Omniverse Transcoding [v1.0.0](https://docs.omniverse.nvidia.com/kit/docs/omni-transcoding)
+    * OpenUSD [v25.05](https://github.com/PixarAnimationStudios/OpenUSD/blob/v25.05/CHANGELOG.md)
+    * OpenUSD Exchange SDK [v2.0.0](https://docs.omniverse.nvidia.com/usd/code-docs/usd-exchange-sdk)
+    * Omniverse Asset Validator [v1.1.6](https://docs.omniverse.nvidia.com/kit/docs/asset-validator)
 
 1.1.0
 -----

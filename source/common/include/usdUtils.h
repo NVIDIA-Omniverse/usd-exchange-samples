@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright (c) 2024 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+// SPDX-FileCopyrightText: Copyright (c) 2024-2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 // SPDX-License-Identifier: MIT
 //
 
@@ -6,6 +6,7 @@
 #pragma once
 
 #include <usdex/core/Core.h>
+#include <usdex/core/Diagnostics.h>
 #include <usdex/core/MeshAlgo.h>
 #include <usdex/core/NameAlgo.h>
 #include <usdex/core/StageAlgo.h>
@@ -15,13 +16,17 @@
 #include <pxr/usd/usd/attribute.h>
 #include <pxr/usd/usd/stage.h>
 #include <pxr/usd/usdGeom/boundable.h>
+#include <pxr/usd/usdGeom/capsule.h>
 #include <pxr/usd/usdGeom/cone.h>
 #include <pxr/usd/usdGeom/cube.h>
 #include <pxr/usd/usdGeom/cylinder.h>
+#include <pxr/usd/usdGeom/gprim.h>
 #include <pxr/usd/usdGeom/metrics.h>
+#include <pxr/usd/usdGeom/sphere.h>
 #include <pxr/usd/usdGeom/tokens.h>
 
 #include <iostream>
+#include <optional>
 #include <string>
 
 
@@ -59,6 +64,8 @@ pxr::UsdStageRefPtr openOrCreateStage(
     const pxr::SdfLayer::FileFormatArguments& fileFormatArgs = pxr::SdfLayer::FileFormatArguments()
 )
 {
+    // Activate the SDK's diagnostic delegate to set the default level to "Warning" to hide "Status" messages
+    usdex::core::activateDiagnosticsDelegate();
     pxr::UsdStageRefPtr stage;
     pxr::SdfLayerRefPtr layer = pxr::SdfLayer::FindOrOpen(identifier);
     if (!layer)
@@ -101,6 +108,39 @@ void setExtents(pxr::UsdGeomBoundable prim)
 }
 
 
+//! Set the transform and display color of a prim
+//!
+//! @param prim The prim to set the transform and display color of
+//! @param position Position of the prim
+//! @param rotation Rotation of the prim
+//! @param scale Scale of the prim
+//! @param displayColor Display color of the prim
+void setTransformAndDisplayColor(
+    pxr::UsdPrim prim,
+    std::optional<pxr::GfVec3d> position = std::nullopt,
+    std::optional<pxr::GfVec3f> rotation = std::nullopt,
+    std::optional<pxr::GfVec3f> scale = std::nullopt,
+    std::optional<pxr::GfVec3f> displayColor = std::nullopt
+)
+{
+    if (position.has_value() || rotation.has_value() || scale.has_value())
+    {
+        const pxr::GfVec3d pivotValue(0);
+        const pxr::GfVec3d positionValue = position.has_value() ? position.value() : pxr::GfVec3d(0);
+        const pxr::GfVec3f rotationValue = rotation.has_value() ? rotation.value() : pxr::GfVec3f(0);
+        const pxr::GfVec3f scaleValue = scale.has_value() ? scale.value() : pxr::GfVec3f(1);
+        usdex::core::setLocalTransform(prim, positionValue, pivotValue, rotationValue, usdex::core::RotationOrder::eXyz, scaleValue);
+    }
+
+    // Set display color.
+    if (displayColor.has_value())
+    {
+        const pxr::VtArray<pxr::GfVec3f> color({ displayColor.value() });
+        pxr::UsdGeomGprim(prim).GetDisplayColorAttr().Set(color);
+    }
+}
+
+
 //! Create a UsdGeom::Cone as a child of the parent prim with Omniverse refinement and extents
 //!
 //! @param parent The parent prim to create the cone under
@@ -108,13 +148,21 @@ void setExtents(pxr::UsdGeomBoundable prim)
 //! @param axis The axis of the cone. Defaults to UsdGeomGetFallbackUpAxis(), which is typically UsdGeomTokens->y
 //! @param height The height of the cone. Defaults to 100
 //! @param radius The radius of the cone. Defaults to 50
+//! @param position Position of the cone
+//! @param rotation Rotation of the cone
+//! @param scale Scale of the cone
+//! @param displayColor Display color of the cone
 //! @return The created pxr::UsdGeomCone
 pxr::UsdGeomCone createCone(
     pxr::UsdPrim parent,
     const std::string& name = "cone",
     pxr::TfToken axis = pxr::UsdGeomGetFallbackUpAxis(),
     double height = 100.0,
-    double radius = 50.0
+    double radius = 50.0,
+    std::optional<pxr::GfVec3d> position = std::nullopt,
+    std::optional<pxr::GfVec3f> rotation = std::nullopt,
+    std::optional<pxr::GfVec3f> scale = std::nullopt,
+    std::optional<pxr::GfVec3f> displayColor = std::nullopt
 )
 {
     // Get a valid, unique child prim name under the parent prim
@@ -126,7 +174,46 @@ pxr::UsdGeomCone createCone(
     cone.GetRadiusAttr().Set(radius);
     setOmniverseRefinement(cone.GetPrim());
     setExtents(cone);
+
+    // Set transform and display color.
+    setTransformAndDisplayColor(cone.GetPrim(), position, rotation, scale, displayColor);
+
     return cone;
+}
+
+
+//! Create a sphere prim as a child of the parent prim
+//!
+//! @param parent The parent prim to create the sphere under
+//! @param name The proposed name of the sphere prim. Defaults to "sphere"
+//! @param radius The radius of the sphere. Defaults to 50
+//! @param position Position of the sphere
+//! @param rotation Rotation of the sphere
+//! @param scale Scale of the sphere
+//! @param displayColor Display color of the sphere
+//! @return The created pxr::UsdGeomSphere
+pxr::UsdGeomSphere createSphere(
+    pxr::UsdPrim parent,
+    const std::string& name = "sphere",
+    double radius = 50.0,
+    std::optional<pxr::GfVec3d> position = std::nullopt,
+    std::optional<pxr::GfVec3f> rotation = std::nullopt,
+    std::optional<pxr::GfVec3f> scale = std::nullopt,
+    std::optional<pxr::GfVec3f> displayColor = std::nullopt
+)
+{
+    // Get a valid, unique child prim name under the parent prim
+    pxr::TfTokenVector validTokens = usdex::core::getValidChildNames(parent, std::vector<std::string>{ name });
+    const pxr::SdfPath primPath = parent.GetPath().AppendChild(validTokens[0]);
+    pxr::UsdGeomSphere sphere = pxr::UsdGeomSphere::Define(parent.GetStage(), primPath);
+    sphere.GetRadiusAttr().Set(radius);
+    setOmniverseRefinement(sphere.GetPrim());
+    setExtents(sphere);
+
+    // Set transform and display color.
+    setTransformAndDisplayColor(sphere.GetPrim(), position, rotation, scale, displayColor);
+
+    return sphere;
 }
 
 
@@ -135,8 +222,20 @@ pxr::UsdGeomCone createCone(
 //! @param parent The parent prim to create the cube under
 //! @param name The proposed name of the cube prim
 //! @param size The size of the cube. Defaults to 100
+//! @param position Position of the cube
+//! @param rotation Rotation of the cube
+//! @param scale Scale of the cube
+//! @param displayColor Display color of the cube
 //! @return The created pxr::UsdGeomCube
-pxr::UsdGeomCube createCube(pxr::UsdPrim parent, const std::string& name = "cube", double size = 100.0)
+pxr::UsdGeomCube createCube(
+    pxr::UsdPrim parent,
+    const std::string& name = "cube",
+    double size = 100.0,
+    std::optional<pxr::GfVec3d> position = std::nullopt,
+    std::optional<pxr::GfVec3f> rotation = std::nullopt,
+    std::optional<pxr::GfVec3f> scale = std::nullopt,
+    std::optional<pxr::GfVec3f> displayColor = std::nullopt
+)
 {
     // Get a valid, unique child prim name under the parent prim
     pxr::TfTokenVector validTokens = usdex::core::getValidChildNames(parent, std::vector<std::string>{ name });
@@ -144,6 +243,10 @@ pxr::UsdGeomCube createCube(pxr::UsdPrim parent, const std::string& name = "cube
     pxr::UsdGeomCube cube = pxr::UsdGeomCube::Define(parent.GetStage(), cubePrimPath);
     cube.GetSizeAttr().Set(size);
     setExtents(cube);
+
+    // Set transform and display color.
+    setTransformAndDisplayColor(cube.GetPrim(), position, rotation, scale, displayColor);
+
     return cube;
 }
 
@@ -155,13 +258,21 @@ pxr::UsdGeomCube createCube(pxr::UsdPrim parent, const std::string& name = "cube
 //! @param axis The axis of the cylinder. Defaults to UsdGeomGetFallbackUpAxis(), which is typically UsdGeomTokens->y
 //! @param height The height of the cylinder. Defaults to 400
 //! @param radius The radius of the cylinder. Defaults to 50
+//! @param position Position of the cylinder
+//! @param rotation Rotation of the cylinder
+//! @param scale Scale of the cylinder
+//! @param displayColor Display color of the cylinder
 //! @return The created pxr::UsdGeomCylinder
 pxr::UsdGeomCylinder createCylinder(
     pxr::UsdPrim parent,
     const std::string& name = "cylinder",
     pxr::TfToken axis = pxr::UsdGeomGetFallbackUpAxis(),
     double height = 400.0,
-    double radius = 50.0
+    double radius = 50.0,
+    std::optional<pxr::GfVec3d> position = std::nullopt,
+    std::optional<pxr::GfVec3f> rotation = std::nullopt,
+    std::optional<pxr::GfVec3f> scale = std::nullopt,
+    std::optional<pxr::GfVec3f> displayColor = std::nullopt
 )
 {
     // Get a valid, unique child prim name under the parent prim
@@ -173,7 +284,51 @@ pxr::UsdGeomCylinder createCylinder(
     cylinder.GetRadiusAttr().Set(radius);
     setOmniverseRefinement(cylinder.GetPrim());
     setExtents(cylinder);
+
+    // Set transform and display color.
+    setTransformAndDisplayColor(cylinder.GetPrim(), position, rotation, scale, displayColor);
+
     return cylinder;
+}
+
+
+//! Create a UsdGeom::Capsule as a child of the parent prim with Omniverse refinement and extents
+//!
+//! @param parent The parent prim to create the capsule under
+//! @param name The proposed name of the capsule prim. Defaults to "capsule"
+//! @param axis The axis of the capsule. Defaults to UsdGeomGetFallbackUpAxis(), which is typically UsdGeomTokens->y
+//! @param height The height of the capsule. Defaults to 100
+//! @param radius The radius of the capsule. Defaults to 50
+//! @param position Position of the capsule
+//! @param rotation Rotation of the capsule
+//! @param scale Scale of the capsule
+//! @param displayColor Display color of the capsule
+//! @return The created pxr::UsdGeomCapsule
+pxr::UsdGeomCapsule createCapsule(
+    pxr::UsdPrim parent,
+    const std::string& name = "capsule",
+    pxr::TfToken axis = pxr::UsdGeomGetFallbackUpAxis(),
+    double height = 100.0,
+    double radius = 50.0,
+    std::optional<pxr::GfVec3d> position = std::nullopt,
+    std::optional<pxr::GfVec3f> rotation = std::nullopt,
+    std::optional<pxr::GfVec3f> scale = std::nullopt,
+    std::optional<pxr::GfVec3f> displayColor = std::nullopt
+)
+{
+    pxr::TfTokenVector validTokens = usdex::core::getValidChildNames(parent, std::vector<std::string>{ name });
+    const pxr::SdfPath primPath = parent.GetPath().AppendChild(validTokens[0]);
+    pxr::UsdGeomCapsule capsule = pxr::UsdGeomCapsule::Define(parent.GetStage(), primPath);
+    capsule.GetAxisAttr().Set(axis);
+    capsule.GetHeightAttr().Set(height);
+    capsule.GetRadiusAttr().Set(radius);
+    setOmniverseRefinement(capsule.GetPrim());
+    setExtents(capsule);
+
+    // Set transform and display color.
+    setTransformAndDisplayColor(capsule.GetPrim(), position, rotation, scale, displayColor);
+
+    return capsule;
 }
 
 
@@ -307,7 +462,7 @@ pxr::UsdGeomMesh createCubeMesh(
     if (localPos != pxr::GfVec3d(0.0))
     {
         usdex::core::setLocalTransform(
-            mesh.GetPrim(), /* parent prim */
+            mesh, /* xformable */
             localPos, /* translation */
             pxr::GfVec3d(0.0), /* pivot */
             pxr::GfVec3f(0.0), /* rotation */

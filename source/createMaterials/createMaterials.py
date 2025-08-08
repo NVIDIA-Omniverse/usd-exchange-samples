@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: Copyright (c) 2024 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-FileCopyrightText: Copyright (c) 2024-2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: MIT
 #
 
@@ -64,7 +64,7 @@ def main(args):
     common.usdUtils.setOmniverseRefinement(sphere.GetPrim())
     common.usdUtils.setExtents(sphere)
     usdex.core.setLocalTransform(
-        prim=sphere.GetPrim(),
+        xformable=sphere,
         translation=Gf.Vec3d(-400.0, 0.0, -400.0),
         pivot=Gf.Vec3d(0.0),
         rotation=Gf.Vec3f(0),

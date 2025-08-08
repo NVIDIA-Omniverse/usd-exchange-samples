@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: Copyright (c) 2024 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-FileCopyrightText: Copyright (c) 2024-2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: MIT
 #
 
@@ -45,7 +45,7 @@ class CreateReferencesTestCase(BaseTestCase):
         self.assertEqual(len(referencesInfo.prependedItems), 1)
 
         # check that the reference stage is present
-        componentStageName = referencesInfo.prependedItems[0].assetPath
+        componentStageName = pathlib.Path(referencesInfo.prependedItems[0].assetPath).name
         stageDir = pathlib.Path(stagePath).parent
         componentStagePath = stageDir / componentStageName
         self.assertTrue(componentStagePath.exists())
@@ -60,10 +60,10 @@ class CreateReferencesTestCase(BaseTestCase):
         # check that the last mesh scale is different due to the override
         inComponentMesh = UsdGeom.Xformable(refStage.GetDefaultPrim().GetChildren()[-1])
         if inComponentMesh:
-            inComponentTransform = usdex.core.getLocalTransform(inComponentMesh.GetPrim())
+            inComponentTransform = usdex.core.getLocalTransform(inComponentMesh)
         inStageMesh = UsdGeom.Xformable(refPrim.GetChildren()[-1])
         if inStageMesh:
-            inStageTransform = usdex.core.getLocalTransform(inStageMesh.GetPrim())
+            inStageTransform = usdex.core.getLocalTransform(inStageMesh)
         self.assertNotEqual(inComponentTransform.GetScale(), inStageTransform.GetScale())
         refStage = None
 
@@ -82,7 +82,7 @@ class CreateReferencesTestCase(BaseTestCase):
         self.assertEqual(len(payloadsInfo.prependedItems), 1)
 
         # check that the reference stage is present
-        componentStageName = payloadsInfo.prependedItems[0].assetPath
+        componentStageName = pathlib.Path(payloadsInfo.prependedItems[0].assetPath).name
         stageDir = pathlib.Path(stagePath).parent
         componentStagePath = stageDir / componentStageName
         self.assertTrue(componentStagePath.exists())
@@ -97,7 +97,7 @@ class CreateReferencesTestCase(BaseTestCase):
         # check that the last mesh display color is different due to the override
         inComponentMesh = UsdGeom.Mesh(payloadStage.GetDefaultPrim().GetChildren()[-1])
         if inComponentMesh:
-            inComponentTransform = usdex.core.getLocalTransform(inComponentMesh.GetPrim())
+            inComponentTransform = usdex.core.getLocalTransform(inComponentMesh)
             primvar = inComponentMesh.GetDisplayColorPrimvar()
             inComponentColorData = usdex.core.Vec3fPrimvarData.getPrimvarData(primvar)
             self.assertEqual(inComponentColorData.interpolation(), UsdGeom.Tokens.constant)

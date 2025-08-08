@@ -12,7 +12,7 @@ version_file = "CHANGELOG.md"
 [repo_install_usdex]
 enabled = true
 usd_flavor = "usd"
-usd_ver = "24.08"
+usd_ver = "25.05"
 python_ver = "3.10"
 
 [repo.tokens]
@@ -41,6 +41,7 @@ fetch.after_pull_commands = [
         "--install-test",
         "--staging-dir", "_build",
         "--install-dir", "_build/intermediate/usdex-runtime/$config",
+        "--install-extra-plugins", "usdSemantics",
     ],
 ]
 

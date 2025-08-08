@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: Copyright (c) 2024 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-FileCopyrightText: Copyright (c) 2024-2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: MIT
 #
 
@@ -18,19 +18,17 @@ def parseCommonOptions(parser):
     args = parser.parse_args()
     args.fileFormatArgs = dict()
 
-    """
-    Stage path and format:
-     --path c:\folder\stage.usdc --usda -> error about invalid arg combo
-     --path c:\folder\stage.usda --usda -> redundant but silent pass
-     --path c:\folder\stage.usd --usda -> use file format args to steer the layer format
-    """
+    # Stage path and format:
+    # --path c:\folder\stage.usdc --usda -> error about invalid arg combo
+    # --path c:\folder\stage.usda --usda -> redundant but silent pass
+    # --path c:\folder\stage.usd --usda -> use file format args to steer the layer format
 
     if args.usda and stagePath == args.path:
         args.path = common.sysUtils.getDefaultStagePath(".usda")
     else:
         pathExtension = str(pathlib.Path(args.path).suffix).casefold()
         if args.usda and ".usdc" == pathExtension:
-            print(f"Error parsing arguments: Inconsistent use of --usda with a .usdc stage")
+            print("Error parsing arguments: Inconsistent use of --usda with a .usdc stage")
             parser.print_help()
             sys.exit(2)
         elif args.usda and ".usd" == pathExtension:

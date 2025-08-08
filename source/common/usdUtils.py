@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: Copyright (c) 2024 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-FileCopyrightText: Copyright (c) 2024-2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: MIT
 #
 
@@ -24,6 +24,8 @@ def openOrCreateStage(identifier: str, defaultPrimName: str = "World", fileForma
     Returns:
         Usd.Stage: The opened or created stage
     """
+    # Activate the SDK's diagnostic delegate to set the default level to "Warning" to hide "Status" messages
+    usdex.core.activateDiagnosticsDelegate()
     # Attempt to open the layer first because this doesn't issue a runtime error
     layer = Sdf.Layer.FindOrOpen(identifier)
     stage = None
@@ -64,13 +66,88 @@ def setExtents(prim: UsdGeom.Boundable):
     prim.GetExtentAttr().Set(extent)
 
 
-def createCube(parent: Usd.Prim, name: str = "cube", size: float = 100) -> UsdGeom.Cube:
+def setTransformAndDisplayColor(
+    prim: Usd.Prim,
+    position: Gf.Vec3d = None,
+    rotation: Gf.Vec3f = None,
+    scale: Gf.Vec3f = None,
+    displayColor: Gf.Vec3f = None,
+):
+    """Set the transform and display color of a prim
+
+    Args:
+        prim (Usd.Prim): The prim to set the transform and display color of
+        position (Gf.Vec3d, optional): The position of the prim. Defaults to None
+        rotation (Gf.Vec3f, optional): The rotation of the prim. Defaults to None
+        scale (Gf.Vec3f, optional): The scale of the prim. Defaults to None
+        displayColor (Gf.Vec3f, optional): The display color of the prim. Defaults to None
+    """
+    if position is not None or rotation is not None or scale is not None:
+        pivotValue = Gf.Vec3d(0)
+        positionValue = position or Gf.Vec3d(0)
+        rotationValue = rotation or Gf.Vec3f(0)
+        scaleValue = scale or Gf.Vec3f(1)
+        usdex.core.setLocalTransform(prim, positionValue, pivotValue, rotationValue, usdex.core.RotationOrder.eXyz, scaleValue)
+
+    if displayColor is not None:
+        UsdGeom.Gprim(prim).GetDisplayColorAttr().Set([displayColor])
+
+
+def createSphere(
+    parent: Usd.Prim,
+    name: str = "sphere",
+    radius: float = 50,
+    position: Gf.Vec3d = None,
+    rotation: Gf.Vec3f = None,
+    scale: Gf.Vec3f = None,
+    displayColor: Gf.Vec3f = None,
+) -> UsdGeom.Sphere:
+    """Create a sphere prim as a child of the parent prim
+
+    Args:
+        parent (Usd.Prim): The parent prim to create the sphere under
+        name (str): The proposed name of the sphere prim
+        radius (float, optional): The radius of the sphere. Defaults to 50
+        position (Gf.Vec3d, optional): The position of the sphere. Defaults to None
+        rotation (Gf.Vec3f, optional): The rotation of the sphere. Defaults to None
+        scale (Gf.Vec3f, optional): The scale of the sphere. Defaults to None
+        displayColor (Gf.Vec3f, optional): The display color of the sphere. Defaults to None
+
+    Returns:
+        UsdGeom.Sphere: The created sphere prim
+    """
+    primNames = usdex.core.getValidChildNames(parent, [name])
+    spherePrimPath = parent.GetPath().AppendChild(primNames[0])
+    sphere = UsdGeom.Sphere.Define(parent.GetStage(), spherePrimPath)
+    sphere.GetRadiusAttr().Set(radius)
+    setOmniverseRefinement(sphere.GetPrim())
+    setExtents(sphere)
+
+    # Set transform and display color.
+    setTransformAndDisplayColor(sphere.GetPrim(), position, rotation, scale, displayColor)
+
+    return sphere
+
+
+def createCube(
+    parent: Usd.Prim,
+    name: str = "cube",
+    size: float = 100,
+    position: Gf.Vec3d = None,
+    rotation: Gf.Vec3f = None,
+    scale: Gf.Vec3f = None,
+    displayColor: Gf.Vec3f = None,
+) -> UsdGeom.Cube:
     """Create a cube prim as a child of the parent prim
 
     Args:
         parent (Usd.Prim): The parent prim to create the cube under
         name (str): The proposed name of the cube prim
         size (float, optional): The size of the cube. Defaults to 100
+        position (Gf.Vec3d, optional): The position of the cube. Defaults to None
+        rotation (Gf.Vec3f, optional): The rotation of the cube. Defaults to None
+        scale (Gf.Vec3f, optional): The scale of the cube. Defaults to None
+        displayColor (Gf.Vec3f, optional): The display color of the cube. Defaults to None
 
     Returns:
         UsdGeom.Cube: The created cube prim
@@ -81,6 +158,10 @@ def createCube(parent: Usd.Prim, name: str = "cube", size: float = 100) -> UsdGe
     cube = UsdGeom.Cube.Define(parent.GetStage(), cubePrimPath)
     cube.GetSizeAttr().Set(size)
     setExtents(cube)
+
+    # Set transform and display color.
+    setTransformAndDisplayColor(cube.GetPrim(), position, rotation, scale, displayColor)
+
     return cube
 
 
@@ -90,6 +171,10 @@ def createCone(
     axis: str = UsdGeom.GetFallbackUpAxis(),
     height: float = 100,
     radius: float = 50,
+    position: Gf.Vec3d = None,
+    rotation: Gf.Vec3f = None,
+    scale: Gf.Vec3f = None,
+    displayColor: Gf.Vec3f = None,
 ) -> UsdGeom.Cone:
     """Create a UsdGeom.Cone prim with Omniverse refinement and extents
 
@@ -99,6 +184,10 @@ def createCone(
         axis (str, optional): The axis along which the cone is aligned. Defaults to UsdGeom.GetFallbackUpAxis(), which is typically UsdGeomTokens->y
         height (float, optional): The height of the cone. Defaults to 100
         radius (float, optional): The radius of the cone. Defaults to 50
+        position (Gf.Vec3d, optional): The position of the cone. Defaults to None
+        rotation (Gf.Vec3f, optional): The rotation of the cone. Defaults to None
+        scale (Gf.Vec3f, optional): The scale of the cone. Defaults to None
+        displayColor (Gf.Vec3f, optional): The display color of the cone. Defaults to None
 
     Returns:
         UsdGeom.Cone: The created cone prim
@@ -111,6 +200,10 @@ def createCone(
     cone.GetRadiusAttr().Set(radius)
     setOmniverseRefinement(cone.GetPrim())
     setExtents(cone)
+
+    # Set transform and display color.
+    setTransformAndDisplayColor(cone.GetPrim(), position, rotation, scale, displayColor)
+
     return cone
 
 
@@ -120,6 +213,10 @@ def createCylinder(
     axis: str = UsdGeom.GetFallbackUpAxis(),
     height: float = 400,
     radius: float = 50,
+    position: Gf.Vec3d = None,
+    rotation: Gf.Vec3f = None,
+    scale: Gf.Vec3f = None,
+    displayColor: Gf.Vec3f = None,
 ) -> UsdGeom.Cylinder:
     """Create a UsdGeom.Cylinder as a child of the parent prim with Omniverse refinement and extents
 
@@ -129,6 +226,10 @@ def createCylinder(
         axis (str, optional): The axis along which the cylinder is aligned. Defaults to UsdGeom.GetFallbackUpAxis(), which is typically UsdGeomTokens->y
         height (float, optional): The height of the cylinder. Defaults to 400
         radius (float, optional): The radius of the cylinder. Defaults to 50
+        position (Gf.Vec3d, optional): The position of the cylinder. Defaults to None
+        rotation (Gf.Vec3f, optional): The rotation of the cylinder. Defaults to None
+        scale (Gf.Vec3f, optional): The scale of the cylinder. Defaults to None
+        displayColor (Gf.Vec3f, optional): The display color of the cylinder. Defaults to None
 
     Returns:
         UsdGeom.Cone: The created cylinder prim
@@ -141,7 +242,49 @@ def createCylinder(
     cylinder.GetRadiusAttr().Set(radius)
     setOmniverseRefinement(cylinder.GetPrim())
     setExtents(cylinder)
+
+    # Set transform and display color.
+    setTransformAndDisplayColor(cylinder.GetPrim(), position, rotation, scale, displayColor)
+
     return cylinder
+
+
+def createCapsule(
+    parent: Usd.Prim,
+    name: str = "capsule",
+    axis: str = UsdGeom.GetFallbackUpAxis(),
+    height: float = 100,
+    radius: float = 50,
+    position: Gf.Vec3d = None,
+    rotation: Gf.Vec3f = None,
+    scale: Gf.Vec3f = None,
+    displayColor: Gf.Vec3f = None,
+) -> UsdGeom.Capsule:
+    """Create a UsdGeom.Capsule as a child of the parent prim with Omniverse refinement and extents
+
+    Args:
+        parent (Usd.Prim): The parent prim to create the capsule under
+        name (str, optional): The proposed name of the capsule prim. Defaults to "capsule"
+        axis (str, optional): The axis along which the capsule is aligned. Defaults to UsdGeom.GetFallbackUpAxis(), which is typically UsdGeomTokens->y
+        height (float, optional): The height of the capsule. Defaults to 400
+        radius (float, optional): The radius of the capsule. Defaults to 50
+
+    Returns:
+        UsdGeom.Capsule: The created capsule prim
+    """
+    primNames = usdex.core.getValidChildNames(parent, [name])
+    primPath = parent.GetPath().AppendChild(primNames[0])
+    capsule = UsdGeom.Capsule.Define(parent.GetStage(), primPath)
+    capsule.GetAxisAttr().Set(axis)
+    capsule.GetHeightAttr().Set(height)
+    capsule.GetRadiusAttr().Set(radius)
+    setOmniverseRefinement(capsule.GetPrim())
+    setExtents(capsule)
+
+    # Set transform and display color.
+    setTransformAndDisplayColor(capsule.GetPrim(), position, rotation, scale, displayColor)
+
+    return capsule
 
 
 def createCubeMesh(parent: str, meshName: str = "cubeMesh", halfHeight: float = 50.0, localPos: Gf.Vec3d = Gf.Vec3d(0.0)) -> UsdGeom.Mesh:
@@ -225,7 +368,7 @@ def createCubeMesh(parent: str, meshName: str = "cubeMesh", halfHeight: float = 
     # Set initial transformation if localPos != 0,0,0
     if localPos != Gf.Vec3d(0.0):
         usdex.core.setLocalTransform(
-            prim=meshPrim.GetPrim(),
+            xformable=meshPrim,
             translation=localPos,
             pivot=Gf.Vec3d(0.0),
             rotation=Gf.Vec3f(0.0),

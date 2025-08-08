@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright (c) 2024 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+// SPDX-FileCopyrightText: Copyright (c) 2024-2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 // SPDX-License-Identifier: MIT
 //
 
@@ -44,7 +44,7 @@ pxr::UsdLuxRectLight createRectLight(pxr::UsdStagePtr stage)
 
     // Move the light up and rotate it so it shines down onto the stage
     usdex::core::setLocalTransform(
-        rectLightPrim.GetPrim(), /* xformable prim */
+        rectLightPrim, /* xformable */
         pxr::GfVec3d(0.0, 300.0, 0.0), /* translation */
         pxr::GfVec3d(0.0), /* pivot */
         pxr::GfVec3f(-90.0, 0.0, 0.0), /* rotation - pointing -z down */
@@ -84,7 +84,7 @@ pxr::UsdLuxDomeLight createDomeLight(pxr::UsdStagePtr stage, const std::string& 
 
     // Rotate the dome light if using Kit/RTX for rendering
     // usdex::core::setLocalTransform(
-    //     domeLightPrim.GetPrim(), /* xformable prim */
+    //     domeLightPrim, /* xformable */
     //     pxr::GfVec3d(0.0), /* translation */
     //     pxr::GfVec3d(0.0), /* pivot */
     //     pxr::GfVec3f(-90.0, 0.0, 0.0), /* rotation - pointing -z down */

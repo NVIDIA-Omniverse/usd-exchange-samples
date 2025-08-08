@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright (c) 2024 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+// SPDX-FileCopyrightText: Copyright (c) 2024-2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 // SPDX-License-Identifier: MIT
 //
 
@@ -6,6 +6,7 @@
 #include "sysUtils.h"
 #include "usdUtils.h"
 
+#include <usdex/core/AssetStructure.h>
 #include <usdex/core/Core.h>
 #include <usdex/core/LayerAlgo.h>
 #include <usdex/core/StageAlgo.h>
@@ -24,7 +25,7 @@
 
 
 // Create a stage with a 2x2x2 grouping of mesh cubes
-std::string createComponentStage(const samples::Args& args)
+pxr::UsdStageRefPtr createComponentStage(const samples::Args& args)
 {
     const char* componentName = "Cube_2x2x2";
     std::filesystem::path stageDir = std::filesystem::path(args.stagePath).parent_path();
@@ -44,7 +45,7 @@ std::string createComponentStage(const samples::Args& args)
     pxr::UsdStageRefPtr componentStage = pxr::UsdStage::CreateInMemory();
     if (!componentStage)
     {
-        return "";
+        return nullptr;
     }
 
     usdex::core::configureStage(
@@ -91,10 +92,10 @@ std::string createComponentStage(const samples::Args& args)
     );
     if (!success)
     {
-        return "";
+        return nullptr;
     }
 
-    return stagePath;
+    return pxr::UsdStage::Open(stagePath);
 }
 
 
@@ -122,47 +123,37 @@ int main(int argc, char* argv[])
     // Get the default prim
     pxr::UsdPrim defaultPrim = stage->GetDefaultPrim();
 
-    std::string componentStagePath = createComponentStage(args);
-    if (componentStagePath.empty())
+    pxr::UsdStageRefPtr componentStage = createComponentStage(args);
+    if (!componentStage)
     {
         std::cout << "Error creating component stage, exiting" << std::endl;
         return -1;
     }
-    std::cout << "Component stage: " << componentStagePath << std::endl;
-
-    // Make a relative path from the stage's folder to the component's stage. This requires a special case when the stage has no "parent"
-    std::string relativeComponentPath;
-    std::filesystem::path stageParentPath = std::filesystem::path(args.stagePath).parent_path();
-    if (stageParentPath.empty())
-    {
-        relativeComponentPath = componentStagePath;
-    }
-    else
-    {
-        relativeComponentPath = std::filesystem::proximate(componentStagePath, stageParentPath).string();
-    }
-    std::string referencePath = pxr::TfStringPrintf("./%s", relativeComponentPath.c_str());
+    std::cout << "Component stage: " << componentStage->GetRootLayer()->GetIdentifier() << std::endl;
 
     // Create a reference prim
-    pxr::TfTokenVector primNames = usdex::core::getValidChildNames(defaultPrim, std::vector<std::string>{ "referencePrim" });
+    pxr::TfTokenVector primNames = usdex::core::getValidChildNames(defaultPrim, std::vector<std::string>{ "referencePrim", "payloadPrim" });
     pxr::GfTransform refTransform;
     refTransform.SetTranslation(pxr::GfVec3d(0, 2.5, 300));
-    pxr::UsdGeomXform xform = usdex::core::defineXform(defaultPrim, primNames[0], refTransform);
-    xform.GetPrim().GetReferences().AddReference(referencePath);
+    pxr::UsdPrim prim = usdex::core::defineReference(defaultPrim, componentStage->GetDefaultPrim(), primNames[0].GetString());
+    pxr::UsdGeomXform xform = pxr::UsdGeomXform(prim);
+    usdex::core::setLocalTransform(xform, refTransform);
+
     // Override the mesh scale from the reference
     pxr::UsdGeomXformable xformable = pxr::UsdGeomXformable(getLastChildPrim(xform.GetPrim()));
     if (xformable)
     {
-        pxr::GfTransform transform = usdex::core::getLocalTransform(xformable.GetPrim());
+        pxr::GfTransform transform = usdex::core::getLocalTransform(xformable);
         transform.SetScale(pxr::GfVec3d(0.5));
-        usdex::core::setLocalTransform(xformable.GetPrim(), transform);
+        usdex::core::setLocalTransform(xformable, transform);
     }
 
     // Create a payload prim
-    primNames = usdex::core::getValidChildNames(defaultPrim, std::vector<std::string>{ "payloadPrim" });
     refTransform.SetTranslation(pxr::GfVec3d(300, 2.5, 0));
-    xform = usdex::core::defineXform(defaultPrim, primNames[0], refTransform);
-    xform.GetPrim().GetPayloads().AddPayload(referencePath);
+    prim = usdex::core::definePayload(defaultPrim, componentStage->GetDefaultPrim(), primNames[1].GetString());
+    xform = pxr::UsdGeomXform(prim);
+    usdex::core::setLocalTransform(xform, refTransform);
+
     // Override the mesh constant color primvar from the payload
     pxr::UsdGeomMesh mesh = pxr::UsdGeomMesh(getLastChildPrim(xform.GetPrim()));
     if (mesh)
