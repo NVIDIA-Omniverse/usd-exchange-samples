@@ -1,3 +1,14 @@
+2.0.1
+-----
+Release: August 2025
+
+OpenUSD Exchange SDK v2.0.1
+
+* Dependencies
+    * OpenUSD [v25.05](https://github.com/PixarAnimationStudios/OpenUSD/blob/v25.05/CHANGELOG.md)
+    * OpenUSD Exchange SDK [v2.0.1](https://docs.omniverse.nvidia.com/usd/code-docs/usd-exchange-sdk)
+    * Omniverse Asset Validator [v1.1.6](https://docs.omniverse.nvidia.com/kit/docs/asset-validator)
+
 2.0.0
 -----
 Release: August 2025
