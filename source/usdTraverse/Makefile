@@ -67,6 +67,10 @@ USD_LIBS += \
  -lusd_python \
  -lusd_ts
 
+ifeq ($(CONFIG),debug)
+	USD_LIBS += -ltbb_debug
+endif
+
 # For USD 24.08 and older, uncomment and remove the block above.
 # USDEX_INCLUDE_DIRS += \
 #  -isystem $(DEPSDIR)/usd/$(CONFIG)/include/boost-1_78
@@ -95,7 +99,7 @@ ifndef PYTHON_LIB_DIR
 endif
 
 # Common flags
-CXXFLAGS += $(CONFIG_DEFINES) $(ABI_DEFINES) $(IGNORED_WARNINGS) -m64
+CXXFLAGS += $(CONFIG_DEFINES) $(ABI_DEFINES) $(IGNORED_WARNINGS)
 INCLUDES += $(USDEX_INCLUDE_DIRS) $(PYTHON_INCLUDE_DIR)
 LIBS += $(USD_LIBS) $(USDEX_LIBS) $(PYTHON_LIB)
 LDFLAGS += $(USDEX_LIB_DIRS) $(PYTHON_LIB_DIR)

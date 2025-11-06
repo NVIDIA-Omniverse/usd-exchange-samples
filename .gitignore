@@ -5,6 +5,7 @@
 
 # generated files
 _*/
+usdex-env/
 /packages/
 VERSION
 version.rc

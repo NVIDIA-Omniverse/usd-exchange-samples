@@ -33,7 +33,7 @@ The Gf, Sdf, Usd, and UsdGeom modules are used.
 This sample is implemented in both C++ and Python.  To run:
 
 - `[./]run.[bat, sh] createReferences`
-- `[./]python.[bat, sh] source/createReferences/createReferences.py`
+- `python[3] source/python/createReferences.py`
 
 ## Hardcoded items
 

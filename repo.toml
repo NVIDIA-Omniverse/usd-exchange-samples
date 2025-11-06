@@ -58,16 +58,22 @@ fetch.generated_packman_file = "${root}/_build/${platform}/${config}/dev/deps/al
 default_config = "release"
 test_root = "${root}/_build/${platform}/${config}"
 aggregated_log_file = "$root/_build/tests/test_results.xml"
-library_paths = [
-    "${test_root}",
-]
 
 [repo_test.suites.main]
+kind = "glob_and_exec"
+path = "$root/tools/wheel"
+include = [
+    "test${shell_ext}",
+]
+timeout = 240
+
+[repo_test.suites.usdview]
 kind = "unittest"
 log_file = "${test_root}/tests/usd.exchange.samples.results.xml"
-discover_path = "$root/source/tests"
+module_path = "$root/source/tests/usdview/testUsdView.py"
 verbosity = 2
 python_paths = [
-    "$root/source",
+    "$root/source/python",
 ]
+
 

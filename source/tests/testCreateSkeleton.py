@@ -1,25 +1,22 @@
-# SPDX-FileCopyrightText: Copyright (c) 2024 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-FileCopyrightText: Copyright (c) 2024-2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: MIT
 #
 
-# Python built-in
 import pathlib
 import tempfile
 import unittest
 
-# Internal imports
-import common.sysUtils
-
-common.sysUtils.initEnvPaths()
-
 import usdex.core
+import utils.BaseTestCase as BaseTestCaseModule
 import utils.fileFormat
 import utils.shell
 from pxr import Gf, Usd, UsdGeom, UsdSkel
-from utils.BaseTestCase import BaseTestCase
 
 
-class CreateSkeletonTestCase(BaseTestCase):
+class CreateSkeletonTestCase(BaseTestCaseModule.BaseTestCase):
+
+    sampleName = "createSkeleton"
+
     def _checkStageContents(self, stagePath, skelRootName):
         self.runAssetValidator(stagePath)
 
@@ -75,7 +72,7 @@ class CreateSkeletonTestCase(BaseTestCase):
         self.assertEqual(bindingApi.GetSkeletonRel().GetTargets()[0], skelPrimPath)
         self.assertEqual(len(bindingApi.GetJointWeightsPrimvar().Get()), 6)
 
-    def _runSampleOptions(self, script, programPath):
+    def runSampleOptions(self, script, programPath):
         with tempfile.TemporaryDirectory() as tempDirStr:
             tempDir = pathlib.Path(tempDirStr)
             argsRuns = [
@@ -99,12 +96,3 @@ class CreateSkeletonTestCase(BaseTestCase):
             # Test invalid options
             return_code, output = utils.shell.run_shell_script(script, programPath, "-p", pathlib.Path(tempDir / "test_stage.usdc").as_posix(), "-a")
             self.assertEqual(return_code, 2)
-
-    def testCppCreateSkeleton(self):
-        self._runSampleOptions("run", "createSkeleton")
-
-    def testPythonCreateSkeleton(self):
-        self._runSampleOptions("python", "source/createSkeleton/createSkeleton.py")
-
-    def testCompareTextCreateSkeleton(self):
-        self.compareTextOutput("createSkeleton", "source/createSkeleton/createSkeleton.py")

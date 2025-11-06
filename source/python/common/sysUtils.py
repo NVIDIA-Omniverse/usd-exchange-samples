@@ -1,8 +1,7 @@
-# SPDX-FileCopyrightText: Copyright (c) 2024 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-FileCopyrightText: Copyright (c) 2024-2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: MIT
 #
 
-# Python built-in
 import os
 import pathlib
 import platform
@@ -11,31 +10,11 @@ import sys
 import tempfile
 
 
-def initEnvPaths():
-    # Set PATH, and PYTHONPATH
-    scriptToRuntimePath = f"../../_build/{platform.system().lower()}-x86_64/release"
-    scriptdir = os.path.dirname(os.path.realpath(__file__))
-    appPath = os.path.abspath(os.path.join(scriptdir, scriptToRuntimePath))
-    os.environ["PATH"] += os.pathsep + appPath
-    sys.path.append(os.path.join(appPath, "python"))
-    sys.path.append(os.path.join(appPath, "scripts"))
-
-    if hasattr(os, "add_dll_directory"):
-        os.add_dll_directory(appPath)
-
-
 def getDefaultStagePath(extension):
     stageFile = "sample"
     tempDir = pathlib.Path(tempfile.gettempdir()) / "usdex"
     stagePath = tempDir / str(stageFile + extension)
     return stagePath.as_posix()
-
-
-def getCoreMaterialsPath():
-    scriptToCoreMaterialsPath = f"../../_build/target-deps/omni_core_materials/Base"
-    scriptdir = os.path.dirname(os.path.realpath(__file__))
-    absCoreMatPath = os.path.abspath(os.path.join(scriptdir, scriptToCoreMaterialsPath))
-    return absCoreMatPath
 
 
 def copyTextureToStagePath(stagePath, textureFile: str):
@@ -53,7 +32,7 @@ def copyTextureToStagePath(stagePath, textureFile: str):
     """
     texturesSubDir = "textures"
     scriptDir = pathlib.Path(__file__).resolve().parent
-    textureSourcePath = scriptDir / pathlib.Path("../../resources/Materials") / textureFile
+    textureSourcePath = scriptDir / pathlib.Path("../../../resources/Materials") / textureFile
     textureTargetPath = pathlib.Path(stagePath).parent / texturesSubDir / textureFile
     if not textureTargetPath.parent.exists():
         textureTargetPath.parent.mkdir(parents=True, exist_ok=True)
@@ -61,3 +40,16 @@ def copyTextureToStagePath(stagePath, textureFile: str):
     shutil.copy(src=textureSourcePath, dst=textureTargetPath)
 
     return f"./{texturesSubDir}/{textureFile}"
+
+
+def getAllSamples() -> list[str]:
+    # Read samples from allSamples.txt
+    # This file is in source/python/common, so we need to go up 4 levels to reach the root
+    allSamplesPath = pathlib.Path(__file__).parent.parent.parent.parent / "allSamples.txt"
+    samples = []
+    try:
+        with open(allSamplesPath, "r") as f:
+            samples = [line.strip() for line in f if line.strip()]
+    except FileNotFoundError:
+        self.fail(f"allSamples.txt not found at {allSamplesPath}")
+    return samples

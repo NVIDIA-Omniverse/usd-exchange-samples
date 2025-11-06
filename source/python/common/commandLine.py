@@ -2,11 +2,9 @@
 # SPDX-License-Identifier: MIT
 #
 
-# Python built-in
 import pathlib
 import sys
 
-# Internal imports
 import common.sysUtils
 
 

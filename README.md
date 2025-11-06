@@ -46,13 +46,22 @@ For command line argument help, use `--help`
 
 You can also [run all samples together](#running-all-samples-together), saved into a single layer.
 
-#### Python Samples
+#### Python Samples (with a virtual environment and the USD Exchange wheel)
 
-Use the `python.sh` script (e.g. `./python.sh source/createStage/createStage.py`) to execute each program with a pre-configured environment.
+Setup and activate a virtual environment for USD Exchange using [these directions from the SDK docs](https://docs.omniverse.nvidia.com/usd/code-docs/usd-exchange-sdk/latest/docs/getting-started.html#installation).
+
+To install the optional Asset Validator, use the optional/extra syntax:
+
+```bash
+(usdex-env): python3 -m pip install usd-exchange[test]
+```
+
+Call `python3` directly (e.g. `python3 source/python/createStage.py`) to execute each program with a pre-configured environment.
 
 For command line argument help, use `--help`
+
 ```bash
-./python.sh source/createStage/createStage.py --help
+(usdex-env): python3 source/python/createStage.py --help
 ```
 
 ### Windows
@@ -78,14 +87,22 @@ For command line argument help, use `--help`
 
 You can also [run all samples together](#running-all-samples-together), saved into a single layer.
 
-#### Python Samples
+#### Python Samples (with a virtual environment and the USD Exchange wheel)
 
-Use the `python.bat` script (e.g. `.\python.bat source\createStage\createStage.py`) to execute each program with a pre-configured environment.
+Setup and activate a virtual environment for USD Exchange using [these directions from the SDK docs](https://docs.omniverse.nvidia.com/usd/code-docs/usd-exchange-sdk/latest/docs/getting-started.html#installation).
+
+To install the optional Asset Validator, use the optional/extra syntax:
+
+```bash
+(usdex-env)> python.exe -m pip install usd-exchange[test]
+```
+
+Call `python.exe` directly (e.g. `python.exe source/python/createStage.py`) to execute each program with a pre-configured environment.
 
 For command line argument help, use `--help`
 
 ```bash
-.\python.bat source\createStage\createStage.py --help
+(usdex-env)> python.exe source/python/createStage.py --help
 ```
 
 #### Building within the Visual Studio IDE
@@ -115,26 +132,14 @@ The samples are intended to be run sequentially and will build up the USD stage 
 ```
 Linux:
 ./run.sh all
-./python.sh all
+python3 source/python/all.py
 
 Windows:
 .\run.bat all
-.\python.bat all
+python.exe source\python\all.py
 ```
 
 This will output a single layer file after all of the samples have run sequentially. This output layer can be passed as the first command line argument to the `usdview.[bat|sh]` script to view it.
-
-#### Run the C++ and Python Samples
-
-The unittests have a similar process, but run both C++ and Python Samples:
-
-```
-Linux:
-./repo.sh test -f testRunAll -e keep
-
-Windows:
-.\repo.bat test -f testRunAll -e keep
-```
 
 ### Build and CI/CD Tools
 The Samples repository uses the [Repo Tools Framework (`repo_man`)](https://docs.omniverse.nvidia.com/kit/docs/repo_man) to configure premake, packman, build and runtime dependencies, testing, formatting, and other tools. Packman is used as a dependency manager for packages like OpenUSD, the Omniverse Asset Validator, the OpenUSD Exchange SDK, and other items. The Samples use OpenUSD Exchange SDK's repo_man, premake, and packman tooling as templates for including and linking against OpenUSD, the OpenUSD Exchange SDK, and other dependencies.  These can serve as an example for the build and runtime configuration that a customer's application might require.  Here's a list of interesting files:
@@ -178,7 +183,9 @@ Third party license notices for dependencies used by the samples are located in 
 
 [NVIDIA OpenUSD Resources and Learning](https://developer.nvidia.com/usd)
 
-[OpenUSD Code Samples](https://github.com/NVIDIA-Omniverse/OpenUSD-Code-Samples)
+[OpenUSD Code Samples Documentation](https://docs.omniverse.nvidia.com/dev-guide/latest/programmer_ref/usd.html)
+
+[OpenUSD Code Samples Repository](https://github.com/NVIDIA-Omniverse/OpenUSD-Code-Samples)
 
 [NVIDIA OpenUSD Docs](https://developer.nvidia.com/usd)
 

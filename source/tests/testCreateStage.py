@@ -1,26 +1,24 @@
-# SPDX-FileCopyrightText: Copyright (c) 2024 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-FileCopyrightText: Copyright (c) 2024-2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: MIT
 #
 
-# Python built-in
 import pathlib
 import shutil
 import tempfile
 import unittest
 
-# Internal imports
 import common.sysUtils
-
-common.sysUtils.initEnvPaths()
-
+import utils.BaseTestCase as BaseTestCaseModule
 import utils.fileFormat
 import utils.shell
 from pxr import Usd, UsdGeom, UsdLux
-from utils.BaseTestCase import BaseTestCase
 from utils.ScopedEnvVar import ScopedEnvVar
 
 
-class CreateStageTestCase(BaseTestCase):
+class CreateStageTestCase(BaseTestCaseModule.BaseTestCase):
+
+    sampleName = "createStage"
+
     def _checkStageContents(self, stagePath, textFlag):
         self.runAssetValidator(stagePath)
 
@@ -47,7 +45,7 @@ class CreateStageTestCase(BaseTestCase):
 
         stage = None
 
-    def _runSampleOptions(self, script, programPath):
+    def runSampleOptions(self, script, programPath):
         with tempfile.TemporaryDirectory() as tempDirStr:
             tempDir = pathlib.Path(tempDirStr)
             argsRuns = [
@@ -88,12 +86,3 @@ class CreateStageTestCase(BaseTestCase):
             # Test invalid options
             return_code, output = utils.shell.run_shell_script(script, programPath, "-p", pathlib.Path(tempDir / "test_stage.usdc").as_posix(), "-a")
             self.assertEqual(return_code, 2)
-
-    def testCppCreateStage(self):
-        self._runSampleOptions("run", "createStage")
-
-    def testPythonCreateStage(self):
-        self._runSampleOptions("python", "source/createStage/createStage.py")
-
-    def testCompareTextCreateStage(self):
-        self.compareTextOutput("createStage", "source/createStage/createStage.py")

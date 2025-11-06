@@ -1,26 +1,33 @@
 @echo off
 
-setlocal
+setlocal enabledelayedexpansion
 
-pushd "%~dp0"
+set SCRIPT_DIR=%~dp0
+set PYTHONPATH=%SCRIPT_DIR%source\python
+set PACKMAN_PYTHON=%SCRIPT_DIR%tools\packman\python.bat
+set VENV=%SCRIPT_DIR%_build\usdex_env
 
-set ROOT_DIR=%~dp0
+if exist "%VENV%" (
+    echo Using existing venv: %VENV%
+    call "%VENV%\Scripts\activate.bat"
+    if %errorlevel% neq 0 ( exit /b %errorlevel% )
+) else (
+    echo Building venv: %VENV%
+    call %PACKMAN_PYTHON% -m venv "%VENV%"
+    if %errorlevel% neq 0 ( exit /b %errorlevel% )
 
-set RUNTIME_DIR=%ROOT_DIR%_build\windows-x86_64\release
-set PYTHONHOME=%RUNTIME_DIR%\python-runtime
-set PYTHON=%PYTHONHOME%\python.exe
+    REM Get the usd-exchange version from packman XML
+    for /f "delims=" %%i in ('call %PACKMAN_PYTHON% "%SCRIPT_DIR%\tools\wheel\get_usdex_version.py"') do set USDEX_VERSION=%%i
 
-set PATH=%PATH%;%PYTHONHOME%;%RUNTIME_DIR%
-set PYTHONPATH=%RUNTIME_DIR%\python;%RUNTIME_DIR%\bindings-python;source
+    call "%VENV%\Scripts\activate.bat"
+    if %errorlevel% neq 0 ( exit /b %errorlevel% )
 
-if not exist "%PYTHON%" (
-    echo Python, USD, and Omniverse dependencies are missing. Run "repo.bat build" to configure them.
-    popd
-    exit /b
+    REM Install usd-exchange package and test option to get the asset validator
+    echo Installing usd-exchange wheel version !USDEX_VERSION! from !PIP_EXTRA_INDEX_URL!
+    python.exe -m pip install usd-exchange[test]==!USDEX_VERSION!
+    if !errorlevel! neq 0 ( exit /b !errorlevel! )
 )
 
-"%PYTHON%" -s source\assetValidator\assetValidatorBootstrap.py %*
-
-popd
+python.exe %SCRIPT_DIR%\source\assetValidator\assetValidatorBootstrap.py %*
 
 EXIT /B %ERRORLEVEL%

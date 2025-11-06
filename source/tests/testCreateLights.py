@@ -1,25 +1,22 @@
-# SPDX-FileCopyrightText: Copyright (c) 2024 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-FileCopyrightText: Copyright (c) 2024-2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: MIT
 #
 
-# Python built-in
 import pathlib
 import shutil
 import tempfile
 import unittest
 
-# Internal imports
-import common.sysUtils
-
-common.sysUtils.initEnvPaths()
-
+import utils.BaseTestCase as BaseTestCaseModule
 import utils.fileFormat
 import utils.shell
 from pxr import Usd, UsdLux
-from utils.BaseTestCase import BaseTestCase
 
 
-class CreateLightsTestCase(BaseTestCase):
+class CreateLightsTestCase(BaseTestCaseModule.BaseTestCase):
+
+    sampleName = "createLights"
+
     # Test the createLights program
     # Testing:
     # - it creates a rect and dome light (UsdLux.RectLight, UsdLux.DomeLight) under the default prim
@@ -59,7 +56,7 @@ class CreateLightsTestCase(BaseTestCase):
 
         stage = None
 
-    def _runSampleOptions(self, script, programPath):
+    def runSampleOptions(self, script, programPath):
         with tempfile.TemporaryDirectory() as tempDirStr:
             tempDir = pathlib.Path(tempDirStr)
             argsRuns = [
@@ -99,12 +96,3 @@ class CreateLightsTestCase(BaseTestCase):
             # Test invalid options
             return_code, output = utils.shell.run_shell_script(script, programPath, "-p", pathlib.Path(tempDir / "test_stage.usdc").as_posix(), "-a")
             self.assertEqual(return_code, 2)
-
-    def testCppCreateLights(self):
-        self._runSampleOptions("run", "createLights")
-
-    def testPythonCreateLights(self):
-        self._runSampleOptions("python", "source/createLights/createLights.py")
-
-    def testCompareTextCreateLights(self):
-        self.compareTextOutput("createLights", "source/createLights/createLights.py")

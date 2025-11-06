@@ -11,3 +11,13 @@ To get the supported command line arguments, run `omni_asset_validator.bat|sh --
 ```bash
 omni_asset_validator.bat|sh --fix C:/USD/stage.usd
 ```
+
+The `omni_asset_validator` script uses a bootstrap script, [assetValidatorBootstrap.py](./assetValidatorBootstrap.py), to aid in MDL material discovery. The bootstrap script adds the core MDL materials to the default search path so that paths like `OmniPBR.mdl` are not flagged as invalid by the Asset Validator.
+
+The Asset Validator used by the `omni_asset_validator` script is installed by the USD Exchange Python Wheel. The script creates and activates a virtual environment for USD Exchange using [these directions from the SDK docs](https://docs.omniverse.nvidia.com/usd/code-docs/usd-exchange-sdk/latest/docs/getting-started.html#installation). To install the optional Asset Validator without using the wrapper or bootstrap script, use the optional/extra syntax as specified by the [USD Exchange Python Wheel Test Dependencies](https://docs.omniverse.nvidia.com/usd/code-docs/usd-exchange-sdk/latest/docs/devtools.html#python-wheel-optional-test-dependencies):
+
+```bash
+(usdex-env)> python -m pip install usd-exchange[test]
+```
+
+See the [USD Exchange Asset Validator docs](https://docs.omniverse.nvidia.com/usd/code-docs/usd-exchange-sdk/latest/docs/devtools.html#asset-validator) for more information on how to validate OpenUSD Stage/Layer data.

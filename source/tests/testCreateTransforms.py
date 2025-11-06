@@ -2,24 +2,21 @@
 # SPDX-License-Identifier: MIT
 #
 
-# Python built-in
 import pathlib
 import tempfile
 import unittest
 
-# Internal imports
-import common.sysUtils
-
-common.sysUtils.initEnvPaths()
-
 import usdex.core
+import utils.BaseTestCase as BaseTestCaseModule
 import utils.fileFormat
 import utils.shell
 from pxr import Gf, Usd, UsdGeom
-from utils.BaseTestCase import BaseTestCase
 
 
-class CreateTransformsTestCase(BaseTestCase):
+class CreateTransformsTestCase(BaseTestCaseModule.BaseTestCase):
+
+    sampleName = "createTransforms"
+
     def _checkStageContents(self, stagePath, cubeName, xformName, groundName, quatName):
         self.runAssetValidator(stagePath)
 
@@ -68,7 +65,7 @@ class CreateTransformsTestCase(BaseTestCase):
 
         stage = None
 
-    def _runSampleOptions(self, script, programPath):
+    def runSampleOptions(self, script, programPath):
         with tempfile.TemporaryDirectory() as tempDirStr:
             tempDir = pathlib.Path(tempDirStr)
             argsRuns = [
@@ -96,12 +93,3 @@ class CreateTransformsTestCase(BaseTestCase):
             # Test invalid options
             return_code, output = utils.shell.run_shell_script(script, programPath, "-p", pathlib.Path(tempDir / "test_stage.usdc").as_posix(), "-a")
             self.assertEqual(return_code, 2)
-
-    def testCppCreateTransforms(self):
-        self._runSampleOptions("run", "createTransforms")
-
-    def testPythonCreateTransforms(self):
-        self._runSampleOptions("python", "source/createTransforms/createTransforms.py")
-
-    def testCompareTextCreateTransforms(self):
-        self.compareTextOutput("createTransforms", "source/createTransforms/createTransforms.py")

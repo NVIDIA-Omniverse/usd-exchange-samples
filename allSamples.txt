@@ -4,6 +4,7 @@ createMesh
 createMaterials
 createReferences
 createAsset
+createAssembly
 createCameras
 createLights
 createPhysics

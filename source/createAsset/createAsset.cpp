@@ -35,6 +35,9 @@ pxr::UsdStageRefPtr createAsset(const samples::Args& args)
     std::filesystem::path stageDir = std::filesystem::path(args.stagePath).parent_path();
     std::filesystem::path stagePath = stageDir / componentStageName;
 
+    // This is really for instructional purposes, in production asset libraries should be binary
+    std::string libraryExtension = std::filesystem::path(args.stagePath).extension().string().substr(1);
+
     // Create the main asset stage with proper metadata and default prim
     pxr::UsdStageRefPtr assetStage = usdex::core::createStage(
         stagePath.string(),
@@ -60,7 +63,7 @@ pxr::UsdStageRefPtr createAsset(const samples::Args& args)
     }
 
     // Create a geometry library to store reusable mesh definitions
-    pxr::UsdStageRefPtr geometryLibraryStage = usdex::core::addAssetLibrary(payloadStage, usdex::core::getGeometryToken());
+    pxr::UsdStageRefPtr geometryLibraryStage = usdex::core::addAssetLibrary(payloadStage, usdex::core::getGeometryToken(), libraryExtension);
 
     // Define the basic geometric shapes for our flower components
     pxr::UsdGeomCylinder planterLibraryGeom = samples::createCylinder(
@@ -76,7 +79,7 @@ pxr::UsdStageRefPtr createAsset(const samples::Args& args)
         petalLibraryGeom = samples::createCylinder(geometryLibraryStage->GetDefaultPrim(), "Petal", pxr::UsdGeomGetFallbackUpAxis(), 2.5f, 8.0f);
 
     // Create a materials library to store reusable material definitions
-    pxr::UsdStageRefPtr materialsLibraryStage = usdex::core::addAssetLibrary(payloadStage, usdex::core::getMaterialsToken());
+    pxr::UsdStageRefPtr materialsLibraryStage = usdex::core::addAssetLibrary(payloadStage, usdex::core::getMaterialsToken(), libraryExtension);
 
     // Define materials with appropriate colors for each component
     pxr::UsdShadeMaterial clayLibraryMat = usdex::core::definePreviewMaterial(

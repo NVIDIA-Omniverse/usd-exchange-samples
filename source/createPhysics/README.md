@@ -1,6 +1,6 @@
 # OpenUSD Exchange Samples: createPhysics
 
-This example demonstrates how to create rigid body or collision assignments, [physics joints](https://openusd.org/release/api/usd_physics_page_front.html#usdPhysics_joint_descriptor), and [physics materials](https://openusd.org/release/api/usd_physics_page_front.html#usdPhysics_physics_materials) using the OpenUSD Exchange SDK.  
+This example demonstrates how to create rigid body or collision assignments, [physics joints](https://openusd.org/release/api/usd_physics_page_front.html#usdPhysics_joint_descriptor), and [physics materials](https://openusd.org/release/api/usd_physics_page_front.html#usdPhysics_physics_materials) using the OpenUSD Exchange SDK.
 
 
 ## USD Modules
@@ -26,7 +26,7 @@ The Gf, Usd, UsdGeom, and UsdPhysics modules are used.
 This sample is implemented in both C++ and Python.  To run:
 
 - `[./]run.[bat, sh] createPhysics`
-- `[./]python.[bat, sh] source/createPhysics/createPhysics.py`
+- `python[3] source/python/createPhysics.py`
 
 ## Hardcoded items
 

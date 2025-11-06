@@ -2,15 +2,9 @@
 # SPDX-License-Identifier: MIT
 #
 
-# Python built-in
 import argparse
 import pathlib
 import sys
-
-# Internal imports
-import common.sysUtils
-
-common.sysUtils.initEnvPaths()
 
 import common.commandLine
 import common.usdUtils
@@ -23,6 +17,9 @@ def createAsset(args) -> Usd.Stage:
     componentStageName = "FlowerPlanter.usda"
     stageDir = pathlib.Path(args.path).parent
     stagePath = stageDir / componentStageName
+
+    # This is really for instructional purposes, in production asset libraries should be binary
+    libraryExtension = pathlib.Path(args.path).suffix.lstrip(".")
 
     # Create the main asset stage with proper metadata and default prim
     assetStage = usdex.core.createStage(
@@ -45,7 +42,7 @@ def createAsset(args) -> Usd.Stage:
         return None
 
     # Create a geometry library to store reusable mesh definitions
-    geometryLibraryStage = usdex.core.addAssetLibrary(payloadStage, usdex.core.getGeometryToken())
+    geometryLibraryStage = usdex.core.addAssetLibrary(payloadStage, usdex.core.getGeometryToken(), libraryExtension)
 
     # Define the basic geometric shapes for our flower components
     planterLibraryGeom = common.usdUtils.createCylinder(
@@ -55,7 +52,7 @@ def createAsset(args) -> Usd.Stage:
     petalLibraryGeom = common.usdUtils.createCylinder(geometryLibraryStage.GetDefaultPrim(), "Petal", height=2.5, radius=8)
 
     # Create a materials library to store reusable material definitions
-    materialsLibraryStage = usdex.core.addAssetLibrary(payloadStage, usdex.core.getMaterialsToken())
+    materialsLibraryStage = usdex.core.addAssetLibrary(payloadStage, usdex.core.getMaterialsToken(), libraryExtension)
     # Define materials with appropriate colors for each component
     clayLibraryMat = usdex.core.definePreviewMaterial(parent=materialsLibraryStage.GetDefaultPrim(), name="Clay", color=Gf.Vec3f(0.7, 0.44, 0.24))
     greenStemLibraryMat = usdex.core.definePreviewMaterial(parent=materialsLibraryStage.GetDefaultPrim(), name="GreenStem", color=Gf.Vec3f(0, 1, 0))

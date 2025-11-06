@@ -22,7 +22,7 @@ The Gf, Sdf, and Usd modules are used
 This sample is implemented in both C++ and Python.  To run:
 
 - `[./]run.[bat, sh] createCameras`
-- `[./]python.[bat, sh] source/createCameras/createCameras.py`
+- `python[3] source/python/createCameras.py`
 
 ## Hardcoded items
 

@@ -3,23 +3,25 @@
 set -e
 
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+export PYTHONPATH=${SCRIPT_DIR}/source/python
+export PACKMAN_PYTHON=${SCRIPT_DIR}/tools/packman/python.sh
+export VENV=${SCRIPT_DIR}/_build/usdex_env
 
-export RUNTIME_DIR=${SCRIPT_DIR}/_build/linux-x86_64/release
-export PYTHONHOME=${RUNTIME_DIR}/python-runtime
-export PYTHON=${PYTHONHOME}/python
+if [ -d "${VENV}" ]; then
+    echo "Using existing venv: ${VENV}"
+    source ${VENV}/bin/activate
+else
+    echo "Building venv: ${VENV}"
+    ${PACKMAN_PYTHON} -m venv ${VENV}
 
-export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${PYTHONHOME}/lib:${RUNTIME_DIR}
-export PYTHONPATH=${RUNTIME_DIR}/python:${RUNTIME_DIR}/bindings-python:source
+    # Get the usd-exchange version from packman XML
+    USDEX_VERSION=$(${PACKMAN_PYTHON} "${SCRIPT_DIR}/tools/wheel/get_usdex_version.py")
 
-echo Running script in "${SCRIPT_DIR}"
-pushd "$SCRIPT_DIR" > /dev/null
+    source ${VENV}/bin/activate
 
-if [ ! -f "${PYTHON}" ]; then
-    echo "Python, USD, and Omniverse dependencies are missing. Run \"./repo.sh build\" to configure them."
-    popd
-    exit
+    # Install packages with optional private index
+    echo "Installing usd-exchange wheel version ${USDEX_VERSION} from ${PIP_EXTRA_INDEX_URL}"
+    python3 -m pip install "usd-exchange[test]==${USDEX_VERSION}"
 fi
 
-"${PYTHON}" -s source/assetValidator/assetValidatorBootstrap.py "$@"
-
-popd > /dev/null
+python3 ${SCRIPT_DIR}/source/assetValidator/assetValidatorBootstrap.py "$@"

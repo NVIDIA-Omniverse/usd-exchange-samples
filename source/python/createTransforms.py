@@ -2,14 +2,8 @@
 # SPDX-License-Identifier: MIT
 #
 
-# Python built-in
 import argparse
 import sys
-
-# Internal imports
-import common.sysUtils
-
-common.sysUtils.initEnvPaths()
 
 import common.commandLine
 import common.usdUtils

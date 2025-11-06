@@ -7,11 +7,15 @@
 
 #include <usdex/core/Core.h>
 #include <usdex/core/Diagnostics.h>
+#include <usdex/core/GprimAlgo.h>
+#include <usdex/core/MaterialAlgo.h>
 #include <usdex/core/MeshAlgo.h>
 #include <usdex/core/NameAlgo.h>
 #include <usdex/core/StageAlgo.h>
 #include <usdex/core/XformAlgo.h>
 
+#include <pxr/base/vt/array.h>
+#include <pxr/base/vt/types.h>
 #include <pxr/usd/sdf/layer.h>
 #include <pxr/usd/usd/attribute.h>
 #include <pxr/usd/usd/stage.h>
@@ -21,9 +25,12 @@
 #include <pxr/usd/usdGeom/cube.h>
 #include <pxr/usd/usdGeom/cylinder.h>
 #include <pxr/usd/usdGeom/gprim.h>
+#include <pxr/usd/usdGeom/mesh.h>
 #include <pxr/usd/usdGeom/metrics.h>
 #include <pxr/usd/usdGeom/sphere.h>
 #include <pxr/usd/usdGeom/tokens.h>
+#include <pxr/usd/usdShade/material.h>
+#include <pxr/usd/usdShade/shader.h>
 
 #include <iostream>
 #include <optional>
@@ -40,6 +47,10 @@ TF_DEFINE_PRIVATE_TOKENS(
     sampleAttrTokens,
     (refinementEnableOverride)
     (refinementLevel)
+    (PrimvarReader)
+    (UsdPrimvarReader_)
+    (varname)
+    (result)
 );
 // clang-format on
 
@@ -90,10 +101,10 @@ pxr::UsdStageRefPtr openOrCreateStage(
 // Set custom attributes for curved geom prim refinement in NVIDIA Omniverse RTX
 void setOmniverseRefinement(pxr::UsdPrim prim, bool enabled = true, int level = 2)
 {
-    pxr::UsdAttribute attr = prim.CreateAttribute(sampleAttrTokens->refinementEnableOverride, pxr::SdfValueTypeNames->Bool);
+    pxr::UsdAttribute attr = prim.CreateAttribute(sampleAttrTokens->refinementEnableOverride, pxr::SdfValueTypeNames->Bool, /* custom */ true);
     attr.Set(enabled);
     attr.SetDisplayName("omniRefinementEnableOverride");
-    attr = prim.CreateAttribute(sampleAttrTokens->refinementLevel, pxr::SdfValueTypeNames->Int);
+    attr = prim.CreateAttribute(sampleAttrTokens->refinementLevel, pxr::SdfValueTypeNames->Int, /* custom */ true);
     attr.Set(level);
     attr.SetDisplayName("omniRefinementLevel");
 }
@@ -108,19 +119,17 @@ void setExtents(pxr::UsdGeomBoundable prim)
 }
 
 
-//! Set the transform and display color of a prim
+//! Set the transform of a prim
 //!
-//! @param prim The prim to set the transform and display color of
+//! @param prim The prim to set the transform
 //! @param position Position of the prim
 //! @param rotation Rotation of the prim
 //! @param scale Scale of the prim
-//! @param displayColor Display color of the prim
-void setTransformAndDisplayColor(
+void setTransform(
     pxr::UsdPrim prim,
     std::optional<pxr::GfVec3d> position = std::nullopt,
     std::optional<pxr::GfVec3f> rotation = std::nullopt,
-    std::optional<pxr::GfVec3f> scale = std::nullopt,
-    std::optional<pxr::GfVec3f> displayColor = std::nullopt
+    std::optional<pxr::GfVec3f> scale = std::nullopt
 )
 {
     if (position.has_value() || rotation.has_value() || scale.has_value())
@@ -130,13 +139,6 @@ void setTransformAndDisplayColor(
         const pxr::GfVec3f rotationValue = rotation.has_value() ? rotation.value() : pxr::GfVec3f(0);
         const pxr::GfVec3f scaleValue = scale.has_value() ? scale.value() : pxr::GfVec3f(1);
         usdex::core::setLocalTransform(prim, positionValue, pivotValue, rotationValue, usdex::core::RotationOrder::eXyz, scaleValue);
-    }
-
-    // Set display color.
-    if (displayColor.has_value())
-    {
-        const pxr::VtArray<pxr::GfVec3f> color({ displayColor.value() });
-        pxr::UsdGeomGprim(prim).GetDisplayColorAttr().Set(color);
     }
 }
 
@@ -166,17 +168,12 @@ pxr::UsdGeomCone createCone(
 )
 {
     // Get a valid, unique child prim name under the parent prim
-    pxr::TfTokenVector validTokens = usdex::core::getValidChildNames(parent, std::vector<std::string>{ name });
-    const pxr::SdfPath primPath = parent.GetPath().AppendChild(validTokens[0]);
-    pxr::UsdGeomCone cone = pxr::UsdGeomCone::Define(parent.GetStage(), primPath);
-    cone.GetAxisAttr().Set(axis);
-    cone.GetHeightAttr().Set(height);
-    cone.GetRadiusAttr().Set(radius);
+    const pxr::TfToken validToken = usdex::core::getValidChildName(parent, name);
+    pxr::UsdGeomCone cone = usdex::core::defineCone(parent, validToken.GetString(), radius, height, axis, displayColor);
     setOmniverseRefinement(cone.GetPrim());
-    setExtents(cone);
 
-    // Set transform and display color.
-    setTransformAndDisplayColor(cone.GetPrim(), position, rotation, scale, displayColor);
+    // Set transform.
+    setTransform(cone.GetPrim(), position, rotation, scale);
 
     return cone;
 }
@@ -203,15 +200,12 @@ pxr::UsdGeomSphere createSphere(
 )
 {
     // Get a valid, unique child prim name under the parent prim
-    pxr::TfTokenVector validTokens = usdex::core::getValidChildNames(parent, std::vector<std::string>{ name });
-    const pxr::SdfPath primPath = parent.GetPath().AppendChild(validTokens[0]);
-    pxr::UsdGeomSphere sphere = pxr::UsdGeomSphere::Define(parent.GetStage(), primPath);
-    sphere.GetRadiusAttr().Set(radius);
+    const pxr::TfToken validToken = usdex::core::getValidChildName(parent, name);
+    pxr::UsdGeomSphere sphere = usdex::core::defineSphere(parent, validToken.GetString(), radius, displayColor);
     setOmniverseRefinement(sphere.GetPrim());
-    setExtents(sphere);
 
-    // Set transform and display color.
-    setTransformAndDisplayColor(sphere.GetPrim(), position, rotation, scale, displayColor);
+    // Set transform.
+    setTransform(sphere.GetPrim(), position, rotation, scale);
 
     return sphere;
 }
@@ -238,14 +232,11 @@ pxr::UsdGeomCube createCube(
 )
 {
     // Get a valid, unique child prim name under the parent prim
-    pxr::TfTokenVector validTokens = usdex::core::getValidChildNames(parent, std::vector<std::string>{ name });
-    const pxr::SdfPath cubePrimPath = parent.GetPath().AppendChild(validTokens[0]);
-    pxr::UsdGeomCube cube = pxr::UsdGeomCube::Define(parent.GetStage(), cubePrimPath);
-    cube.GetSizeAttr().Set(size);
-    setExtents(cube);
+    const pxr::TfToken validToken = usdex::core::getValidChildName(parent, name);
+    pxr::UsdGeomCube cube = usdex::core::defineCube(parent, validToken.GetString(), size, displayColor);
 
-    // Set transform and display color.
-    setTransformAndDisplayColor(cube.GetPrim(), position, rotation, scale, displayColor);
+    // Set transform.
+    setTransform(cube.GetPrim(), position, rotation, scale);
 
     return cube;
 }
@@ -276,17 +267,12 @@ pxr::UsdGeomCylinder createCylinder(
 )
 {
     // Get a valid, unique child prim name under the parent prim
-    pxr::TfTokenVector validTokens = usdex::core::getValidChildNames(parent, std::vector<std::string>{ name });
-    const pxr::SdfPath primPath = parent.GetPath().AppendChild(validTokens[0]);
-    pxr::UsdGeomCylinder cylinder = pxr::UsdGeomCylinder::Define(parent.GetStage(), primPath);
-    cylinder.GetAxisAttr().Set(axis);
-    cylinder.GetHeightAttr().Set(height);
-    cylinder.GetRadiusAttr().Set(radius);
+    const pxr::TfToken validToken = usdex::core::getValidChildName(parent, name);
+    pxr::UsdGeomCylinder cylinder = usdex::core::defineCylinder(parent, validToken.GetString(), radius, height, axis, displayColor);
     setOmniverseRefinement(cylinder.GetPrim());
-    setExtents(cylinder);
 
-    // Set transform and display color.
-    setTransformAndDisplayColor(cylinder.GetPrim(), position, rotation, scale, displayColor);
+    // Set transform.
+    setTransform(cylinder.GetPrim(), position, rotation, scale);
 
     return cylinder;
 }
@@ -316,17 +302,12 @@ pxr::UsdGeomCapsule createCapsule(
     std::optional<pxr::GfVec3f> displayColor = std::nullopt
 )
 {
-    pxr::TfTokenVector validTokens = usdex::core::getValidChildNames(parent, std::vector<std::string>{ name });
-    const pxr::SdfPath primPath = parent.GetPath().AppendChild(validTokens[0]);
-    pxr::UsdGeomCapsule capsule = pxr::UsdGeomCapsule::Define(parent.GetStage(), primPath);
-    capsule.GetAxisAttr().Set(axis);
-    capsule.GetHeightAttr().Set(height);
-    capsule.GetRadiusAttr().Set(radius);
+    const pxr::TfToken validToken = usdex::core::getValidChildName(parent, name);
+    pxr::UsdGeomCapsule capsule = usdex::core::defineCapsule(parent, validToken.GetString(), radius, height, axis, displayColor);
     setOmniverseRefinement(capsule.GetPrim());
-    setExtents(capsule);
 
-    // Set transform and display color.
-    setTransformAndDisplayColor(capsule.GetPrim(), position, rotation, scale, displayColor);
+    // Set transform.
+    setTransform(capsule.GetPrim(), position, rotation, scale);
 
     return capsule;
 }
@@ -350,7 +331,7 @@ pxr::UsdGeomMesh createCubeMesh(
 {
     // clang-format off
     const float h = halfHeight;
-    int cubeVertexIndices[] = {
+    static const pxr::VtArray<int> faceVertexIndices = {
         0, 1, 2, 1, 3, 2,
         4, 5, 6, 4, 6, 7,
         8, 9, 10, 8, 10, 11,
@@ -358,7 +339,7 @@ pxr::UsdGeomMesh createCubeMesh(
         16, 17, 18, 16, 18, 19,
         20, 21, 22, 20, 22, 23
     };
-    float cubeNormals[][3] = {
+    static const pxr::VtArray<pxr::GfVec3f> normals = {
         {0, 0, -1}, {0, 0, -1}, {0, 0, -1}, {0, 0, -1},
         {0, 0, 1}, {0, 0, 1}, {0, 0, 1}, {0, 0, 1},
         {0, -1, 0}, {0, -1, 0}, {0, -1, 0}, {0, -1, 0},
@@ -366,7 +347,7 @@ pxr::UsdGeomMesh createCubeMesh(
         {0, 1, 0}, {0, 1, 0}, {0, 1, 0}, {0, 1, 0},
         {-1, 0, 0}, {-1, 0, 0}, {-1, 0, 0}, {-1, 0, 0}
     };
-    float cubePoints[][3] = {
+    const pxr::VtArray<pxr::GfVec3f> points = {
         {h, -h, -h}, {-h, -h, -h}, {h, h, -h}, {-h, h, -h},
         {h, h, h}, {-h, h, h}, {-h, -h, h}, {h, -h, h},
         {h, -h, h}, {-h, -h, h}, {-h, -h, -h}, {h, -h, -h},
@@ -374,7 +355,7 @@ pxr::UsdGeomMesh createCubeMesh(
         {-h, h, h}, {h, h, h}, {h, h, -h}, {-h, h, -h},
         {-h, -h, h}, {-h, h, h}, {-h, h, -h}, {-h, -h, -h}
     };
-    float cubeUV[][2] = {
+    static const pxr::VtArray<pxr::GfVec2f> uvs = {
         {0, 0}, {0, 1}, {1, 1}, {1, 0},
         {0, 0}, {0, 1}, {1, 1}, {1, 0},
         {0, 0}, {0, 1}, {1, 1}, {1, 0},
@@ -391,48 +372,13 @@ pxr::UsdGeomMesh createCubeMesh(
     }
     const pxr::SdfPath meshPrimPath = parent.GetPath().AppendChild(meshPrimNames[0]);
 
-    // Face vertex count
-    pxr::VtArray<int> faceVertexCounts;
-    faceVertexCounts.resize(12); // 2 Triangles per face * 6 faces
-    std::fill(faceVertexCounts.begin(), faceVertexCounts.end(), 3); // Triangle
+    // Face vertex count - 2 Triangles per face * 6 faces
+    static const pxr::VtArray<int> faceVertexCounts = { 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3 };
 
-    // Calculate indices for each triangle
-    size_t num_indices = std::size(cubeVertexIndices); // 2 Triangles per face * 3 Vertices per Triangle * 6 Faces
-    pxr::VtArray<int> faceVertexIndices;
-    faceVertexIndices.resize(num_indices);
-    for (size_t i = 0; i < num_indices; i++)
-    {
-        faceVertexIndices[i] = cubeVertexIndices[i];
-    }
-
-    // all of the vertices
-    size_t num_vertices = std::size(cubePoints);
-    pxr::VtArray<pxr::GfVec3f> points;
-    points.resize(num_vertices);
-    for (size_t i = 0; i < num_vertices; i++)
-    {
-        points[i] = pxr::GfVec3f(cubePoints[i][0], cubePoints[i][1], cubePoints[i][2]);
-    }
-
-    // normals
-    size_t num_normals = std::size(cubeNormals);
-    pxr::VtArray<pxr::GfVec3f> normals;
-    normals.resize(num_normals);
-    for (size_t i = 0; i < num_normals; i++)
-    {
-        normals[i] = pxr::GfVec3f((float)cubeNormals[i][0], (float)cubeNormals[i][1], (float)cubeNormals[i][2]);
-    }
+    // Index the normals and UVs
     auto normalPrimvarData = usdex::core::Vec3fPrimvarData(pxr::UsdGeomTokens->vertex, normals);
     normalPrimvarData.index();
 
-    // UV (st)
-    size_t uv_count = std::size(cubeUV);
-    pxr::VtVec2fArray uvs;
-    uvs.resize(uv_count);
-    for (size_t i = 0; i < uv_count; ++i)
-    {
-        uvs[i].Set(cubeUV[i]);
-    }
     auto uvPrimvarData = usdex::core::Vec2fPrimvarData(pxr::UsdGeomTokens->vertex, uvs);
     uvPrimvarData.index();
 
@@ -440,9 +386,9 @@ pxr::UsdGeomMesh createCubeMesh(
     pxr::UsdGeomMesh mesh = usdex::core::definePolyMesh(
         parent.GetStage(), /* parent prim */
         meshPrimPath, /* name */
-        faceVertexCounts, /* faceVertexCounts */
-        faceVertexIndices, /* faceVertexIndices */
-        points, /* points */
+        faceVertexCounts,
+        faceVertexIndices,
+        points,
         normalPrimvarData, /* normals */
         uvPrimvarData, /* uvs */
         usdex::core::Vec3fPrimvarData(pxr::UsdGeomTokens->constant, { { 0.463f, 0.725f, 0.0f } }) /* displayColor */
@@ -473,5 +419,155 @@ pxr::UsdGeomMesh createCubeMesh(
 
     return mesh;
 }
+
+
+//! Creates a wedge mesh (triangular prism) with the specified dimensions and local position
+//!
+//! @brief The wedge mesh prim will be a child of the parent parameter
+//!
+//! @param parent The parent prim for the new wedge mesh
+//! @param meshName The name of the mesh. Defaults to "wedgeMesh"
+//! @param height The height scale of the wedge. Defaults to 1.0
+//! @param length The length scale of the wedge. Defaults to 1.0
+//! @param width The width scale of the wedge. Defaults to 1.0
+//! @param localPos The local position of the wedge. Defaults to 0,0,0
+//! @return The created pxr::UsdGeomMesh
+pxr::UsdGeomMesh createWedge(
+    pxr::UsdPrim parent,
+    const std::string& meshName = "wedgeMesh",
+    float height = 1.0f,
+    float length = 1.0f,
+    float width = 1.0f,
+    const pxr::GfVec3d& localPos = pxr::GfVec3d(0.0)
+)
+{
+    const float h = 0.5f;
+
+    // Wedge points (6 vertices total)
+    // clang-format off
+    static const pxr::VtArray<pxr::GfVec3f> points = {
+        { h, -h, h }, // Vertex 0: (1, -1, 1) scaled
+        { h, -h, -h }, // Vertex 1: (1, -1, -1) scaled
+        { -h, h, h }, // Vertex 2: (-1, 1, 1) scaled
+        { -h, h, -h }, // Vertex 3: (-1, 1, -1) scaled
+        { -h, -h, h }, // Vertex 4: (-1, -1, 1) scaled
+        { -h, -h, -h }, // Vertex 5: (-1, -1, -1) scaled
+    };
+    // Wedge vertex indices and counts
+    // 5 faces: 3 triangular (3 vertices each), 2 rectangular (4 vertices each)
+    static const pxr::VtArray<int> faceVertexIndices = {
+        0, 2, 4,
+        1, 0, 4, 5,
+        5, 4, 2, 3,
+        3, 1, 5,
+        3, 2, 0, 1
+    };
+    static const pxr::VtArray<int> faceVertexCounts = { 3, 4, 4, 3, 4 };
+
+    // Normals for each face vertex (18 normals total)
+    static const pxr::VtArray<pxr::GfVec3f> normals = {
+        { 0, 0, 1 }, { 0, 0, 1 }, { 0, 0, 1 }, // Face 1 (3 vertices)
+        { 0, -1, 0 }, { 0, -1, 0 }, { 0, -1, 0 }, { 0, -1, 0 }, // Face 2 (4 vertices)
+        { -1, 0, 0 }, { -1, 0, 0 }, { -1, 0, 0 }, { -1, 0, 0 }, // Face 3 (4 vertices)
+        { 0, 0, -1 }, { 0, 0, -1 }, { 0, 0, -1 }, // Face 4 (3 vertices)
+        { 0.70710677f, 0.70710677f, 0 }, { 0.70710677f, 0.70710677f, 0 }, { 0.70710677f, 0.70710677f, 0 }, { 0.70710677f, 0.70710677f, 0 } // Face 5
+    };
+    // clang-format on
+
+    pxr::TfTokenVector meshPrimNames = usdex::core::getValidChildNames(parent, std::vector<std::string>{ meshName });
+    if (meshName != meshPrimNames[0])
+    {
+        std::cout << "Renaming input mesh name <" << meshName << "> to the valid USD prim name <" << meshPrimNames[0] << ">" << std::endl;
+    }
+    const pxr::SdfPath meshPrimPath = parent.GetPath().AppendChild(meshPrimNames[0]);
+
+    // Index the normals
+    auto normalPrimvarData = usdex::core::Vec3fPrimvarData(pxr::UsdGeomTokens->faceVarying, normals);
+    normalPrimvarData.index();
+
+    // Create the geometry under the parent prim
+    pxr::UsdGeomMesh mesh = usdex::core::definePolyMesh(
+        parent.GetStage(), /* parent prim */
+        meshPrimPath, /* name */
+        faceVertexCounts,
+        faceVertexIndices,
+        points,
+        normalPrimvarData, /* normals */
+        std::nullopt, /* uvs */
+        usdex::core::Vec3fPrimvarData(pxr::UsdGeomTokens->constant, { { 1.0f, 0.0f, 0.0f } }) /* displayColor */
+    );
+    if (!mesh)
+    {
+        return mesh;
+    }
+
+    // Set the display name if the input name was not "valid", the display name can handle UTF-8 characters
+    if (meshName != meshPrimNames[0])
+    {
+        usdex::core::setDisplayName(mesh.GetPrim(), meshName);
+    }
+
+    // Set transform information with scaling and position
+    usdex::core::setLocalTransform(
+        mesh, /* xformable */
+        localPos, /* translation */
+        pxr::GfVec3d(0.0), /* pivot */
+        pxr::GfVec3f(0.0), /* rotation */
+        usdex::core::RotationOrder::eXyz,
+        pxr::GfVec3f(length, height, width) /* scale */
+    );
+
+    return mesh;
+}
+
+
+//! Add a primvar shader to a material
+//!
+//! @param material The material to add the primvar shader to
+//! @param surfaceInputName The name of the surface input to connect to
+//! @param primvarName The name of the primvar to read
+//! @return True if successful, false otherwise
+bool addPrimvarShader(pxr::UsdShadeMaterial material, const std::string& surfaceInputName, const std::string& primvarName)
+{
+    pxr::SdfValueTypeName typeName;
+    std::string shaderId;
+
+    pxr::UsdShadeShader surfaceShader = usdex::core::computeEffectivePreviewSurfaceShader(material);
+
+    // Get the input and type name needed to create the primvar reader
+    pxr::UsdShadeInput shaderInput = surfaceShader.GetInput(pxr::TfToken(surfaceInputName));
+    if (shaderInput)
+    {
+        typeName = shaderInput.GetTypeName();
+        if (typeName == pxr::SdfValueTypeNames->Color3f)
+        {
+            typeName = pxr::SdfValueTypeNames->Float3;
+        }
+
+        shaderId = sampleAttrTokens->UsdPrimvarReader_.GetString() + typeName.GetAsToken().GetString();
+    }
+    else
+    {
+        std::cout << "Error: Cannot connect primvar <" << primvarName << "> to input <" << surfaceInputName << "> on surface shader <"
+                  << surfaceShader.GetPrim().GetPath() << ">" << std::endl;
+        return false;
+    }
+
+    // Create the primvar reader
+    pxr::UsdShadeShader primvarReader = pxr::UsdShadeShader::Define(
+        material.GetPrim().GetStage(),
+        material.GetPrim().GetPath().AppendChild(sampleAttrTokens->PrimvarReader)
+    );
+
+    // Set the id and input
+    primvarReader.SetShaderId(pxr::TfToken(shaderId));
+    primvarReader.CreateInput(sampleAttrTokens->varname, pxr::SdfValueTypeNames->String).Set(primvarName);
+    pxr::UsdShadeOutput primvarOutput = primvarReader.CreateOutput(sampleAttrTokens->result, typeName);
+
+    // Connect the primvar reader output to the surface shader input
+    shaderInput.ConnectToSource(primvarOutput);
+    return true;
+}
+
 
 } // namespace samples

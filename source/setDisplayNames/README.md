@@ -8,7 +8,7 @@ OpenUSD has strict requirements on what names are valid for a UsdObject. There i
 - [OpenUSD documentation on UsdObject display names](https://openusd.org/release/api/class_usd_object.html#a89d396665875d4d4a88b5ecb0a22acb0)
 - [OpenUSD GitHub PR for displayName metadata](https://github.com/PixarAnimationStudios/OpenUSD/pull/2055)
 
-This sample introduces the `createCone()` and `createCylinder()` utilies for creating [UsdGeomGprims](https://openusd.org/release/api/usd_geom_page_front.html#UsdGeom_Gprim). They provide useful arguments, set extents (as required by these classes), and set custom Omniverse RTX refinement attributes.
+This sample introduces the `createCone()` and `createCylinder()` utilities for creating [UsdGeomGprims](https://openusd.org/release/api/usd_geom_page_front.html#UsdGeom_Gprim). They provide useful arguments, set extents (as required by these classes), and set custom Omniverse RTX refinement attributes.
 
 This sample creates a multi-prim component rocket which users may wish to be selectable as a single object.  Many USD viewers support [model selection hierarchy](https://openusd.org/release/glossary.html#usdglossary-modelhierarchy) so the "rocket" Xform is assigned a [component](https://openusd.org/release/glossary.html#component) kind.
 
@@ -29,7 +29,7 @@ The Gf, Sdf, Usd, and UsdGeom modules are used.
 This sample is implemented in both C++ and Python.  To run:
 
 - `[./]run.[bat, sh] setDisplayNames`
-- `[./]python.[bat, sh] source/setDisplayNames/setDisplayNames.py`
+- `python[3] source/python/setDisplayNames.py`
 
 ## Hardcoded items
 

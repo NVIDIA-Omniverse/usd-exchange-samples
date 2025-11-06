@@ -1,25 +1,22 @@
-# SPDX-FileCopyrightText: Copyright (c) 2024 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-FileCopyrightText: Copyright (c) 2024-2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: MIT
 #
 
-# Python built-in
 import pathlib
 import tempfile
 import unittest
 
-# Internal imports
-import common.sysUtils
-
-common.sysUtils.initEnvPaths()
-
 import usdex.core
+import utils.BaseTestCase as BaseTestCaseModule
 import utils.fileFormat
 import utils.shell
 from pxr import Usd, UsdGeom
-from utils.BaseTestCase import BaseTestCase
 
 
-class CreateCamerasTestCase(BaseTestCase):
+class CreateCamerasTestCase(BaseTestCaseModule.BaseTestCase):
+
+    sampleName = "createCameras"
+
     def _checkStageContents(self, stagePath, telephotoCameraName, wideCameraName):
         self.runAssetValidator(stagePath)
 
@@ -53,7 +50,7 @@ class CreateCamerasTestCase(BaseTestCase):
 
         stage = None
 
-    def _runSampleOptions(self, script, programPath):
+    def runSampleOptions(self, script, programPath):
         with tempfile.TemporaryDirectory() as tempDirStr:
             tempDir = pathlib.Path(tempDirStr)
             argsRuns = [
@@ -79,12 +76,3 @@ class CreateCamerasTestCase(BaseTestCase):
             # Test invalid options
             return_code, output = utils.shell.run_shell_script(script, programPath, "-p", pathlib.Path(tempDir / "test_stage.usdc").as_posix(), "-a")
             self.assertEqual(return_code, 2)
-
-    def testCppCreateCameras(self):
-        self._runSampleOptions("run", "createCameras")
-
-    def testPythonCreateCameras(self):
-        self._runSampleOptions("python", "source/createCameras/createCameras.py")
-
-    def testCompareTextCreateCameras(self):
-        self.compareTextOutput("createCameras", "source/createCameras/createCameras.py")

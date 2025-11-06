@@ -4,7 +4,8 @@ set -e
 
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
-export RUNTIME_DIR=${SCRIPT_DIR}/_build/linux-x86_64/release
+export PLATFORM="linux-$(uname -m)"
+export RUNTIME_DIR=${SCRIPT_DIR}/_build/${PLATFORM}/release
 export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${RUNTIME_DIR}
 pushd "$SCRIPT_DIR" > /dev/null
 

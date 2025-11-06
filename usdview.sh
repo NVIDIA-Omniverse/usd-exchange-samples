@@ -17,9 +17,9 @@ if [ -d "${USDVIEW_VENV}" ]; then
     source ${USDVIEW_VENV}/bin/activate
 else
     echo "Building venv: ${USDVIEW_VENV}"
-    ./python.sh -m venv ${USDVIEW_VENV}
+    ${SCRIPT_DIR}/tools/packman/python.sh -m venv ${USDVIEW_VENV}
     source ${USDVIEW_VENV}/bin/activate
-    python -m pip install -r ${SCRIPT_DIR}/_build/target-deps/usd/release/requirements.txt
+    python3 -m pip install -r ${SCRIPT_DIR}/_build/target-deps/usd/release/requirements.txt
 fi
 
 ${USDVIEW_SCRIPT} $@

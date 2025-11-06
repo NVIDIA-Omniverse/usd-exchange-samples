@@ -1,15 +1,9 @@
-# SPDX-FileCopyrightText: Copyright (c) 2024 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-FileCopyrightText: Copyright (c) 2024-2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: MIT
 #
 
-# Python built-in
 import argparse
 import sys
-
-# Internal imports
-import common.sysUtils
-
-common.sysUtils.initEnvPaths()
 
 import common.commandLine
 import common.usdUtils

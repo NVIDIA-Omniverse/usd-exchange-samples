@@ -1,27 +1,24 @@
-# SPDX-FileCopyrightText: Copyright (c) 2024 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-FileCopyrightText: Copyright (c) 2024-2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: MIT
 #
 
-# Python built-in
 import pathlib
 import shutil
 import tempfile
 import unittest
 
-# Internal imports
-import common.sysUtils
-
-common.sysUtils.initEnvPaths()
-
 import usdex.core
 import usdex.rtx
+import utils.BaseTestCase as BaseTestCaseModule
 import utils.fileFormat
 import utils.shell
 from pxr import Gf, Usd, UsdGeom, UsdShade, UsdUtils
-from utils.BaseTestCase import BaseTestCase
 
 
-class CreateMaterialsTestCase(BaseTestCase):
+class CreateMaterialsTestCase(BaseTestCaseModule.BaseTestCase):
+
+    sampleName = "createMaterials"
+
     # Test the createMaterials program
     # Testing:
     # - it creates a mesh (UsdGeom.Mesh) under the default prim
@@ -66,6 +63,7 @@ class CreateMaterialsTestCase(BaseTestCase):
         materialScopePath = defaultPrim.GetPath().AppendPath(UsdUtils.GetMaterialsScopeName())
         prim = stage.GetPrimAtPath(materialScopePath.AppendPath(sphereMatName))
         self.assertTrue(prim)
+        sphereMatPrim = prim
         typedPrim = UsdShade.Material(prim)
         self.assertTrue(typedPrim)
         self.assertIsInstance(typedPrim, UsdShade.Material)
@@ -73,6 +71,30 @@ class CreateMaterialsTestCase(BaseTestCase):
         self.assertTrue(mdlShader.GetInput("project_uvw").Get())
         self.assertTrue(mdlShader.GetInput("world_or_object").Get())
         self.assertAlmostEqual(mdlShader.GetInput("texture_scale").Get(), Gf.Vec2f(0.01))
+
+        # Check that the sphere prim has a custom attribute for the refinement level
+        # Get all mesh/sphere prims under default prim
+        allSpherePrims = [p for p in defaultPrim.GetChildren() if p.IsA(UsdGeom.Sphere)]
+
+        # Find which ones are bound to the sphere material
+        materialBindings = UsdShade.MaterialBindingAPI.ComputeBoundMaterials(allSpherePrims)
+
+        primsWithSphereMaterial = []
+        for i, mat in enumerate(materialBindings[0]):
+            if mat and mat.GetPath() == sphereMatPrim.GetPath():
+                primsWithSphereMaterial.append(materialBindings[1][i].GetPrim())
+
+        for spherePrim in primsWithSphereMaterial:
+            # refinementEnableOverride and refinementLevel are custom attributes for the sphere prim
+            attr = spherePrim.GetAttribute("refinementEnableOverride")
+            self.assertTrue(attr)
+            self.assertEqual(attr.Get(), True)
+            self.assertTrue(attr.IsCustom())
+
+            attr = spherePrim.GetAttribute("refinementLevel")
+            self.assertTrue(attr)
+            self.assertEqual(attr.Get(), 2)
+            self.assertTrue(attr.IsCustom())
 
         # Check the Preview Surface material
         prim = stage.GetPrimAtPath(defaultPrim.GetPath().AppendChild(previewCubeName))
@@ -89,7 +111,7 @@ class CreateMaterialsTestCase(BaseTestCase):
             usdex.rtx.computeEffectiveMdlSurfaceShader(UsdShade.Material(previewMatPrim)).GetPrim().GetPath(),
         )
 
-    def _runSampleOptions(self, script, programPath):
+    def runSampleOptions(self, script, programPath):
         with tempfile.TemporaryDirectory() as tempDirStr:
             tempDir = pathlib.Path(tempDirStr)
             argsRuns = [
@@ -131,12 +153,3 @@ class CreateMaterialsTestCase(BaseTestCase):
             # Test invalid options
             return_code, output = utils.shell.run_shell_script(script, programPath, "-p", pathlib.Path(tempDir / "test_stage.usdc").as_posix(), "-a")
             self.assertEqual(return_code, 2)
-
-    def testCppCreateMaterials(self):
-        self._runSampleOptions("run", "createMaterials")
-
-    def testPythonCreateMaterials(self):
-        self._runSampleOptions("python", "source/createMaterials/createMaterials.py")
-
-    def testCompareTextCreateMaterials(self):
-        self.compareTextOutput("createMaterials", "source/createMaterials/createMaterials.py")

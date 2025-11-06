@@ -7,6 +7,7 @@ There are some key concepts that are demonstrated in this sample:
 - Material prims may contain inputs that connect to shader inputs, creating a "material interface".
     - Some renderers cannot access shader parameters and are required to use material inputs.
     - Some DCC tools and renderers do not support material interface inputs and require that all parameters be specified in shader prims.
+- Custom attributes are added to the sphere prim for custom rendering options in RTX.
 
 [Omniverse MDL Materials](https://docs.omniverse.nvidia.com/materials-and-rendering/latest/materials.html)
 
@@ -35,7 +36,7 @@ The Gf, Sdf, Usd, UsdGeom, UsdShade and UsdUtils modules are used.
 This sample is implemented in both C++ and Python.  To run:
 
 - `[./]run.[bat, sh] createMaterials`
-- `[./]python.[bat, sh] source/createMaterials/createMaterials.py`
+- `python[3] source/python/createMaterials.py`
 
 ## Hardcoded items
 
@@ -45,6 +46,7 @@ This sample is implemented in both C++ and Python.  To run:
 - A 1 meter sphere with no UVs named "pbrSphere" is created and an OmniPBR/Preview Surface material is bound to it
     - OmniPBR has UV world projection parameters that allow shapes and meshes with no UVs to be textured
     - There is no mechanism for UV world projection with USD Preview Surface, so that material may not look correct on the UV-less sphere
+    - Two custom attributes (`refinementLevel` and `refinementEnableOverride`) are added to the sphere prim to control refinement in the RTX renderer. This is implemented in the [C++](../common/include/usdUtils.h) or [Python](../python/common/usdUtils.py) `createSphere()` USD utility functions.
 - A 1 meter mesh with UVs named "previewSurfaceMesh" is created with a USD Preview Surface material
     - Material and shader prims are created under a scope prim typically named "Looks"
 

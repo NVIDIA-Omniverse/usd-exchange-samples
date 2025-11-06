@@ -17,7 +17,7 @@ if exist "%USDVIEW_VENV%" (
     call %USDVIEW_VENV%\Scripts\activate.bat
 ) else (
     echo Building venv: %USDVIEW_VENV%
-    call .\python.bat -m venv "%USDVIEW_VENV%"
+    call %SCRIPT_DIR%tools\packman\python.bat -m venv "%USDVIEW_VENV%"
     call "%USDVIEW_VENV%\Scripts\activate.bat"
     call python.exe -m pip install -r %USD_INSTALL_DIR%\requirements.txt
 )

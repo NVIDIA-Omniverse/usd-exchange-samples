@@ -39,7 +39,7 @@ The Gf, Sdf, Usd, UsdGeom, UsdShade, and Kind modules are used.
 This sample is implemented in both C++ and Python.  To run:
 
 - `[./]run.[bat, sh] createAsset`
-- `[./]python.[bat, sh] source/createAsset/createAsset.py`
+- `python[3] source/python/createAsset.py`
 
 ## Hardcoded items
 

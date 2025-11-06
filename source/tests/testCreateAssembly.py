@@ -9,22 +9,12 @@ import unittest
 import utils.BaseTestCase as BaseTestCaseModule
 import utils.fileFormat
 import utils.shell
-from pxr import Usd, UsdGeom
+from pxr import Gf, Kind, Usd, UsdGeom
 
 
-class CreateAssetTestCase(BaseTestCaseModule.BaseTestCase):
+class CreateAssemblyTestCase(BaseTestCaseModule.BaseTestCase):
 
-    sampleName = "createAsset"
-
-    # Test the createAsset program
-    # Testing:
-    # - it creates a flower planter asset with 3 flowers and proper structure
-    # - it creates a reference to the asset in the main stage
-    # - it uses the "usda" argument
-    # - it runs properly with or without an existing stage
-    # - it creates the expected geometric components (planter, stems, petals)
-    # - it creates and binds materials to the components
-    # - it validates the asset structure using layer prim specs
+    sampleName = "createAssembly"
 
     def _checkStageContents(self, stagePath, textFlag):
         self.runAssetValidator(stagePath)
@@ -36,42 +26,39 @@ class CreateAssetTestCase(BaseTestCaseModule.BaseTestCase):
         self.assertTrue(defaultPrim)
         self.assertEqual("World", defaultPrim.GetName())
 
-        flowerPlanterPrimPath = defaultPrim.GetPath().AppendChild("FlowerPlanter")
+        # Check that the default prim is an assembly
+        self.assertTrue(Usd.ModelAPI(defaultPrim).GetKind() == Kind.Tokens.group)
+        # Check that the pinewood derby prim is an assembly
+        derbyPrim = stage.GetPrimAtPath(defaultPrim.GetPath().AppendChild("PinewoodDerbyAssembly"))
+        self.assertTrue(Usd.ModelAPI(derbyPrim).GetKind() == Kind.Tokens.assembly)
+        # Check that the child prims are components
+        for childPrim in derbyPrim.GetChildren():
+            self.assertTrue(Usd.ModelAPI(childPrim).GetKind() == Kind.Tokens.component, msg=f"Child prim {childPrim.GetName()} is not a component")
 
-        # Check the flower planter reference prim spec exists in the layer
-        flowerPlanterPrimSpec = stage.GetRootLayer().GetPrimAtPath(flowerPlanterPrimPath)
-        self.assertTrue(flowerPlanterPrimSpec)
+        # Check for a blue and green car
+        CAR_BODY_COLOR_PRIMVAR = "bodyPaintColor"
+        blueCarPrim = derbyPrim.GetPrimAtPath(derbyPrim.GetPath().AppendChild("BlueCar"))
+        self.assertTrue(blueCarPrim)
+        self.assertTrue(UsdGeom.PrimvarsAPI(blueCarPrim.GetPrim()).GetPrimvar(CAR_BODY_COLOR_PRIMVAR).Get() == Gf.Vec3f(0.3284, 0.7490, 0.7098))
 
-        # Check that the flower planter reference points to the asset stage
-        # Use the layer prim spec to check for references
-        self.assertTrue(flowerPlanterPrimSpec.hasReferences)
-
-        # Check the transform on the flower planter reference
-        flowerPlanterPrim = stage.GetPrimAtPath(flowerPlanterPrimPath)
-        xform = UsdGeom.Xform(flowerPlanterPrim)
-        self.assertTrue(xform)
-
-        stage = None
+        greenCarPrim = derbyPrim.GetPrimAtPath(derbyPrim.GetPath().AppendChild("GreenCar"))
+        self.assertTrue(greenCarPrim)
+        self.assertTrue(UsdGeom.PrimvarsAPI(greenCarPrim.GetPrim()).GetPrimvar(CAR_BODY_COLOR_PRIMVAR).Get() == Gf.Vec3f(0.294, 0.725, 0))
 
     def _checkAssetStageContents(self, assetStagePath):
         """Check the contents of the created asset stage"""
         assetStage = Usd.Stage.Open(assetStagePath)
         self.assertTrue(assetStage)
 
-        # Check the asset has a default prim named "FlowerPlanter"
+        # Check the assembly has a default prim named correctly - the same name as the stage identifier
         defaultPrim = assetStage.GetDefaultPrim()
         self.assertTrue(defaultPrim)
-        self.assertEqual("FlowerPlanter", defaultPrim.GetName())
-
-        # Check the display name is set
-        displayName = defaultPrim.GetDisplayName()
-        self.assertEqual("🌻", displayName)
+        assetStageName = pathlib.Path(assetStagePath).stem
+        self.assertEqual(assetStageName, defaultPrim.GetName())
 
         # Check that the asset has payloads
         payloads = defaultPrim.GetPayloads()
         self.assertTrue(payloads)
-
-        assetStage = None
 
     def runSampleOptions(self, script, programPath):
         with tempfile.TemporaryDirectory() as tempDirStr:
@@ -92,12 +79,13 @@ class CreateAssetTestCase(BaseTestCaseModule.BaseTestCase):
                 self._checkStageContents(args[0], args[1])
                 utils.fileFormat.checkLayerFormat(self, args[0], args[1])
 
-                # Check the asset stage that was created
-                stageDir = pathlib.Path(args[0]).parent
-                assetStagePath = stageDir / "FlowerPlanter.usda"
-                self.assertTrue(assetStagePath.exists())
-                self._checkAssetStageContents(assetStagePath.as_posix())
-
+                # Check the asset stages
+                assetStageNames = ["PinewoodDerbyTrack", "PinewoodDerbyCar"]
+                for assetStageName in assetStageNames:
+                    stageDir = pathlib.Path(args[0]).parent
+                    assetStagePath = stageDir / assetStageName / f"{assetStageName}.usda"
+                    self.assertTrue(assetStagePath.exists())
+                    self._checkAssetStageContents(assetStagePath.as_posix())
             # Test invalid options
             return_code, output = utils.shell.run_shell_script(script, programPath, "-p", pathlib.Path(tempDir / "test_stage.usdc").as_posix(), "-a")
             self.assertEqual(return_code, 2)

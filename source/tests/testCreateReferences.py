@@ -2,25 +2,22 @@
 # SPDX-License-Identifier: MIT
 #
 
-# Python built-in
 import pathlib
 import shutil
 import tempfile
 import unittest
 
-# Internal imports
-import common.sysUtils
-
-common.sysUtils.initEnvPaths()
-
 import usdex.core
+import utils.BaseTestCase as BaseTestCaseModule
 import utils.fileFormat
 import utils.shell
 from pxr import Gf, Sdf, Usd, UsdGeom
-from utils.BaseTestCase import BaseTestCase
 
 
-class CreateReferencesTestCase(BaseTestCase):
+class CreateReferencesTestCase(BaseTestCaseModule.BaseTestCase):
+
+    sampleName = "createReferences"
+
     def _checkStageContents(self, stagePath, refPrimName, payloadPrimName):
         self.runAssetValidator(stagePath)
 
@@ -110,7 +107,7 @@ class CreateReferencesTestCase(BaseTestCase):
         payloadStage = None
         stage = None
 
-    def _runSampleOptions(self, script, programPath):
+    def runSampleOptions(self, script, programPath):
         with tempfile.TemporaryDirectory() as tempDirStr:
             tempDir = pathlib.Path(tempDirStr)
             argsRuns = [
@@ -151,13 +148,3 @@ class CreateReferencesTestCase(BaseTestCase):
             # Test invalid options
             return_code, output = utils.shell.run_shell_script(script, programPath, "-p", pathlib.Path(tempDir / "test_stage.usdc").as_posix(), "-a")
             self.assertEqual(return_code, 2)
-
-    def testCppCreateReferences(self):
-        self._runSampleOptions("run", "createReferences")
-
-    def testPythonCreateReferences(self):
-        self._runSampleOptions("python", "source/createReferences/createReferences.py")
-
-    def testCompareTextCreateReferences(self):
-        # This should also verify that the reference stage file is the same
-        self.compareTextOutput("createReferences", "source/createReferences/createReferences.py")

@@ -26,7 +26,7 @@ The Gf, Sdf, and Usd modules are used
 This sample is implemented in both C++ and Python.  To run:
 
 - `[./]run.[bat, sh] createTransforms`
-- `[./]python.[bat, sh] source/createTransforms/createTransforms.py`
+- `python[3] source/python/createTransforms.py`
 
 ## Hardcoded items
 
@@ -38,6 +38,18 @@ This sample is implemented in both C++ and Python.  To run:
 - A Xform prim named "groundXform" is created and lowered 55 cm
 - A cube prim named "groundCube" is created as a child of "groundXform" with a scale of (20, 0.1, 20)
 - A cube prim named "quatCube" is created with a quaternion orientation
+
+## More resources
+
+If you need to get the transform of a prim in world space (taking into account the transforms of ancestor prims), you can use either of these functions:
+- [UsdGeom.Xformable.ComputeLocalToWorldTransform()](https://openusd.org/release/api/class_usd_geom_imageable.html#a8e3fb09253ba63d63921f665d63cd270)
+- [UsdGeom.XformCache.GetLocalToWorldTransform()](https://openusd.org/release/api/class_usd_geom_xform_cache.html#aaba1e27b19713a49c1b5b77805184113)
+
+For the best performance when querying multiple transforms, the [UsdGeomXformCache](https://openusd.org/release/api/class_usd_geom_xform_cache.html#details) should be used. 
+Note that the class does not automatically invalidate cached values based on changes to the stage from which values were cached. Additionally, a separate 
+instance of this class should be used per-thread, calling the Get* methods from multiple threads is not safe, as they mutate internal state.
+
+See [Get the World Space Transforms for a Prim](https://docs.omniverse.nvidia.com/dev-guide/latest/programmer_ref/usd/transforms/get-world-transforms.html) for examples.
 
 ## Command Line Arguments
 

@@ -2,14 +2,8 @@
 # SPDX-License-Identifier: MIT
 #
 
-# Python built-in
 import argparse
 import sys
-
-# Internal imports
-import common.sysUtils
-
-common.sysUtils.initEnvPaths()
 
 import common.commandLine
 import common.usdUtils
@@ -49,15 +43,13 @@ def createGroundWithCollision(stage: Usd.Stage) -> bool:
     # Check if the plane already exists, we only want one per stage.
     for prim in Usd.PrimRange(defaultPrim):
         if prim.IsA(UsdGeom.Plane):
-            return True
+            if prim.HasAPI(UsdPhysics.CollisionAPI):
+                return True
 
     groundName = usdex.core.getValidChildName(defaultPrim, "ground")
-    groundPath = defaultPrim.GetPath().AppendChild(groundName)
-    plane = UsdGeom.Plane.Define(stage, groundPath)
+    plane = usdex.core.definePlane(defaultPrim, groundName, 2.0, 2.0, UsdGeom.GetStageUpAxis(stage))
     if not plane:
         return False
-
-    plane.GetAxisAttr().Set(UsdGeom.GetStageUpAxis(stage))
 
     # Set collider.
     UsdPhysics.CollisionAPI.Apply(plane.GetPrim())

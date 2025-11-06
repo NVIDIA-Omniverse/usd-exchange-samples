@@ -1,26 +1,23 @@
-# SPDX-FileCopyrightText: Copyright (c) 2024 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-FileCopyrightText: Copyright (c) 2024-2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: MIT
 #
 
-# Python built-in
 import pathlib
 import tempfile
 import unittest
 
-# Internal imports
-import common.sysUtils
-
-common.sysUtils.initEnvPaths()
-
 import usdex.core
+import utils.BaseTestCase as BaseTestCaseModule
 import utils.fileFormat
 import utils.shell
 from pxr import Gf, Usd, UsdGeom
-from utils.BaseTestCase import BaseTestCase
 from utils.ScopedEnvVar import ScopedEnvVar
 
 
-class SetDisplayNamesTestCase(BaseTestCase):
+class SetDisplayNamesTestCase(BaseTestCaseModule.BaseTestCase):
+
+    sampleName = "setDisplayNames"
+
     def _checkStageContents(self, stagePath, primName):
         self.runAssetValidator(stagePath)
 
@@ -48,7 +45,7 @@ class SetDisplayNamesTestCase(BaseTestCase):
 
         stage = None
 
-    def _runSampleOptions(self, script, programPath):
+    def runSampleOptions(self, script, programPath):
         with tempfile.TemporaryDirectory() as tempDirStr:
             tempDir = pathlib.Path(tempDirStr)
             argsRuns = [
@@ -73,14 +70,3 @@ class SetDisplayNamesTestCase(BaseTestCase):
             # Test invalid options
             return_code, output = utils.shell.run_shell_script(script, programPath, "-p", pathlib.Path(tempDir / "test_stage.usdc").as_posix(), "-a")
             self.assertEqual(return_code, 2)
-
-    def testCppSetDisplayNames(self):
-        self._runSampleOptions("run", "setDisplayNames")
-
-    def testPythonSetDisplayNames(self):
-        # Set PYTHONIOENCODING because subprocess.run() isn't giving a good default code page for the rocket glyph to print
-        with ScopedEnvVar("PYTHONIOENCODING", "utf-8", ["Windows"]):
-            self._runSampleOptions("python", "source/setDisplayNames/setDisplayNames.py")
-
-    def notestCompareTextSetDisplayNames(self):
-        self.compareTextOutput("setDisplayNames", "source/setDisplayNames/setDisplayNames.py")

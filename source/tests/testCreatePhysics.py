@@ -2,24 +2,21 @@
 # SPDX-License-Identifier: MIT
 #
 
-# Python built-in
 import pathlib
 import shutil
 import tempfile
 import unittest
 
-# Internal imports
-import common.sysUtils
-
-common.sysUtils.initEnvPaths()
-
+import utils.BaseTestCase as BaseTestCaseModule
 import utils.fileFormat
 import utils.shell
 from pxr import Gf, Usd, UsdGeom, UsdPhysics, UsdShade, UsdUtils
-from utils.BaseTestCase import BaseTestCase
 
 
-class CreatePhysicsTestCase(BaseTestCase):
+class CreatePhysicsTestCase(BaseTestCaseModule.BaseTestCase):
+
+    sampleName = "createPhysics"
+
     # Check the physics joint parameters.
     def assertIsPhysicsJoint(
         self,
@@ -502,7 +499,7 @@ class CreatePhysicsTestCase(BaseTestCase):
                 self.assertEqual(len(pathList), 1)
                 self.assertEqual(pathList[0], material3_prim.GetPrim().GetPath())
 
-    def _runSampleOptions(self, script, programPath):
+    def runSampleOptions(self, script, programPath):
         with tempfile.TemporaryDirectory() as tempDirStr:
             tempDir = pathlib.Path(tempDirStr)
             argsRuns = [
@@ -524,12 +521,3 @@ class CreatePhysicsTestCase(BaseTestCase):
             # Test invalid options
             return_code, output = utils.shell.run_shell_script(script, programPath, "-p", pathlib.Path(tempDir / "test_stage.usdc").as_posix(), "-a")
             self.assertEqual(return_code, 2)
-
-    def testCppCreateMaterials(self):
-        self._runSampleOptions("run", "createPhysics")
-
-    def testPythonCreateMaterials(self):
-        self._runSampleOptions("python", "source/createPhysics/createPhysics.py")
-
-    def testCompareTextCreateMaterials(self):
-        self.compareTextOutput("createPhysics", "source/createPhysics/createPhysics.py")

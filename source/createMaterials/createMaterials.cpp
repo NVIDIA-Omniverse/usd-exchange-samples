@@ -86,20 +86,8 @@ int main(int argc, char* argv[])
 
     // Create a sphere with no UVs and bind a PBR with OmniPBR that projects UVW coordinates onto the object and uses world space for projection
     // This will look correct in Omniverse RTX, but USDView will not show a textured sphere
-    pxr::TfToken primName = usdex::core::getValidChildName(defaultPrim, "pbrSphere");
-    pxr::SdfPath primPath = defaultPrim.GetPath().AppendChild(primName);
-    pxr::UsdGeomSphere sphere = pxr::UsdGeomSphere::Define(stage, primPath);
-    sphere.GetRadiusAttr().Set(50.0);
-    samples::setOmniverseRefinement(sphere.GetPrim());
-    samples::setExtents(sphere);
-    usdex::core::setLocalTransform(
-        sphere, /* xformable */
-        pxr::GfVec3d(-400.0, 0.0, -400.0), /* translation */
-        pxr::GfVec3d(0), /* pivot */
-        pxr::GfVec3f(0), /* rotation */
-        usdex::core::RotationOrder::eXyz, /* rotation order */
-        pxr::GfVec3f(1) /* scale */
-    );
+
+    pxr::UsdGeomSphere sphere = samples::createSphere(defaultPrim, "pbrSphere", 50.0, pxr::GfVec3d(-400.0, 0.0, -400.0));
 
     // Define a material with both MDL and USD Preview Surface shaders and material interface inputs
     pxr::UsdShadeMaterial worldUvMatPrim = usdex::rtx::definePbrMaterial(

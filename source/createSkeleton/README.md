@@ -31,7 +31,7 @@ The Gf, Sdf, Usd, UsdGeom, UsdSkel, and Vt modules are used.
 This sample is implemented in both C++ and Python.  To run:
 
 - `[./]run.[bat, sh] createSkeleton`
-- `[./]python.[bat, sh] source/createSkeleton/createSkeleton.py`
+- `python[3] source/python/createSkeleton.py`
 
 ## Hardcoded items
 

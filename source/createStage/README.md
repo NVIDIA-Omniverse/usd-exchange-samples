@@ -16,7 +16,7 @@ The Tf, Usd, UsdGeom, and UsdLux modules are used.
 This sample is implemented in both C++ and Python.  To run:
 
 - `[./]run.[bat, sh] createStage`
-- `[./]python.[bat, sh] source/createStage/createStage.py`
+- `python[3] source/python/createStage.py`
 
 ## Hardcoded items
 

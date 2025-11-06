@@ -20,7 +20,7 @@ The Gf, Sdf, Usd, and UsdGeom modules are used.
 This sample is implemented in both C++ and Python.  To run:
 
 - `[./]run.[bat, sh] createMesh`
-- `[./]python.[bat, sh] source/createMesh/createMesh.py`
+- `python[3] source/python/createMesh.py`
 
 ## Hardcoded items
 

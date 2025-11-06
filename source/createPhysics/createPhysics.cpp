@@ -8,6 +8,7 @@
 
 #include <usdex/core/AssetStructure.h>
 #include <usdex/core/Core.h>
+#include <usdex/core/GprimAlgo.h>
 #include <usdex/core/PhysicsJointAlgo.h>
 #include <usdex/core/PhysicsMaterialAlgo.h>
 #include <usdex/core/StageAlgo.h>
@@ -70,19 +71,22 @@ bool createGroundWithCollision(pxr::UsdStageRefPtr stage)
     {
         if (prim.IsA<pxr::UsdGeomPlane>())
         {
-            return true;
+            if (prim.HasAPI<pxr::UsdPhysicsCollisionAPI>())
+            {
+                return true;
+            }
         }
     }
 
     const auto groundName = usdex::core::getValidChildName(defaultPrim, "ground");
-    pxr::SdfPath groundPath = defaultPrim.GetPath().AppendChild(groundName);
-    pxr::UsdGeomPlane plane = pxr::UsdGeomPlane::Define(stage, groundPath);
+    const double width = 2.0;
+    const double length = 2.0;
+    const pxr::TfToken axis = pxr::UsdGeomGetStageUpAxis(stage);
+    pxr::UsdGeomPlane plane = usdex::core::definePlane(defaultPrim, groundName.GetString(), width, length, axis);
     if (!plane)
     {
         return false;
     }
-
-    plane.GetAxisAttr().Set(pxr::UsdGeomGetStageUpAxis(stage));
 
     // Set collider.
     pxr::UsdPhysicsCollisionAPI::Apply(plane.GetPrim());

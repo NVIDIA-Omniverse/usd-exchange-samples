@@ -18,7 +18,7 @@ The Gf, Sdf, Tf, UsdGeom, UsdSemantics modules are used.
 This sample is implemented in both C++ and Python.  To run:
 
 - `[./]run.[bat, sh] setSemantics`
-- `[./]python.[bat, sh] source/setSemantics/setSemantics.py`
+- `python[3] source/python/setSemantics.py`
 
 ## Hardcoded items
 

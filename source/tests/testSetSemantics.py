@@ -2,24 +2,21 @@
 # SPDX-License-Identifier: MIT
 #
 
-# Python built-in
 import pathlib
 import shutil
 import tempfile
 
-# Internal imports
-import common.sysUtils
-
-common.sysUtils.initEnvPaths()
-
+import utils.BaseTestCase as BaseTestCaseModule
 import utils.fileFormat
 import utils.shell
 from pxr import Usd, UsdSemantics
-from utils.BaseTestCase import BaseTestCase
 from utils.ScopedEnvVar import ScopedEnvVar
 
 
-class SetSemanticsTestCase(BaseTestCase):
+class SetSemanticsTestCase(BaseTestCaseModule.BaseTestCase):
+
+    sampleName = "setSemantics"
+
     def _checkStageContents(self, stagePath, textFlag):
         self.runAssetValidator(stagePath)
 
@@ -52,7 +49,7 @@ class SetSemanticsTestCase(BaseTestCase):
 
         stage = None
 
-    def _runSampleOptions(self, script, programPath):
+    def runSampleOptions(self, script, programPath):
         with tempfile.TemporaryDirectory() as tempDirStr:
             tempDir = pathlib.Path(tempDirStr)
             argsRuns = [
@@ -74,12 +71,3 @@ class SetSemanticsTestCase(BaseTestCase):
             # Test invalid options
             return_code, output = utils.shell.run_shell_script(script, programPath, "-p", pathlib.Path(tempDir / "test_stage.usdc").as_posix(), "-a")
             self.assertEqual(return_code, 2)
-
-    def testCppSetSemantics(self):
-        self._runSampleOptions("run", "setSemantics")
-
-    def testPythonSetSemantics(self):
-        self._runSampleOptions("python", "source/setSemantics/setSemantics.py")
-
-    def testCompareTextSetSemantics(self):
-        self.compareTextOutput("setSemantics", "source/setSemantics/setSemantics.py")

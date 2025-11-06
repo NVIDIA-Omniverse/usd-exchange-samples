@@ -1,22 +1,17 @@
-# SPDX-FileCopyrightText: Copyright (c) 2024 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-FileCopyrightText: Copyright (c) 2024-2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: MIT
 #
 
-# Python built-in
 import pathlib
 import tempfile
+import unittest
 
-# Internal imports
-import common.sysUtils
-
-common.sysUtils.initEnvPaths()
-
+import utils.BaseTestCase as BaseTestCaseModule
 import utils.shell
 from pxr import Usd
-from utils.BaseTestCase import BaseTestCase
 
 
-class AssetValidatorTestCase(BaseTestCase):
+class AssetValidatorTestCase(unittest.TestCase):
     def testProblemsFoundAndNoFix(self):
         with tempfile.TemporaryDirectory() as tempDirStr:
             tempDir = pathlib.Path(tempDirStr)
@@ -25,7 +20,7 @@ class AssetValidatorTestCase(BaseTestCase):
             self.assertEqual(return_code, 0, output)
 
             # This should not assert
-            self.runAssetValidator(stagePath)
+            BaseTestCaseModule.BaseTestCase.runAssetValidator(self, stagePath)
 
             # Make the stage less valid
             stage = Usd.Stage.Open(stagePath)

@@ -29,9 +29,26 @@ The `repo build` command accepts additional arguments (e.g. `-config release`), 
 
 ## Testing
 
-To run all of the tests, use `repo.bat test` or `repo.sh test`, depending on your local platform.
+To run all of the sample tests, use `repo test`. The tests are split into two suites. The `main` suite, run by default, contains all of the sample tests and is run within a virtual environment. There is an additional suite, `usdview`, which tests the `usdview.bat|sh` scripts. It can be run using `repo test -s usdview`.
 
-If you want to isolate the tests, `repo test -f <pattern>` will filter down to a single test file or test pattern. See `repo test -h` for more information.
+To run only certain sample tests the test scripts must be run directly. For instance, the following command will reuse the existing test virtual environment and run just the `createAsset` tests, run:
+
+```
+Linux:
+tools/wheel/test.sh --reuse -k testCreateAsset
+
+Windows:
+tools\wheel\test.bat --reuse -k testCreateAsset
+```
+
+See `python -m unittest --help` for more information on test options.
+
+These arguments to reuse the virtual test environment and filter tests are also supported within [repo.toml](./repo.toml). To achieve the same result as above, add this to the `[repo_test.suites.main]` section:
+
+```toml
+[repo_test.suites.main]
+args = ["--reuse", "-k", "testCreateAsset"]
+```
 
 ## Adding a sample
 
@@ -51,7 +68,7 @@ All samples should have a Python [unittest](https://docs.python.org/3/library/un
 
 ### Programing language
 
-Because the OpenUSD and OpenUSD Exchange SDKs both provide Python bindings, each sample should be written in C++ and Python. If the situation merits it, a single language implementation could suffice.
+Because the OpenUSD and OpenUSD Exchange SDKs both provide Python bindings, each sample should be written in C++ and Python. If the situation merits it, a single language implementation could suffice. The C++ implementation resides in the sample's directory (eg. `source/createThing/createThing.cpp`) while the Python implementation resides in the project's python directory (`source/python/createThing.py`).
 
 ### Sample name lists
 

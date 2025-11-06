@@ -24,7 +24,7 @@ The Gf, Sdf, Usd, and UsdLux modules are used.
 This sample is implemented in both C++ and Python.  To run:
 
 - `[./]run.[bat, sh] createLights`
-- `[./]python.[bat, sh] source/createLights/createLights.py`
+- `python[3] source/python/createLights.py`
 
 ## Hardcoded items
 

@@ -2,34 +2,17 @@
 # SPDX-License-Identifier: MIT
 #
 
-# Python built-in
 import pathlib
 import sys
 import tempfile
 import unittest
 
-# Internal imports
 import common.sysUtils
-
-common.sysUtils.initEnvPaths()
-
 import utils.shell
 from utils.ScopedEnvVar import ScopedEnvVar
 
 
 class RunAllTestCase(unittest.TestCase):
-
-    def _getSamples(self) -> list[str]:
-        # Read samples from allSamples.txt
-        # The test file is in source/tests/, so we need to go up two levels to reach the root
-        allSamplesPath = pathlib.Path(__file__).parent.parent.parent / "allSamples.txt"
-        samples = []
-        try:
-            with open(allSamplesPath, "r") as f:
-                samples = [line.strip() for line in f if line.strip()]
-        except FileNotFoundError:
-            self.fail(f"allSamples.txt not found at {allSamplesPath}")
-        return samples
 
     def testRunAllCpp(self):
         if "-e" in sys.argv and "keep" in sys.argv:
@@ -50,16 +33,17 @@ class RunAllTestCase(unittest.TestCase):
 
     def testRunAllPython(self):
         with ScopedEnvVar("PYTHONIOENCODING", "utf-8", ["Windows"]):
+            pySampleBaseDir = "source/python/"
             if "-e" in sys.argv and "keep" in sys.argv:
                 stagePath = common.sysUtils.getDefaultStagePath(".python.usda")
                 print(f"\nStage output to {stagePath}")
-                return_code, output = utils.shell.run_shell_script("python", "all", "-p", stagePath)
+                return_code, output = utils.shell.run_shell_script("python", f"{pySampleBaseDir}all.py", "-p", stagePath)
                 self.assertEqual(return_code, 0, output)
             else:
                 with tempfile.TemporaryDirectory() as tempDirStr:
                     tempDir = pathlib.Path(tempDirStr)
                     stagePath = pathlib.Path(tempDir / "test_stage.usdc").as_posix()
-                    return_code, output = utils.shell.run_shell_script("run", "all", "-p", stagePath)
+                    return_code, output = utils.shell.run_shell_script("python", f"{pySampleBaseDir}all.py", "-p", stagePath)
                     self.assertEqual(return_code, 0, output)
 
                     # Check that the stage was created
@@ -67,11 +51,11 @@ class RunAllTestCase(unittest.TestCase):
                     self.assertTrue(stagePathObj.exists(), f"Stage file {stagePathObj} does not exist")
 
     def testAllSamplesConsistency(self):
-        samples = self._getSamples()
+        samples = common.sysUtils.getAllSamples()
 
-        # There are some extra directories in the source directory that are not samples
-        sampleDirsToIgnore = ["assetValidator", "common", "tests", "usdTraverse"]
-        samples.extend(sampleDirsToIgnore)
+        # There are some extra files and directories in the source directories that are not samples
+        sampleEntriesToIgnore = ["__pycache__", "all", "assetValidator", "common", "python", "tests", "usdTraverse"]
+        samples.extend(sampleEntriesToIgnore)
 
         # Check that the samples are consistent with the directory names in the source directory
         sourceDir = pathlib.Path(__file__).parent.parent.parent / "source"
@@ -79,4 +63,11 @@ class RunAllTestCase(unittest.TestCase):
             if sampleDir.is_dir():
                 sample = sampleDir.name
                 if sample not in samples:
+                    self.fail(f"Sample <{sample}> not found in allSamples.txt")
+
+        pythonDir = pathlib.Path(__file__).parent.parent.parent / "source" / "python"
+        for sampleFile in pythonDir.iterdir():
+            if sampleFile.is_file():
+                sample = sampleFile.stem
+                if f"{sample}" not in samples:
                     self.fail(f"Sample <{sample}> not found in allSamples.txt")
