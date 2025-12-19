@@ -1,3 +1,17 @@
+2.2.0
+-----
+Release: December 2025
+
+OpenUSD Exchange SDK v2.2.0
+
+* Samples
+    * Add a call to the new defineXform() function that accepts a matrix
+
+* Dependencies
+    * OpenUSD [v25.05](https://github.com/PixarAnimationStudios/OpenUSD/blob/v25.05/CHANGELOG.md)
+    * OpenUSD Exchange SDK [v2.2.0](https://docs.omniverse.nvidia.com/usd/code-docs/usd-exchange-sdk)
+    * Omniverse Asset Validator [v1.9.2](https://docs.omniverse.nvidia.com/kit/docs/asset-validator)
+
 2.1.0
 -----
 Release: November 2025

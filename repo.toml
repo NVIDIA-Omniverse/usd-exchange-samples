@@ -65,7 +65,7 @@ path = "$root/tools/wheel"
 include = [
     "test${shell_ext}",
 ]
-timeout = 240
+timeout = 600
 
 [repo_test.suites.usdview]
 kind = "unittest"

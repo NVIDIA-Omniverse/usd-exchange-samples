@@ -6,13 +6,13 @@
     <package name="repo_build" version="1.16.0" />
   </dependency>
   <dependency name="repo_usd" linkPath="../_repo/deps/repo_usd">
-    <package name="repo_usd" version="5.0.19" />
+    <package name="repo_usd" version="5.0.23" />
   </dependency>
   <dependency name="repo_test" linkPath="../_repo/deps/repo_test">
-    <package name="repo_test" version="2.40.4" />
+    <package name="repo_test" version="2.42.1" />
   </dependency>
   <dependency name="repo_format" linkPath="../_repo/deps/repo_format">
-    <package name="repo_format" version="2.16.2" />
+    <package name="repo_format" version="2.16.7" />
   </dependency>
   <dependency name="repo_source" linkPath="../_repo/deps/repo_source">
     <package name="repo_source" version="0.6.3" />

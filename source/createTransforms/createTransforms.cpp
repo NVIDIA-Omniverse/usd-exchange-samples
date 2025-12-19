@@ -77,6 +77,27 @@ int main(int argc, char* argv[])
         scale /* scale */
     );
 
+    // Create a Xform prim with an initial transform matrix
+    pxr::TfToken validToken = usdex::core::getValidChildName(stage->GetDefaultPrim(), "matrixXform");
+    // Matrix with scale 0.5, translation (100, 22, 100), rotation 22.5° around x, y, z
+    // Note: GfMatrix4d constructor is row-major. For USD, translation belongs in the last row.
+    // clang-format off
+    pxr::GfMatrix4d matrix(0.42677669529663687,  0.17677669529663687, -0.19134171618254486, 0.0,
+                           -0.10912718277836225, 0.45479804086963466,  0.17677669529663687, 0.0,
+                           0.23654367531291015, -0.10912718277836225,  0.42677669529663687, 0.0,
+                           100.0,                22.0,                 100.0,               1.0);
+    // clang-format on
+    pxr::UsdGeomXform matrixXformPrim = usdex::core::defineXform(stage->GetDefaultPrim(), validToken, matrix);
+    samples::createCube(
+        matrixXformPrim.GetPrim(), /* parent */
+        "matrixCube", /* name */
+        100.0, /* size */
+        std::nullopt, /* position */
+        std::nullopt, /* rotation */
+        std::nullopt, /* scale */
+        pxr::GfVec3f(0.5f, 0.7f, 1.0f) /* displayColor (light blue)*/
+    );
+
     // Create a Xform prim with an initial transform
     pxr::TfTokenVector validTokens = usdex::core::getValidChildNames(stage->GetDefaultPrim(), std::vector<std::string>{ "groundXform" });
     pxr::GfTransform transform;

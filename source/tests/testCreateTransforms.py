@@ -17,7 +17,7 @@ class CreateTransformsTestCase(BaseTestCaseModule.BaseTestCase):
 
     sampleName = "createTransforms"
 
-    def _checkStageContents(self, stagePath, cubeName, xformName, groundName, quatName):
+    def _checkStageContents(self, stagePath, cubeName, xformName, groundName, quatName, matrixXformName):
         self.runAssetValidator(stagePath)
 
         stage = Usd.Stage.Open(stagePath)
@@ -34,6 +34,18 @@ class CreateTransformsTestCase(BaseTestCaseModule.BaseTestCase):
         self.assertIsInstance(typedPrim, UsdGeom.Cube)
         translation, pivot, rotation, rotationOrder, scale = usdex.core.getLocalTransformComponents(prim)
         self.assertNotEqual(rotation, Gf.Vec3f(0))
+
+        # check the matrix xform
+        prim = stage.GetPrimAtPath(defaultPrim.GetPath().AppendChild(matrixXformName))
+        self.assertTrue(prim)
+        typedPrim = UsdGeom.Xform(prim)
+        self.assertTrue(typedPrim)
+        self.assertIsInstance(typedPrim, UsdGeom.Xform)
+        translation, pivot, rotation, rotationOrder, scale = usdex.core.getLocalTransformComponents(prim)
+        self.assertAlmostEqual(translation, Gf.Vec3f(100, 22, 100))
+        self.assertAlmostEqual(scale, Gf.Vec3f(0.5, 0.5, 0.5))
+        self.assertAlmostEqual(rotation, Gf.Vec3f(22.5, 22.5, 22.5))
+        self.assertAlmostEqual(rotationOrder, usdex.core.RotationOrder.eXyz)
 
         # Check the xform
         prim = stage.GetPrimAtPath(defaultPrim.GetPath().AppendChild(xformName))
@@ -77,6 +89,7 @@ class CreateTransformsTestCase(BaseTestCaseModule.BaseTestCase):
             cubeNames = ["cube", "cube"]
             xformNames = ["groundXform", "groundXform_1"]
             groundNames = ["groundCube", "groundCube"]
+            matrixXformNames = ["matrixXform", "matrixXform_1"]
             quatNames = ["quatCube", "quatCube_1"]
 
             for args in argsRuns:
@@ -87,7 +100,7 @@ class CreateTransformsTestCase(BaseTestCaseModule.BaseTestCase):
                         return_code, output = utils.shell.run_shell_script(script, programPath, "-p", args[0])
 
                     self.assertEqual(return_code, 0, output)
-                    self._checkStageContents(args[0], cubeNames[idx], xformNames[idx], groundNames[idx], quatNames[idx])
+                    self._checkStageContents(args[0], cubeNames[idx], xformNames[idx], groundNames[idx], quatNames[idx], matrixXformNames[idx])
                     utils.fileFormat.checkLayerFormat(self, args[0], args[1])
 
             # Test invalid options

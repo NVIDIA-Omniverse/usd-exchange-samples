@@ -53,6 +53,19 @@ def main(args):
         scale=scale,
     )
 
+    # Create a Xform prim with an initial transform matrix
+    validToken = usdex.core.getValidChildName(stage.GetDefaultPrim(), "matrixXform")
+    # Matrix with scale 0.5, translation (100, 22, 100), rotation 22.5° around x, y, z
+    # Note: GfMatrix4d constructor is row-major. For USD, translation belongs in the last row.
+    # fmt: off
+    matrix = Gf.Matrix4d(0.42677669529663687,  0.17677669529663687, -0.19134171618254486, 0.0,
+                         -0.10912718277836225, 0.45479804086963466, 0.17677669529663687,  0.0,
+                         0.23654367531291015, -0.10912718277836225, 0.42677669529663687,  0.0,
+                         100.0,                22.0,                100.0,                1.0,)
+    # fmt: on
+    matrixXformPrim = usdex.core.defineXform(stage.GetDefaultPrim(), validToken, matrix)
+    common.usdUtils.createCube(matrixXformPrim.GetPrim(), name="matrixCube", displayColor=Gf.Vec3f(0.5, 0.7, 1.0))
+
     # Create a Xform prim with an initial transform
     primNames = usdex.core.getValidChildNames(stage.GetDefaultPrim(), ["groundXform"])
     transform = Gf.Transform(Gf.Vec3d(0, -55, 0))
