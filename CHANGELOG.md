@@ -1,3 +1,17 @@
+2.3.0
+-----
+Release: May 2026
+
+OpenUSD Exchange SDK v2.3.0
+
+* Samples
+    * Add emissive material examples
+
+* Dependencies
+    * OpenUSD [v25.05](https://github.com/PixarAnimationStudios/OpenUSD/blob/v25.05/CHANGELOG.md)
+    * OpenUSD Exchange SDK [v2.3.0](https://docs.omniverse.nvidia.com/usd/code-docs/usd-exchange-sdk)
+    * Omniverse Asset Validator [v1.15.1](https://docs.omniverse.nvidia.com/kit/docs/asset-validator)
+
 2.2.2
 -----
 Release: March 2026

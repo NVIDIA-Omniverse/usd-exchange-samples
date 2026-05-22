@@ -7,7 +7,7 @@ export PYTHONPATH=${SCRIPT_DIR}/source/python
 export PACKMAN_PYTHON=${SCRIPT_DIR}/tools/packman/python.sh
 export VENV=${SCRIPT_DIR}/_build/usdex_env
 
-if [ -d "${VENV}" ]; then
+if [[ -d "${VENV}" ]]; then
     echo "Using existing venv: ${VENV}"
     source ${VENV}/bin/activate
 else

@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright (c) 2024-2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+// SPDX-FileCopyrightText: Copyright (c) 2024-2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 // SPDX-License-Identifier: MIT
 //
 
@@ -51,7 +51,10 @@ int main(int argc, char* argv[])
     pxr::UsdPrim scopePrim = pxr::UsdGeomScope::Define(stage, matScopePath).GetPrim();
 
     // Get a unique and valid material name
-    pxr::TfTokenVector validMaterialNames = usdex::core::getValidChildNames(scopePrim, { "cubePbr", "sphereUvwPbr", "previewSurfacePbr" });
+    pxr::TfTokenVector validMaterialNames = usdex::core::getValidChildNames(
+        scopePrim,
+        { "cubePbr", "sphereUvwPbr", "previewSurfacePbr", "emissivePbr", "emissiveTexturePbr" }
+    );
 
     // Copy textures to the stage's subdirectory
     std::string colorTex = samples::copyTextureToStagePath(args.stagePath, "Fieldstone/Fieldstone_BaseColor.png");
@@ -133,6 +136,38 @@ int main(int argc, char* argv[])
     usdex::core::addDiffuseTextureToPreviewMaterial(matPrim, pxr::SdfAssetPath(colorTex));
     usdex::core::addNormalTextureToPreviewMaterial(matPrim, pxr::SdfAssetPath(normalTex));
     usdex::core::addOrmTextureToPreviewMaterial(matPrim, pxr::SdfAssetPath(ormTex));
+    usdex::core::bindMaterial(meshPrim.GetPrim(), matPrim);
+
+    // Create a sphere with an emissive color PBR/Preview Surface material
+    sphere = samples::createSphere(defaultPrim, "emissiveSphere", 25.0, pxr::GfVec3d(-500.0, 0.0, -400.0));
+    matPrim = usdex::rtx::definePbrMaterial(
+        /* parent */ scopePrim,
+        /* name */ validMaterialNames[3],
+        /* color */ pxr::GfVec3f(1, 1, 1)
+    );
+    if (!matPrim)
+    {
+        std::cout << "Error creating emissive sphere material, exiting" << std::endl;
+        return -1;
+    }
+    usdex::rtx::addEmissiveColorToPbrMaterial(matPrim, pxr::GfVec3f(1.0f, 0.77f, 0.56f));
+    usdex::core::bindMaterial(sphere.GetPrim(), matPrim);
+
+    // Create a mesh with UVs with an emissive texture PBR/Preview Surface material
+    meshPrim = samples::createCubeMesh(defaultPrim, "emissiveTextureMesh", 25.0, pxr::GfVec3d(-400.0, 0.0, -500.0));
+    matPrim = usdex::rtx::definePbrMaterial(
+        /* parent */ scopePrim,
+        /* name */ validMaterialNames[4],
+        /* color */ pxr::GfVec3f(1, 1, 1)
+    );
+    if (!matPrim)
+    {
+        std::cout << "Error creating emissive texture mesh material, exiting" << std::endl;
+        return -1;
+    }
+
+    // The normal texture is bright purple, so it sticks out and looks interesting
+    usdex::rtx::addEmissiveTextureToPbrMaterial(matPrim, pxr::SdfAssetPath(normalTex));
     usdex::core::bindMaterial(meshPrim.GetPrim(), matPrim);
 
     // Save the stage to disk

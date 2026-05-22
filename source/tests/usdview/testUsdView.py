@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: Copyright (c) 2024-2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-FileCopyrightText: Copyright (c) 2024-2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: MIT
 #
 
@@ -23,6 +23,9 @@ class UsdViewTestCase(unittest.TestCase):
         env = os.environ.copy()
         if platform.system() == "Linux" and "LD_LIBRARY_PATH" in env:
             del env["LD_LIBRARY_PATH"]
+        if platform.system() == "Linux":
+            # CI smoke test runs with --norender, so avoid requiring xcb runtime libs.
+            env["QT_QPA_PLATFORM"] = "offscreen"
 
         scriptPath = pathlib.Path(__file__).parent.parent.parent.parent / f"usdview{shell_ext()}"
         print(f"scriptPath: {scriptPath}")

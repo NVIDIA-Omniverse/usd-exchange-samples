@@ -19,14 +19,14 @@ while IFS= read -r line; do
 done < "${SCRIPT_DIR}/allSamples.txt"
 
 # Check if user wants to run all samples
-if [ "$1" = "all" ]; then
+if [[ "$1" = "all" ]]; then
     echo "Running all samples in order..."
 
     for sample in "${samples[@]}"; do
         echo ""
         echo "=== Running $sample ==="
         SAMPLE_PATH=${RUNTIME_DIR}/${sample}
-        if [ -f "${SAMPLE_PATH}" ]; then
+        if [[ -f "${SAMPLE_PATH}" ]]; then
             ${SAMPLE_PATH} "${@:2}"
         else
             echo "WARNING: ${sample} not found at ${SAMPLE_PATH}"
@@ -41,7 +41,7 @@ fi
 
 export SAMPLE=${RUNTIME_DIR}/${1}
 
-if [ ! -f "${SAMPLE}" ]; then
+if [[ ! -f "${SAMPLE}" ]]; then
     echo "<${SAMPLE}> does not exist, run one of the existing samples, eg. './run.sh createStage': "
     echo " all (runs all samples in order)"
     for sample in "${samples[@]}"; do

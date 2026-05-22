@@ -20,6 +20,8 @@ The Gf, Sdf, Usd, UsdGeom, UsdShade and UsdUtils modules are used.
 ## OpenUSD Exchange SDK functions
 
 - addDiffuseTextureToPbrMaterial()
+- addEmissiveColorToPbrMaterial()
+- addEmissiveTextureToPbrMaterial()
 - addOrmTextureToPbrMaterial()
 - addNormalTextureToPbrMaterial()
 - bindMaterial()
@@ -49,6 +51,7 @@ This sample is implemented in both C++ and Python.  To run:
     - Two custom attributes (`refinementLevel` and `refinementEnableOverride`) are added to the sphere prim to control refinement in the RTX renderer. This is implemented in the [C++](../common/include/usdUtils.h) or [Python](../python/common/usdUtils.py) `createSphere()` USD utility functions.
 - A 1 meter mesh with UVs named "previewSurfaceMesh" is created with a USD Preview Surface material
     - Material and shader prims are created under a scope prim typically named "Looks"
+- A 500 cm sphere and mesh are created to demonstrate emissive color and texture
 
 ## Command Line Arguments
 

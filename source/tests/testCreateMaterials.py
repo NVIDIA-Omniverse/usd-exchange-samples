@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: Copyright (c) 2024-2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-FileCopyrightText: Copyright (c) 2024-2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: MIT
 #
 
@@ -26,7 +26,9 @@ class CreateMaterialsTestCase(BaseTestCaseModule.BaseTestCase):
     # - it uses the "usda" argument
     # - it runs properly with or without an existing stage
 
-    def _checkStageContents(self, stagePath, meshPrimName, matPrimName, sphereMatName, previewCubeName, previewMatName):
+    def _checkStageContents(
+        self, stagePath, meshPrimName, matPrimName, sphereMatName, previewCubeName, previewMatName, emissiveMatName, emissiveTextureMatName
+    ):
         self.runAssetValidator(stagePath)
 
         stage = Usd.Stage.Open(stagePath)
@@ -111,6 +113,32 @@ class CreateMaterialsTestCase(BaseTestCaseModule.BaseTestCase):
             usdex.rtx.computeEffectiveMdlSurfaceShader(UsdShade.Material(previewMatPrim)).GetPrim().GetPath(),
         )
 
+        # Check that the emissive color material is bound to the emissive sphere
+        emissiveMatPrim = UsdShade.Material(stage.GetPrimAtPath(materialScopePath.AppendPath(emissiveMatName)))
+        primsWithEmissiveColorMaterial = []
+        for i, mat in enumerate(materialBindings[0]):
+            if mat and mat.GetPath() == emissiveMatPrim.GetPath():
+                primsWithEmissiveColorMaterial.append(materialBindings[1][i].GetPrim())
+        self.assertEqual(len(primsWithEmissiveColorMaterial), 1)
+
+        # Check that the emissive color material has the correct color
+        emissiveColor = emissiveMatPrim.GetInput("emissiveColor").Get()
+        self.assertEqual(emissiveColor, Gf.Vec3f(1.0, 0.77, 0.56))
+
+        # Check that the emissive texture material is bound to the emissive texture mesh
+        allMeshPrims = [p for p in defaultPrim.GetChildren() if p.IsA(UsdGeom.Mesh)]
+        materialBindings = UsdShade.MaterialBindingAPI.ComputeBoundMaterials(allMeshPrims)
+        emissiveTextureMatPrim = UsdShade.Material(stage.GetPrimAtPath(materialScopePath.AppendPath(emissiveTextureMatName)))
+        primsWithEmissiveTextureMaterial = []
+        for i, mat in enumerate(materialBindings[0]):
+            if mat and mat.GetPath() == emissiveTextureMatPrim.GetPath():
+                primsWithEmissiveTextureMaterial.append(materialBindings[1][i].GetPrim())
+        self.assertEqual(len(primsWithEmissiveTextureMaterial), 1)
+
+        # Check that the emissive texture material has the correct texture
+        emissiveTexture = emissiveTextureMatPrim.GetInput("EmissiveTexture").Get()
+        self.assertEqual(emissiveTexture.path, "./textures/Fieldstone/Fieldstone_N.png")
+
     def runSampleOptions(self, script, programPath):
         with tempfile.TemporaryDirectory() as tempDirStr:
             tempDir = pathlib.Path(tempDirStr)
@@ -125,6 +153,8 @@ class CreateMaterialsTestCase(BaseTestCaseModule.BaseTestCase):
             sphereMatNames = ["sphereUvwPbr", "sphereUvwPbr_1"]
             previewCubeNames = ["previewSurfaceMesh", "previewSurfaceMesh_1"]
             previewMatNames = ["previewSurfacePbr", "previewSurfacePbr_1"]
+            emissiveMatNames = ["emissivePbr", "emissivePbr_1"]
+            emissiveTextureMatNames = ["emissiveTexturePbr", "emissiveTexturePbr_1"]
 
             for args in argsRuns:
                 for i in range(len(meshNames)):
@@ -133,21 +163,48 @@ class CreateMaterialsTestCase(BaseTestCaseModule.BaseTestCase):
                     else:
                         return_code, output = utils.shell.run_shell_script(script, programPath, "-p", args[0])
                     self.assertEqual(return_code, 0, output)
-                    self._checkStageContents(args[0], meshNames[i], cubeMatNames[i], sphereMatNames[i], previewCubeNames[i], previewMatNames[i])
+                    self._checkStageContents(
+                        args[0],
+                        meshNames[i],
+                        cubeMatNames[i],
+                        sphereMatNames[i],
+                        previewCubeNames[i],
+                        previewMatNames[i],
+                        emissiveMatNames[i],
+                        emissiveTextureMatNames[i],
+                    )
                     utils.fileFormat.checkLayerFormat(self, args[0], args[1])
 
             # Test relative path calculation in the program.  These pollute the repo, but they clean up after themselves
             localStage = "local_test_stage.usdc"
             return_code, output = utils.shell.run_shell_script(script, programPath, "-p", localStage)
             self.assertEqual(return_code, 0, output)
-            self._checkStageContents(localStage, meshNames[0], cubeMatNames[0], sphereMatNames[0], previewCubeNames[0], previewMatNames[0])
+            self._checkStageContents(
+                localStage,
+                meshNames[0],
+                cubeMatNames[0],
+                sphereMatNames[0],
+                previewCubeNames[0],
+                previewMatNames[0],
+                emissiveMatNames[0],
+                emissiveTextureMatNames[0],
+            )
             pathlib.Path.unlink(pathlib.Path(localStage))
             shutil.rmtree("textures")
 
             localStage = "local_directory/test_stage.usdc"
             return_code, output = utils.shell.run_shell_script(script, programPath, "-p", localStage)
             self.assertEqual(return_code, 0, output)
-            self._checkStageContents(localStage, meshNames[0], cubeMatNames[0], sphereMatNames[0], previewCubeNames[0], previewMatNames[0])
+            self._checkStageContents(
+                localStage,
+                meshNames[0],
+                cubeMatNames[0],
+                sphereMatNames[0],
+                previewCubeNames[0],
+                previewMatNames[0],
+                emissiveMatNames[0],
+                emissiveTextureMatNames[0],
+            )
             shutil.rmtree("local_directory")
 
             # Test invalid options

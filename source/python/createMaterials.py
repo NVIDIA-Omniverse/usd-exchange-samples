@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: Copyright (c) 2024-2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-FileCopyrightText: Copyright (c) 2024-2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: MIT
 #
 
@@ -26,7 +26,9 @@ def main(args):
     scopePrim = UsdGeom.Scope.Define(stage, materialScopePath)
 
     # Get unique and valid material names
-    validMaterialNames = usdex.core.getValidChildNames(scopePrim.GetPrim(), ["cubePbr", "sphereUvwPbr", "previewSurfacePbr"])
+    validMaterialNames = usdex.core.getValidChildNames(
+        scopePrim.GetPrim(), ["cubePbr", "sphereUvwPbr", "previewSurfacePbr", "emissivePbr", "emissiveTexturePbr"]
+    )
 
     # Copy textures to the stage's subdirectory
     colorTex = common.sysUtils.copyTextureToStagePath(args.path, "Fieldstone/Fieldstone_BaseColor.png")
@@ -54,7 +56,7 @@ def main(args):
     sphere = common.usdUtils.createSphere(parent=defaultPrim, name="pbrSphere", radius=50.0, position=Gf.Vec3d(-400.0, 0.0, -400.0))
 
     worldUvMatPrim = usdex.rtx.definePbrMaterial(parent=scopePrim.GetPrim(), name=validMaterialNames[1], color=Gf.Vec3f(1, 1, 0))
-    if not matPrim:
+    if not worldUvMatPrim:
         print("Error creating sphere material, exiting")
         sys.exit(-1)
 
@@ -84,6 +86,24 @@ def main(args):
     usdex.core.addNormalTextureToPreviewMaterial(matPrim, normalTex)
     usdex.core.addOrmTextureToPreviewMaterial(matPrim, ormTex)
     usdex.core.bindMaterial(meshPrim.GetPrim(), matPrim)
+
+    # Create a sphere with an emissive color PBR/Preview Surface material
+    sphere = common.usdUtils.createSphere(parent=defaultPrim, name="emissiveSphere", radius=25.0, position=Gf.Vec3d(-500.0, 0.0, -400.0))
+    emissiveMatPrim = usdex.rtx.definePbrMaterial(parent=scopePrim.GetPrim(), name=validMaterialNames[3], color=Gf.Vec3f(1, 1, 1))
+    if not emissiveMatPrim:
+        print("Error creating emissive sphere material, exiting")
+        sys.exit(-1)
+    usdex.rtx.addEmissiveColorToPbrMaterial(emissiveMatPrim, Gf.Vec3f(1.0, 0.77, 0.56))
+    usdex.core.bindMaterial(sphere.GetPrim(), emissiveMatPrim)
+
+    # Create a mesh with UVs with an emissive texture PBR/Preview Surface material
+    meshPrim = common.usdUtils.createCubeMesh(defaultPrim, "emissiveTextureMesh", 25.0, Gf.Vec3d(-400.0, 0.0, -500.0))
+    emissiveTextureMatPrim = usdex.rtx.definePbrMaterial(parent=scopePrim.GetPrim(), name=validMaterialNames[4], color=Gf.Vec3f(1, 1, 1))
+    if not emissiveTextureMatPrim:
+        print("Error creating emissive texture mesh material, exiting")
+        sys.exit(-1)
+    usdex.rtx.addEmissiveTextureToPbrMaterial(emissiveTextureMatPrim, normalTex)
+    usdex.core.bindMaterial(meshPrim.GetPrim(), emissiveTextureMatPrim)
 
     usdex.core.saveStage(stage, "OpenUSD Exchange Samples")
 

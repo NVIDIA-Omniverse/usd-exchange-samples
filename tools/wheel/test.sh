@@ -29,8 +29,8 @@ pushd "${SCRIPT_DIR}/../.." > /dev/null
 # Setup the build environment
 VENV=./_build/tests/venv
 
-if [ ${REUSE_VENV} -eq 1 ]; then
-    if [ -d "${VENV}" ]; then
+if [[ ${REUSE_VENV} -eq 1 ]]; then
+    if [[ -d "${VENV}" ]]; then
         echo "Reusing existing venv: ${VENV}"
     else
         echo "No existing venv found, creating new one: ${VENV}"
@@ -38,9 +38,9 @@ if [ ${REUSE_VENV} -eq 1 ]; then
     fi
 fi
 
-if [ ${REUSE_VENV} -eq 0 ]; then
+if [[ ${REUSE_VENV} -eq 0 ]]; then
     echo "Building: ${VENV}"
-    if [ -d "${VENV}" ]; then
+    if [[ -d "${VENV}" ]]; then
         rm -rf "${VENV}"
     fi
 
