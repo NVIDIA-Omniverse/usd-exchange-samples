@@ -5,8 +5,8 @@ set -e
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
 export PLATFORM="linux-$(uname -m)"
-export RUNTIME_DIR=${SCRIPT_DIR}/_build/${PLATFORM}/release
-export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${RUNTIME_DIR}
+export RUNTIME_DIR="${SCRIPT_DIR}/_build/${PLATFORM}/release"
+export LD_LIBRARY_PATH="${LD_LIBRARY_PATH:+$LD_LIBRARY_PATH:}${RUNTIME_DIR}"
 pushd "$SCRIPT_DIR" > /dev/null
 
 # Read samples from allSamples.txt
@@ -25,9 +25,9 @@ if [[ "$1" = "all" ]]; then
     for sample in "${samples[@]}"; do
         echo ""
         echo "=== Running $sample ==="
-        SAMPLE_PATH=${RUNTIME_DIR}/${sample}
+        SAMPLE_PATH="${RUNTIME_DIR}/${sample}"
         if [[ -f "${SAMPLE_PATH}" ]]; then
-            ${SAMPLE_PATH} "${@:2}"
+            "${SAMPLE_PATH}" "${@:2}"
         else
             echo "WARNING: ${sample} not found at ${SAMPLE_PATH}"
         fi
@@ -39,7 +39,7 @@ if [[ "$1" = "all" ]]; then
     exit 0
 fi
 
-export SAMPLE=${RUNTIME_DIR}/${1}
+export SAMPLE="${RUNTIME_DIR}/${1}"
 
 if [[ ! -f "${SAMPLE}" ]]; then
     echo "<${SAMPLE}> does not exist, run one of the existing samples, eg. './run.sh createStage': "
@@ -51,5 +51,5 @@ if [[ ! -f "${SAMPLE}" ]]; then
     exit 3
 fi
 
-${SAMPLE} "${@:2}"
+"${SAMPLE}" "${@:2}"
 popd > /dev/null
