@@ -18,8 +18,8 @@ if [[ -d "${USDVIEW_VENV}" ]]; then
 else
     echo "Building venv: ${USDVIEW_VENV}"
     ${SCRIPT_DIR}/tools/packman/python.sh -m venv ${USDVIEW_VENV}
-    source ${USDVIEW_VENV}/bin/activate
+    source "${USDVIEW_VENV}/bin/activate"
     python3 -m pip install -r ${SCRIPT_DIR}/_build/target-deps/usd/release/requirements.txt
 fi
 
-${USDVIEW_SCRIPT} $@
+"${USDVIEW_SCRIPT}" "$@"
