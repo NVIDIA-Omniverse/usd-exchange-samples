@@ -22,8 +22,8 @@ This sample is implemented in both C++ and Python.  To run:
 
 ## Hardcoded items
 
-- If a stage is created, it will have a default prim named "World", Y-up axis, 1 cm linear units
-- An Xform prim is created at location (300, 0, 300) to represent a house with Cube prims underneath that represent a wall, roof, door, and a window
+- If a stage is created, it will have a default prim named "World", Z-up axis, 1 m linear units
+- An Xform prim is created at location (3, -3, 0) to represent a house with Cube prims underneath that represent a wall, roof, door, and a window
 - Q-Codes are applied to prims to show inherited semantics following codes gathered from https://www.wikidata.org/
   - /World/house ["Q3947"]
   - /World/house/wall ["Q3947", "Q42948"]
@@ -42,4 +42,5 @@ Usage:
   -h, --help             Print usage
   -s, --print-semantics  Print semantics
   -p, --path arg         Alternate destination stage path (default: c:/Users/username/AppData/Local/Temp/usdex/sample.usdc)
+  -z, --usdz             Package the output stage as USDZ
 ```

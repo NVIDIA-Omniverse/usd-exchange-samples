@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright (c) 2024-2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+// SPDX-FileCopyrightText: Copyright (c) 2024-2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 // SPDX-License-Identifier: MIT
 //
 
@@ -41,7 +41,7 @@ pxr::SdfPath createHouse(pxr::UsdStageRefPtr stage)
 
     // Create Xform prim with an initial transform
     pxr::TfToken validToken = usdex::core::getValidChildName(stage->GetDefaultPrim(), "house");
-    transform.SetTranslation(pxr::GfVec3d(300, 0, 300));
+    transform.SetTranslation(pxr::GfVec3d(3, -3, 0));
     pxr::UsdGeomXform xformPrim = usdex::core::defineXform(stage->GetDefaultPrim(), validToken, transform);
 
     ///////////////////////////////////
@@ -57,8 +57,8 @@ pxr::SdfPath createHouse(pxr::UsdStageRefPtr stage)
     ///////////////////////////////////
     pxr::UsdGeomCube roof = samples::createCube(xformPrim.GetPrim(), "roof");
     transform.SetIdentity();
-    transform.SetTranslation(pxr::GfVec3d(0, 52, 0));
-    transform.SetScale(pxr::GfVec3d(1.2, 0.05, 1.2));
+    transform.SetTranslation(pxr::GfVec3d(0, 0, 0.52));
+    transform.SetScale(pxr::GfVec3d(1.2, 1.2, 0.05));
     usdex::core::setLocalTransform(roof, transform);
 
     ///////////////////////////////////
@@ -66,8 +66,8 @@ pxr::SdfPath createHouse(pxr::UsdStageRefPtr stage)
     ///////////////////////////////////
     pxr::UsdGeomCube door = samples::createCube(xformPrim.GetPrim(), "door");
     transform.SetIdentity();
-    transform.SetTranslation(pxr::GfVec3d(0, -25, -50));
-    transform.SetScale(pxr::GfVec3d(0.2, 0.5, 0.05));
+    transform.SetTranslation(pxr::GfVec3d(0, 0.5, -0.25));
+    transform.SetScale(pxr::GfVec3d(0.2, 0.05, 0.5));
     usdex::core::setLocalTransform(door, transform);
 
     ///////////////////////////////////
@@ -75,8 +75,8 @@ pxr::SdfPath createHouse(pxr::UsdStageRefPtr stage)
     ///////////////////////////////////
     pxr::UsdGeomCube window = samples::createCube(xformPrim.GetPrim(), "window");
     transform.SetIdentity();
-    transform.SetTranslation(pxr::GfVec3d(0, 0, 50));
-    transform.SetScale(pxr::GfVec3d(0.3, 0.3, 0.05));
+    transform.SetTranslation(pxr::GfVec3d(0, -0.5, 0));
+    transform.SetScale(pxr::GfVec3d(0.3, 0.05, 0.3));
     usdex::core::setLocalTransform(window, transform);
 
     return xformPrim.GetPath();
@@ -137,7 +137,10 @@ int main(int argc, char* argv[])
     }
 
     // Save the stage to disk
-    usdex::core::saveStage(stage, "OpenUSD Exchange Samples");
+    if (!samples::saveStage(stage, "OpenUSD Exchange Samples", args.usdzPath))
+    {
+        return -1;
+    }
 
     return 0;
 }

@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright (c) 2024 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+// SPDX-FileCopyrightText: Copyright (c) 2024-2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 // SPDX-License-Identifier: MIT
 //
 
@@ -28,7 +28,7 @@ int main(int argc, char* argv[])
         return -1;
     }
 
-    pxr::UsdGeomMesh meshPrim = samples::createCubeMesh(stage->GetDefaultPrim(), "cubeMesh", 50.0, pxr::GfVec3d(0.0, 150.0, 0.0));
+    pxr::UsdGeomMesh meshPrim = samples::createCubeMesh(stage->GetDefaultPrim(), "cubeMesh", 0.5, pxr::GfVec3d(0.0, 0.0, 1.5));
     if (!meshPrim)
     {
         std::cout << "Error creating cube mesh, exiting" << std::endl;
@@ -36,7 +36,10 @@ int main(int argc, char* argv[])
     }
 
     // Save the stage to disk
-    usdex::core::saveStage(stage, "OpenUSD Exchange Samples");
+    if (!samples::saveStage(stage, "OpenUSD Exchange Samples", args.usdzPath))
+    {
+        return -1;
+    }
 
     return 0;
 }

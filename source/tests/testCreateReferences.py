@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: Copyright (c) 2024-2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-FileCopyrightText: Copyright (c) 2024-2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: MIT
 #
 
@@ -129,6 +129,14 @@ class CreateReferencesTestCase(BaseTestCaseModule.BaseTestCase):
                     self.assertEqual(return_code, 0, output)
                     self._checkStageContents(args[0], refNames[idx], payloadNames[idx])
                     utils.fileFormat.checkLayerFormat(self, args[0], args[1])
+
+            # Test USDZ output includes the root layer and external component dependency
+            stagePath = pathlib.Path(tempDir / "test_stage_usdz.usdc")
+            usdzPath = stagePath.with_suffix(".usdz")
+            return_code, output = utils.shell.run_shell_script(script, programPath, "-p", stagePath.as_posix(), "--usdz")
+            self.assertEqual(return_code, 0, output)
+            utils.fileFormat.checkUsdzPackage(self, usdzPath.as_posix(), ["test_stage_usdz.usdc", "Cube_2x2x2.usdc"])
+            self._checkStageContents(stagePath.as_posix(), refNames[0], payloadNames[0])
 
             # Test relative path calculation in the program.  These pollute the repo, but they clean up after themselves
             localStage = "local_test_stage.usdc"

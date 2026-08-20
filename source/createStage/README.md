@@ -3,13 +3,14 @@
 This sample demonstrates how to create/overwrite a stage with key metadata using the OpenUSD Exchange SDK and create cube and light prims.
 
 ## USD Modules
-The Tf, Usd, UsdGeom, and UsdLux modules are used.
+The Gf, Tf, Usd, UsdGeom, and UsdLux modules are used.
 
 ## OpenUSD Exchange SDK functions
 
 - createStage()
 - getValidPrimName()
 - saveStage()
+- setLocalTransform()
 
 ## Languages
 
@@ -20,9 +21,9 @@ This sample is implemented in both C++ and Python.  To run:
 
 ## Hardcoded items
 
-- The stage is created with a Y-up axis, 1 cm linear units, default Scope prim named "World"
+- The stage is created with a Z-up axis, 1 m linear units, default Scope prim named "World"
 - A 1 meter cube named "cube" is created
-- A distant light named "distantLight" is created
+- A distant light named "distantLight" is created with an authored intensity and a rotation
 
 ## Command Line Arguments
 
@@ -33,4 +34,5 @@ Usage:
   -a, --usda             Output a text stage rather than binary
   -h, --help             Print usage
   -p, --path arg         Alternate destination stage path (default: c:/Users/username/AppData/Local/Temp/usdex/sample.usdc)
+  -z, --usdz             Package the output stage as USDZ
 ```

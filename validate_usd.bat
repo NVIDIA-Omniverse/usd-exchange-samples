@@ -3,6 +3,7 @@
 setlocal enabledelayedexpansion
 
 set SCRIPT_DIR=%~dp0
+call "%SCRIPT_DIR%tools\wheel\configure_python_package_index.bat"
 set PYTHONPATH=%SCRIPT_DIR%source\python
 set PACKMAN_PYTHON=%SCRIPT_DIR%tools\packman\python.bat
 set VENV=%SCRIPT_DIR%_build\usdex_env
@@ -22,12 +23,12 @@ if exist "%VENV%" (
     call "%VENV%\Scripts\activate.bat"
     if %errorlevel% neq 0 ( exit /b %errorlevel% )
 
-    REM Install usd-exchange package and test option to get the asset validator
+    REM Install usd-exchange package and test option to get the usd-validation-nvidia package
     echo Installing usd-exchange wheel version !USDEX_VERSION! from !PIP_EXTRA_INDEX_URL!
     python.exe -m pip install usd-exchange[test]==!USDEX_VERSION!
     if !errorlevel! neq 0 ( exit /b !errorlevel! )
 )
 
-python.exe %SCRIPT_DIR%\source\assetValidator\assetValidatorBootstrap.py %*
+python.exe %SCRIPT_DIR%\source\validateUsd\validateUsdBootstrap.py %*
 
 EXIT /B %ERRORLEVEL%

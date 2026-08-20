@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright (c) 2024 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+// SPDX-FileCopyrightText: Copyright (c) 2024-2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 // SPDX-License-Identifier: MIT
 //
 
@@ -54,7 +54,7 @@ std::string copyTextureToStagePath(const std::string& stagePath, const std::stri
     // Copy the HDRI texture to the stage path "textures" subdirectory
     const std::string texturesSubDir("textures");
     std::string textureSourcePath(
-        pxr::TfStringPrintf("%s../../../resources/Materials/%s", pxr::TfGetPathName(pxr::ArchGetExecutablePath()).c_str(), textureFile.c_str())
+        pxr::TfStringPrintf("%s../../../../resources/Materials/%s", pxr::TfGetPathName(pxr::ArchGetExecutablePath()).c_str(), textureFile.c_str())
     );
     std::string stagePathParent(pxr::TfGetPathName(stagePath));
     std::string textureTargetPath;

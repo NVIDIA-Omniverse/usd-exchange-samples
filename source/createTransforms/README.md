@@ -30,13 +30,13 @@ This sample is implemented in both C++ and Python.  To run:
 
 ## Hardcoded items
 
-- If a stage is created, it has a default prim named "World", Y-up axis, 1 cm linear units
-- A prim (either found or created) is rotated 45 degrees in the prim's middle rotation axis
+- If a stage is created, it has a default prim named "World", Z-up axis, 1 m linear units
+- A prim (either found or created) is rotated 45 degrees in the prim's last rotation axis
     - The prim is found using a method called [stage traversal](https://openusd.org/release/tut_traversing_stage.html)
     - If a xformable prim isn't found a cube will be created to rotate
-    - Note that the typical rotation order is XYZ, so the expectation is that the sample rotates the prim on the Y axis
-- A Xform prim named "groundXform" is created and lowered 55 cm
-- A cube prim named "groundCube" is created as a child of "groundXform" with a scale of (20, 0.1, 20)
+    - Note that the typical rotation order is XYZ, so the expectation is that the sample rotates the prim on the Z axis
+- A Xform prim named "groundXform" is created and lowered 0.55 m
+- A cube prim named "groundCube" is created as a child of "groundXform" with a scale of (20, 20, 0.1)
 - A cube prim named "quatCube" is created with a quaternion orientation
 
 ## More resources
@@ -60,4 +60,5 @@ Usage:
   -a, --usda          Output a text stage rather than binary
   -h, --help          Print usage
   -p, --path arg      Alternate destination stage path (default: c:/Users/username/AppData/Local/Temp/usdex/sample.usdc)
+  -z, --usdz          Package the output stage as USDZ
 ```

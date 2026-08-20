@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: Copyright (c) 2024-2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-FileCopyrightText: Copyright (c) 2024-2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: MIT
 #
 
@@ -11,7 +11,7 @@ import common.sysUtils
 import utils.BaseTestCase as BaseTestCaseModule
 import utils.fileFormat
 import utils.shell
-from pxr import Usd, UsdGeom, UsdLux
+from pxr import Gf, Usd, UsdGeom, UsdLux
 from utils.ScopedEnvVar import ScopedEnvVar
 
 
@@ -42,6 +42,9 @@ class CreateStageTestCase(BaseTestCaseModule.BaseTestCase):
         typedPrim = UsdLux.DistantLight(prim)
         self.assertTrue(typedPrim)
         self.assertIsInstance(typedPrim, UsdLux.DistantLight)
+        self.assertEqual(typedPrim.GetIntensityAttr().Get(), 1000.0)
+        self.assertEqual(prim.GetAttribute("xformOp:rotateXYZ").Get(), Gf.Vec3f(20.0, 0.0, 10.0))
+        self.assertIn("xformOp:rotateXYZ", [str(token) for token in prim.GetAttribute("xformOpOrder").Get()])
 
         stage = None
 

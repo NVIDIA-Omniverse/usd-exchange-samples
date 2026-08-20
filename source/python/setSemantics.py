@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: Copyright (c) 2024-2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-FileCopyrightText: Copyright (c) 2024-2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: MIT
 #
 
@@ -17,7 +17,7 @@ def createHouse(stage):
     transform = Gf.Transform()
 
     validToken = usdex.core.getValidChildName(stage.GetDefaultPrim(), "house")
-    transform.SetTranslation(Gf.Vec3d(300, 0, 300))
+    transform.SetTranslation(Gf.Vec3d(3, -3, 0))
     xformPrim = usdex.core.defineXform(stage.GetDefaultPrim(), validToken, transform)
 
     #################################
@@ -35,8 +35,8 @@ def createHouse(stage):
     roof = common.usdUtils.createCube(xformPrim.GetPrim(), "roof")
     # Set the scale
     transform.SetIdentity()
-    transform.SetTranslation(Gf.Vec3d(0, 52, 0))
-    transform.SetScale(Gf.Vec3d(1.2, 0.05, 1.2))
+    transform.SetTranslation(Gf.Vec3d(0, 0, 0.52))
+    transform.SetScale(Gf.Vec3d(1.2, 1.2, 0.05))
     usdex.core.setLocalTransform(roof, transform)
 
     #################################
@@ -45,8 +45,8 @@ def createHouse(stage):
     door = common.usdUtils.createCube(xformPrim.GetPrim(), "door")
     # Set the scale
     transform.SetIdentity()
-    transform.SetTranslation(Gf.Vec3d(0, -25, -50))
-    transform.SetScale(Gf.Vec3d(0.2, 0.5, 0.05))
+    transform.SetTranslation(Gf.Vec3d(0, 0.5, -0.25))
+    transform.SetScale(Gf.Vec3d(0.2, 0.05, 0.5))
     usdex.core.setLocalTransform(door, transform)
 
     #################################
@@ -55,8 +55,8 @@ def createHouse(stage):
     window = common.usdUtils.createCube(xformPrim.GetPrim(), "window")
     # Set the scale
     transform.SetIdentity()
-    transform.SetTranslation(Gf.Vec3d(0, 0, 50))
-    transform.SetScale(Gf.Vec3d(0.3, 0.3, 0.05))
+    transform.SetTranslation(Gf.Vec3d(0, -0.5, 0))
+    transform.SetScale(Gf.Vec3d(0.3, 0.05, 0.3))
     usdex.core.setLocalTransform(window, transform)
 
     return xformPrim.GetPath()
@@ -100,7 +100,8 @@ def main(args):
             print("{} {}".format(prim.GetPath(), query.ComputeUniqueInheritedLabels(prim)))
 
     # Save the stage to disk
-    usdex.core.saveStage(stage, "OpenUSD Exchange Samples")
+    if not common.usdUtils.saveStage(stage, "OpenUSD Exchange Samples", args.usdzPath):
+        sys.exit(-1)
 
 
 if __name__ == "__main__":

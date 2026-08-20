@@ -3,6 +3,7 @@
 This sample demonstrates how to open/create a stage with key metadata and set prim display names using the OpenUSD Exchange SDK.
 
 OpenUSD has strict requirements on what names are valid for a UsdObject. There is support for storing a "Display Name" as metadata on a Prim.
+The sample also demonstrates how to preserve a preferred name when uniqueness changes the authored prim name without adding redundant display names.
 
 - [Exchange SDK documentation on display names](https://docs.omniverse.nvidia.com/usd/code-docs/usd-exchange-sdk/latest/api/group__names.html)
 - [OpenUSD documentation on UsdObject display names](https://openusd.org/release/api/class_usd_object.html#a89d396665875d4d4a88b5ecb0a22acb0)
@@ -20,8 +21,10 @@ The Gf, Sdf, Usd, and UsdGeom modules are used.
 
 - computeEffectiveDisplayName()
 - createStage()
+- getValidChildName()
 - getValidChildNames()
 - get/setDisplayName()
+- setEffectiveDisplayName()
 - saveStage()
 
 ## Languages
@@ -34,6 +37,7 @@ This sample is implemented in both C++ and Python.  To run:
 ## Hardcoded items
 
 - Make a rocket with interesting part display names using 🚀
+- Create prims from the preferred names `[foo, foo, bar, bar, foo]` and only author display names for the uniquified results.
 
 ## Command Line Arguments
 
@@ -44,4 +48,5 @@ Usage:
   -a, --usda          Output a text stage rather than binary
   -h, --help          Print usage
   -p, --path arg      Alternate destination stage path (default: c:/Users/username/AppData/Local/Temp/usdex/sample.usdc)
+  -z, --usdz          Package the output stage as USDZ
 ```

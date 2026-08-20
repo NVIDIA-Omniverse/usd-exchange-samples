@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+// SPDX-FileCopyrightText: Copyright (c) 2025-2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 // SPDX-License-Identifier: MIT
 //
 
@@ -23,6 +23,7 @@
 #include <pxr/usd/usdGeom/sphere.h>
 #include <pxr/usd/usdGeom/tokens.h>
 #include <pxr/usd/usdGeom/xformable.h>
+#include <pxr/usd/usdPhysics/articulationRootAPI.h>
 #include <pxr/usd/usdPhysics/collisionAPI.h>
 #include <pxr/usd/usdPhysics/rigidBodyAPI.h>
 #include <pxr/usd/usdPhysics/scene.h>
@@ -50,8 +51,8 @@ void createPhysicsScene(pxr::UsdStageRefPtr stage)
 
     // Create physics scene, note that we don't have to specify gravity because
     // the default value is derived from the stage's upAxis and linear scale.
-    // In this case the gravity would be (0.0, -981.0, 0.0) since the stage has a
-    // Y upAxis with a centimeter linear scale.
+    // In this case the gravity would be (0.0, 0.0, -9.81) since the stage has a
+    // Z upAxis with a meter linear scale.
     const auto physicsSceneName = usdex::core::getValidChildName(defaultPrim, "PhysicsScene");
     const pxr::SdfPath scenePath = defaultPrim.GetPath().AppendChild(physicsSceneName);
     pxr::UsdPhysicsScene::Define(stage, scenePath);
@@ -79,8 +80,8 @@ bool createGroundWithCollision(pxr::UsdStageRefPtr stage)
     }
 
     const auto groundName = usdex::core::getValidChildName(defaultPrim, "ground");
-    const double width = 2.0;
-    const double length = 2.0;
+    const double width = 0.02;
+    const double length = 0.02;
     const pxr::TfToken axis = pxr::UsdGeomGetStageUpAxis(stage);
     pxr::UsdGeomPlane plane = usdex::core::definePlane(defaultPrim, groundName.GetString(), width, length, axis);
     if (!plane)
@@ -92,7 +93,7 @@ bool createGroundWithCollision(pxr::UsdStageRefPtr stage)
     pxr::UsdPhysicsCollisionAPI::Apply(plane.GetPrim());
 
     // Set transform.
-    const pxr::GfVec3d position(0, -50, 0);
+    const pxr::GfVec3d position(0, 0, -0.5);
     const pxr::GfVec3d pivot(0);
     const pxr::GfVec3f rotation(0, 0, 0);
     const pxr::GfVec3f scale(1, 1, 1);
@@ -118,10 +119,10 @@ void simpleRigidBodiesAndCollisions(pxr::UsdStageRefPtr stage, const pxr::GfVec3
     // Create sphere with rigid body and collision.
     {
         const pxr::GfVec3f displayColor(1, 0, 0);
-        const pxr::GfVec3d position(0, 200, 0);
+        const pxr::GfVec3d position(0, 0, 2);
         const pxr::GfVec3f rotation(0);
         const pxr::GfVec3f scale(1);
-        pxr::UsdGeomSphere sphere = samples::createSphere(simpleXform.GetPrim(), "sphere", 30.0f, position, rotation, scale, displayColor);
+        pxr::UsdGeomSphere sphere = samples::createSphere(simpleXform.GetPrim(), "sphere", 0.3, position, rotation, scale, displayColor);
 
         // Set rigid body.
         pxr::UsdPhysicsRigidBodyAPI::Apply(sphere.GetPrim());
@@ -133,10 +134,10 @@ void simpleRigidBodiesAndCollisions(pxr::UsdStageRefPtr stage, const pxr::GfVec3
     // Create cube with rigid body and collision.
     {
         const pxr::GfVec3f displayColor(0, 1, 0);
-        const pxr::GfVec3d position(120, 250, 0);
-        const pxr::GfVec3f rotation(50, 45, 0);
+        const pxr::GfVec3d position(1.2, 0, 2.5);
+        const pxr::GfVec3f rotation(50, 0, 45);
         const pxr::GfVec3f scale(1);
-        pxr::UsdGeomCube cube = samples::createCube(simpleXform.GetPrim(), "cube", 50.0f, position, rotation, scale, displayColor);
+        pxr::UsdGeomCube cube = samples::createCube(simpleXform.GetPrim(), "cube", 0.5, position, rotation, scale, displayColor);
 
         // Set rigid body.
         pxr::UsdPhysicsRigidBodyAPI::Apply(cube.GetPrim());
@@ -171,13 +172,13 @@ void simplePhysicsFixedJoints(pxr::UsdStageRefPtr stage, const pxr::GfVec3d& cen
     const auto capsuleNames = usdex::core::getValidChildNames(baseXform.GetPrim(), srcCapsuleNames);
 
     // Create capsules with rigid body and collision.
-    const float capsuleWidth = 80.0f;
-    const float capsuleRadius = 10.0f;
-    const float capsuleMargin = 2.0f;
-    const float capsuleLengthX = capsuleWidth + capsuleRadius * 2.0f + capsuleMargin;
+    const double capsuleWidth = 0.8;
+    const double capsuleRadius = 0.1;
+    const double capsuleMargin = 0.02;
+    const double capsuleLengthX = capsuleWidth + capsuleRadius * 2.0 + capsuleMargin;
     double px = 0.0;
-    const double py = 200.0;
-    double pz = 0.0;
+    const double py = 0.0;
+    double pz = 2.0;
 
     std::vector<pxr::UsdGeomXformable> capsules;
     for (int i = 0; i < capsuleCount; i++, px += capsuleLengthX)
@@ -208,13 +209,15 @@ void simplePhysicsFixedJoints(pxr::UsdStageRefPtr stage, const pxr::GfVec3d& cen
         capsules.push_back(capsule);
     }
 
+    // Mark the first capsule as the articulation root of the kinematic tree.
+    pxr::UsdPhysicsArticulationRootAPI::Apply(capsules[0].GetPrim());
+
     // Connect the root and the first capsule with a FixedJoint to fix them in place.
     {
         pxr::UsdPrim body0 = baseXform.GetPrim();
         pxr::UsdPrim body1 = capsules[0].GetPrim();
 
         const std::string name = "FixedJoint_root";
-
         // The center position and rotation of the physics joint in body1's local coordinate system.
         // Body0 will be automatically aligned to match this joint frame.
         const usdex::core::JointFrame jointFrame = { /* space */ usdex::core::JointFrame::Space::Body1,
@@ -286,13 +289,13 @@ void simplePhysicsRevoluteJoints(pxr::UsdStageRefPtr stage, const pxr::GfVec3d& 
     const auto capsuleNames = usdex::core::getValidChildNames(baseXform.GetPrim(), srcCapsuleNames);
 
     // Create capsules with rigid body and collision.
-    const float capsuleWidth = 80.0f;
-    const float capsuleRadius = 10.0f;
-    const float capsuleMargin = 2.0f;
-    const float capsuleLengthX = capsuleWidth + capsuleRadius * 2.0f + capsuleMargin;
+    const double capsuleWidth = 0.8;
+    const double capsuleRadius = 0.1;
+    const double capsuleMargin = 0.02;
+    const double capsuleLengthX = capsuleWidth + capsuleRadius * 2.0 + capsuleMargin;
     double px = 0.0;
-    const double py = 200.0;
-    double pz = 0.0;
+    const double py = 0.0;
+    double pz = 2.0;
 
     std::vector<pxr::UsdGeomCapsule> capsules;
     for (int i = 0; i < capsuleCount; i++, px += capsuleLengthX)
@@ -323,6 +326,9 @@ void simplePhysicsRevoluteJoints(pxr::UsdStageRefPtr stage, const pxr::GfVec3d& 
         capsules.push_back(capsule);
     }
 
+    // Mark the first capsule as the articulation root of the kinematic tree.
+    pxr::UsdPhysicsArticulationRootAPI::Apply(capsules[0].GetPrim());
+
     // Connect the root and the first capsule with a FixedJoint to fix them in place.
     {
         pxr::UsdPrim body0 = baseXform.GetPrim();
@@ -351,10 +357,10 @@ void simplePhysicsRevoluteJoints(pxr::UsdStageRefPtr stage, const pxr::GfVec3d& 
     const auto jointNames = usdex::core::getValidChildNames(jointsXform.GetPrim(), srcJointNames);
 
     // Connect two capsules with physics joints.
-    // The rotation of a RevoluteJoint is primarily about the local Z axis and limits are set in degrees.
+    // The rotation of a RevoluteJoint is primarily about the local Y axis and limits are set in degrees.
     const float lowerLimit = -45.0f;
     const float upperLimit = 20.0f;
-    const pxr::GfVec3f axis(0, 0, 1);
+    const pxr::GfVec3f axis(0, -1, 0);
     for (int i = 1; i < capsuleCount; i++)
     {
         const std::string name = jointNames[i].GetString();
@@ -404,18 +410,18 @@ void simplePhysicsPrismaticJoints(pxr::UsdStageRefPtr stage, const pxr::GfVec3d&
     pxr::UsdGeomXform jointsXform = usdex::core::defineXform(baseXform.GetPrim(), jointsName.GetString());
 
     // Create capsules with rigid body and collision.
-    const float capsuleWidth = 80.0f;
-    const float capsuleRadius = 10.0f;
-    const float capsuleMargin = 2.0f;
-    const float capsuleLengthX = capsuleWidth + capsuleRadius * 2.0f + capsuleMargin;
+    const double capsuleWidth = 0.8;
+    const double capsuleRadius = 0.1;
+    const double capsuleMargin = 0.02;
+    const double capsuleLengthX = capsuleWidth + capsuleRadius * 2.0 + capsuleMargin;
     double px = 0.0;
-    const double py = 200.0;
-    double pz = 0.0;
+    const double py = 0.0;
+    double pz = 2.0;
 
     // Xform tilted slightly downwards.
     pxr::GfTransform tiltTransform;
     tiltTransform.SetTranslation(pxr::GfVec3d(-(capsuleLengthX * 0.5), 0, 0));
-    tiltTransform.SetRotation(pxr::GfRotation(pxr::GfVec3d(0, 0, 1), -15.0f));
+    tiltTransform.SetRotation(pxr::GfRotation(pxr::GfVec3d(0, 1, 0), 15.0f));
     const auto tiltName = usdex::core::getValidChildName(baseXform.GetPrim(), "tilt");
     pxr::UsdGeomXform tiltXform = usdex::core::defineXform(baseXform.GetPrim(), tiltName.GetString(), tiltTransform);
 
@@ -452,6 +458,9 @@ void simplePhysicsPrismaticJoints(pxr::UsdStageRefPtr stage, const pxr::GfVec3d&
         capsules.push_back(capsule);
     }
 
+    // Mark the first capsule as the articulation root of the kinematic tree.
+    pxr::UsdPhysicsArticulationRootAPI::Apply(capsules[0].GetPrim());
+
     // Connect the root and the first capsule with a FixedJoint to fix them in place.
     {
         pxr::UsdPrim body0 = baseXform.GetPrim();
@@ -480,10 +489,10 @@ void simplePhysicsPrismaticJoints(pxr::UsdStageRefPtr stage, const pxr::GfVec3d&
     const auto jointNames = usdex::core::getValidChildNames(jointsXform.GetPrim(), srcJointNames);
 
     // Connect two capsules with physics joints.
-    // The slide of a PrismaticJoint is primarily about the local X axis and limits are set in centimeters.
+    // The slide of a PrismaticJoint is primarily about the local X axis and limits are set in meters.
     const pxr::GfVec3f axis(1, 0, 0);
     const float lowerLimit = 0.0f;
-    const float upperLimit = 40.0f;
+    const float upperLimit = 0.4f;
     for (int i = 1; i < capsuleCount; i++)
     {
         const std::string name = jointNames[i].GetString();
@@ -537,13 +546,13 @@ void simplePhysicsSphericalJoints(pxr::UsdStageRefPtr stage, const pxr::GfVec3d&
     const auto capsuleNames = usdex::core::getValidChildNames(baseXform.GetPrim(), srcCapsuleNames);
 
     // Create capsules with rigid body and collision.
-    const float capsuleWidth = 80.0f;
-    const float capsuleRadius = 10.0f;
-    const float capsuleMargin = 2.0f;
-    const float capsuleLengthX = capsuleWidth + capsuleRadius * 2.0f + capsuleMargin;
+    const double capsuleWidth = 0.8;
+    const double capsuleRadius = 0.1;
+    const double capsuleMargin = 0.02;
+    const double capsuleLengthX = capsuleWidth + capsuleRadius * 2.0 + capsuleMargin;
     double px = 0.0;
-    const double py = 200.0;
-    double pz = 0.0;
+    const double py = 0.0;
+    double pz = 2.0;
 
     std::vector<pxr::UsdGeomXformable> capsules;
     for (int i = 0; i < capsuleCount; i++, px += capsuleLengthX)
@@ -574,6 +583,9 @@ void simplePhysicsSphericalJoints(pxr::UsdStageRefPtr stage, const pxr::GfVec3d&
         capsules.push_back(capsule);
     }
 
+    // Mark the first capsule as the articulation root of the kinematic tree.
+    pxr::UsdPhysicsArticulationRootAPI::Apply(capsules[0].GetPrim());
+
     // Connect the root and the first capsule with a FixedJoint to fix them in place.
     {
         pxr::UsdPrim body0 = baseXform.GetPrim();
@@ -603,8 +615,9 @@ void simplePhysicsSphericalJoints(pxr::UsdStageRefPtr stage, const pxr::GfVec3d&
 
     // Connect two capsules with physics joints.
     // The rotation of a SphericalJoint is primarily about the local X axis and limits are set in degrees.
-    const float coneAngle0Limit = 45.0f;
-    const float coneAngle1Limit = 20.0f;
+    // For axis X, coneAngle0 limits toward local Y and coneAngle1 toward local Z.
+    const float coneAngle0Limit = 20.0f;
+    const float coneAngle1Limit = 45.0f;
     const pxr::GfVec3f axis(1, 0, 0);
     for (int i = 1; i < capsuleCount; i++)
     {
@@ -666,15 +679,15 @@ void physicsMaterials(pxr::UsdStageRefPtr stage, const pxr::GfVec3d& centerPos)
     std::vector<pxr::UsdGeomXformable> cubes;
     for (int i = 0; i < 3; i++)
     {
-        double pz = -100.0 + i * 100.0;
+        double py = 1.0 - i * 1.0;
         // Create a ramp. This does not assign a rigid body, only collision.
         {
             const std::string name = rampNames[i].GetString();
             const pxr::GfVec3f displayColor(0, 1, 0);
-            const pxr::GfVec3d position(20, 20, pz);
-            const pxr::GfVec3f rotation(0, 0, -10.0f);
-            const pxr::GfVec3f scale(2.5f, 0.05f, 0.8f);
-            pxr::UsdGeomCube cube = samples::createCube(rampsXform.GetPrim(), name, 100.0f, position, rotation, scale, displayColor);
+            const pxr::GfVec3d position(0.2, py, 0.2);
+            const pxr::GfVec3f rotation(0, 10.0f, 0);
+            const pxr::GfVec3f scale(2.5f, 0.8f, 0.05f);
+            pxr::UsdGeomCube cube = samples::createCube(rampsXform.GetPrim(), name, 1.0, position, rotation, scale, displayColor);
 
             // Set collision.
             pxr::UsdPhysicsCollisionAPI::Apply(cube.GetPrim());
@@ -686,10 +699,10 @@ void physicsMaterials(pxr::UsdStageRefPtr stage, const pxr::GfVec3d& centerPos)
         {
             const std::string name = cubeNames[i].GetString();
             const pxr::GfVec3f displayColor(0, 0, 1);
-            const pxr::GfVec3d position(-60, 160, pz);
+            const pxr::GfVec3d position(-0.6, py, 1.6);
             const pxr::GfVec3f rotation(0, 0, 0);
             const pxr::GfVec3f scale(1);
-            pxr::UsdGeomCube cube = samples::createCube(cubesXform.GetPrim(), name, 30.0f, position, rotation, scale, displayColor);
+            pxr::UsdGeomCube cube = samples::createCube(cubesXform.GetPrim(), name, 0.3, position, rotation, scale, displayColor);
 
             // Set rigid body.
             pxr::UsdPhysicsRigidBodyAPI::Apply(cube.GetPrim());
@@ -779,22 +792,25 @@ int main(int argc, char* argv[])
 
     // Simple rigid bodies and collisions.
     // -830 > -610
-    simpleRigidBodiesAndCollisions(stage, pxr::GfVec3d(-250, 0, -820));
+    simpleRigidBodiesAndCollisions(stage, pxr::GfVec3d(-2.5, 8.2, 0));
 
     // Simple FixedJoint.
-    simplePhysicsFixedJoints(stage, pxr::GfVec3d(-150, 0, -660));
+    simplePhysicsFixedJoints(stage, pxr::GfVec3d(-1.5, 6.6, 0));
     // Simple RevoluteJoint.
-    simplePhysicsRevoluteJoints(stage, pxr::GfVec3d(-150, 0, -610));
+    simplePhysicsRevoluteJoints(stage, pxr::GfVec3d(-1.5, 6.1, 0));
     // Simple PrismaticJoint.
-    simplePhysicsPrismaticJoints(stage, pxr::GfVec3d(-150, 0, -560));
+    simplePhysicsPrismaticJoints(stage, pxr::GfVec3d(-1.5, 5.6, 0));
     // Simple SphericalJoint.
-    simplePhysicsSphericalJoints(stage, pxr::GfVec3d(-150, 0, -510));
+    simplePhysicsSphericalJoints(stage, pxr::GfVec3d(-1.5, 5.1, 0));
 
     // physics materials.
-    physicsMaterials(stage, pxr::GfVec3d(200, 0, -820));
+    physicsMaterials(stage, pxr::GfVec3d(2, 8.2, 0));
 
     // Save the stage to disk
-    usdex::core::saveStage(stage, "OpenUSD Exchange Samples");
+    if (!samples::saveStage(stage, "OpenUSD Exchange Samples", args.usdzPath))
+    {
+        return -1;
+    }
 
     return 0;
 }

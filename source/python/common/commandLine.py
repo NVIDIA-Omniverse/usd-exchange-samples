@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: Copyright (c) 2024-2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-FileCopyrightText: Copyright (c) 2024-2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: MIT
 #
 
@@ -13,8 +13,10 @@ def parseCommonOptions(parser):
 
     parser.add_argument("-a", "--usda", action="store_true", help="Output a text stage rather than binary")
     parser.add_argument("-p", "--path", action="store", default=stagePath, help="Alternate destination stage path")
+    parser.add_argument("-z", "--usdz", action="store_true", help="Package the output stage as USDZ")
     args = parser.parse_args()
     args.fileFormatArgs = dict()
+    args.usdzPath = None
 
     # Stage path and format:
     # --path c:\folder\stage.usdc --usda -> error about invalid arg combo
@@ -33,5 +35,8 @@ def parseCommonOptions(parser):
             # Usd.UsdFileFormat.Tokens.FormatArg doesn't exist, but it should
             # Usd.UsdaFileFormat.Tokens.Id doesn't exist, but it should
             args.fileFormatArgs = {"format": "usda"}
+
+    if args.usdz:
+        args.usdzPath = pathlib.Path(args.path).with_suffix(".usdz").as_posix()
 
     return args

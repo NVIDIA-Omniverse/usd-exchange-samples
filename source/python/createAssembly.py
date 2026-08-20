@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-FileCopyrightText: Copyright (c) 2025-2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: MIT
 #
 
@@ -26,28 +26,30 @@ sampleTokens = SampleTokens()
 # All constants in one organized class
 class Constants:
     # Car component constants
-    carDims = Gf.Vec3d(17.8, 3.18, 4.45)  # length, height, width in cm
+    carDims = Gf.Vec3d(0.178, 0.0318, 0.0445)  # length, height, width in m
     carBodyColor = Gf.Vec3f(1, 0, 0)  # red
+    lightBlue = Gf.Vec3f(0.3284, 0.7490, 0.7098)
+    green = Gf.Vec3f(0.294, 0.725, 0)
 
     # Axle constants
-    axleLength = 2.54
-    axleRadius = 0.11
-    axleHeadRadius = 0.3
-    axleHeadLength = 0.1
+    axleLength = 0.0254
+    axleRadius = 0.0011
+    axleHeadRadius = 0.003
+    axleHeadLength = 0.001
     axleColor = Gf.Vec3f(0.5, 0.5, 0.75)
-    axleRearOffset = 2.0
-    axleFrontOffset = 5.08
+    axleRearOffset = 0.02
+    axleFrontOffset = 0.0508
 
     # Wheel constants
-    wheelRadius = 1.5
-    wheelWidth = 1
+    wheelRadius = 0.015
+    wheelWidth = 0.01
     wheelColor = Gf.Vec3f(0, 0, 0)  # black
 
     # Track component constants
-    trackDims = Gf.Vec3d(400, 100, 50)  # length, height, width in cm
+    trackDims = Gf.Vec3d(4, 1, 0.5)  # length, height, width in m
     trackRampColor = Gf.Vec3f(0.6, 0.4, 0.2)  # brown
     # Calculated constants
-    trackAngle = 14.0362434679264787  # height/length in degrees (precalculated: math.degrees(math.atan(100/400)))
+    trackAngle = 14.0362434679264787  # height/length in degrees (precalculated: math.degrees(math.atan(1/4)))
     trackDividerLength = math.sqrt(trackDims[0] ** 2 + trackDims[1] ** 2)
 
 
@@ -65,8 +67,8 @@ def createCarComponent(args) -> Usd.Stage:
     assetStage = usdex.core.createStage(
         identifier=stagePath.as_posix(),
         defaultPrimName=componentName,
-        upAxis=UsdGeom.Tokens.y,
-        linearUnits=UsdGeom.LinearUnits.centimeters,
+        upAxis=UsdGeom.Tokens.z,
+        linearUnits=UsdGeom.LinearUnits.meters,
         authoringMetadata="OpenUSD Exchange Samples",
     )
     if not assetStage:
@@ -99,7 +101,7 @@ def createCarComponent(args) -> Usd.Stage:
         metallic=0.0,
     )
     # Create primvar reader for the body paint color
-    common.usdUtils.addPrimvarShader(bodyMat, sampleTokens.diffuseColor, sampleTokens.bodyPaintColor)
+    usdex.core.addPrimvarShaderToPreviewMaterial(bodyMat, sampleTokens.diffuseColor, sampleTokens.bodyPaintColor)
 
     axleMat = usdex.core.definePreviewMaterial(
         parent=materialsLibraryStage.GetDefaultPrim(),
@@ -125,10 +127,10 @@ def createCarComponent(args) -> Usd.Stage:
     carXform = usdex.core.defineXform(
         parent=geomScope.GetPrim(),
         name="pinewoodCar",
-        transform=Gf.Transform(Gf.Vec3d(0, Constants.wheelRadius - Constants.axleRadius * 2, 0)),
+        transform=Gf.Transform(Gf.Vec3d(0, 0, Constants.wheelRadius - Constants.axleRadius * 2)),
     )
     bodyXform = usdex.core.defineXform(
-        parent=carXform.GetPrim(), name="bodyOffset", transform=Gf.Transform(Gf.Vec3d(0, Constants.carDims[1] * 0.5, 0))
+        parent=carXform.GetPrim(), name="bodyOffset", transform=Gf.Transform(Gf.Vec3d(0, 0, Constants.carDims[1] * 0.5))
     )
     bodyMeshRef = usdex.core.defineReference(parent=bodyXform.GetPrim(), source=bodyMesh.GetPrim())
 
@@ -145,7 +147,7 @@ def createCarComponent(args) -> Usd.Stage:
         "axleShaft",
         height=Constants.axleLength,
         radius=Constants.axleRadius,
-        axis=UsdGeom.Tokens.z,
+        axis=UsdGeom.Tokens.y,
         displayColor=Constants.axleColor,
     )
     axleHead = common.usdUtils.createCylinder(
@@ -153,8 +155,8 @@ def createCarComponent(args) -> Usd.Stage:
         "axleHead",
         height=Constants.axleHeadLength,
         radius=Constants.axleHeadRadius,
-        axis=UsdGeom.Tokens.z,
-        position=Gf.Vec3d(0, 0, -Constants.axleLength * 0.5),
+        axis=UsdGeom.Tokens.y,
+        position=Gf.Vec3d(0, Constants.axleLength * 0.5, 0),
         displayColor=Constants.axleColor,
     )
     wheel = common.usdUtils.createCylinder(
@@ -162,8 +164,8 @@ def createCarComponent(args) -> Usd.Stage:
         "wheel",
         height=Constants.wheelWidth,
         radius=Constants.wheelRadius,
-        axis=UsdGeom.Tokens.z,
-        position=Gf.Vec3d(0, 0, -Constants.wheelWidth * 0.65),
+        axis=UsdGeom.Tokens.y,
+        position=Gf.Vec3d(0, Constants.wheelWidth * 0.65, 0),
         displayColor=Constants.wheelColor,
     )
 
@@ -172,8 +174,8 @@ def createCarComponent(args) -> Usd.Stage:
     transform = Gf.Transform(
         Gf.Vec3d(
             Constants.carDims[0] * 0.5 - Constants.axleFrontOffset,
+            Constants.carDims[2] * 0.5,
             -Constants.carDims[1] * 0.5 + Constants.axleRadius * 2,
-            -Constants.carDims[2] * 0.5,
         )
     )
     usdex.core.setLocalTransform(axleXform, transform=transform)
@@ -182,10 +184,12 @@ def createCarComponent(args) -> Usd.Stage:
     axleXform = usdex.core.defineReference(parent=bodyXform.GetPrim(), source=wheelAxleXform.GetPrim(), name="axleRightFront")
     transform = Gf.Transform(
         Gf.Vec3d(
-            Constants.carDims[0] * 0.5 - Constants.axleFrontOffset, -Constants.carDims[1] * 0.5 + Constants.axleRadius * 2, Constants.carDims[2] * 0.5
+            Constants.carDims[0] * 0.5 - Constants.axleFrontOffset,
+            -Constants.carDims[2] * 0.5,
+            -Constants.carDims[1] * 0.5 + Constants.axleRadius * 2,
         )
     )
-    transform.SetRotation(Gf.Rotation(Gf.Vec3d(0, 1, 0), 180))
+    transform.SetRotation(Gf.Rotation(Gf.Vec3d(0, 0, 1), -180))
     usdex.core.setLocalTransform(axleXform, transform=transform)
 
     # Left rear axle
@@ -193,8 +197,8 @@ def createCarComponent(args) -> Usd.Stage:
     transform = Gf.Transform(
         Gf.Vec3d(
             -Constants.carDims[0] * 0.5 + Constants.axleRearOffset,
+            Constants.carDims[2] * 0.5,
             -Constants.carDims[1] * 0.5 + Constants.axleRadius * 2,
-            -Constants.carDims[2] * 0.5,
         )
     )
     usdex.core.setLocalTransform(axleXform, transform=transform)
@@ -203,10 +207,12 @@ def createCarComponent(args) -> Usd.Stage:
     axleXform = usdex.core.defineReference(parent=bodyXform.GetPrim(), source=wheelAxleXform.GetPrim(), name="axleRightRear")
     transform = Gf.Transform(
         Gf.Vec3d(
-            -Constants.carDims[0] * 0.5 + Constants.axleRearOffset, -Constants.carDims[1] * 0.5 + Constants.axleRadius * 2, Constants.carDims[2] * 0.5
+            -Constants.carDims[0] * 0.5 + Constants.axleRearOffset,
+            -Constants.carDims[2] * 0.5,
+            -Constants.carDims[1] * 0.5 + Constants.axleRadius * 2,
         )
     )
-    transform.SetRotation(Gf.Rotation(Gf.Vec3d(0, 1, 0), 180))
+    transform.SetRotation(Gf.Rotation(Gf.Vec3d(0, 0, 1), -180))
     usdex.core.setLocalTransform(axleXform, transform=transform)
 
     # Create materials content layer and bind materials to geometry
@@ -238,10 +244,17 @@ def createCarComponent(args) -> Usd.Stage:
         return None
 
     # Add asset parameterization interface, the car body paint color using a primvar (defaults to red)
-    primvar = UsdGeom.PrimvarsAPI(assetXform.GetPrim()).CreatePrimvar(sampleTokens.bodyPaintColor, Sdf.ValueTypeNames.Color3f)
-    primvar.SetInterpolation(UsdGeom.Tokens.constant)
+    primvar = usdex.core.createConstantPrimvar(
+        assetXform.GetPrim(),
+        sampleTokens.bodyPaintColor,
+        Constants.carBodyColor,
+        Sdf.ValueTypeNames.Color3f,
+    )
+    if not primvar:
+        print("Error creating body paint color primvar")
+        return None
+
     primvar.GetAttr().SetDisplayName("Car Body Paint Color")
-    primvar.Set(Constants.carBodyColor)
 
     return assetStage
 
@@ -260,8 +273,8 @@ def createTrackComponent(args) -> Usd.Stage:
     assetStage = usdex.core.createStage(
         identifier=stagePath.as_posix(),
         defaultPrimName=componentName,
-        upAxis=UsdGeom.Tokens.y,
-        linearUnits=UsdGeom.LinearUnits.centimeters,
+        upAxis=UsdGeom.Tokens.z,
+        linearUnits=UsdGeom.LinearUnits.meters,
         authoringMetadata="OpenUSD Exchange Samples",
     )
     if not assetStage:
@@ -305,7 +318,7 @@ def createTrackComponent(args) -> Usd.Stage:
 
     rampRef = usdex.core.defineReference(parent=geomScope.GetPrim(), source=rampMesh.GetPrim())
     transform = usdex.core.getLocalTransform(rampRef)
-    transform.SetTranslation(Gf.Vec3d(0, Constants.trackDims[1] * 0.5, 0))
+    transform.SetTranslation(Gf.Vec3d(0, 0, Constants.trackDims[1] * 0.5))
     usdex.core.setLocalTransform(rampRef, transform)
 
     dividers = []
@@ -314,9 +327,9 @@ def createTrackComponent(args) -> Usd.Stage:
             geomScope.GetPrim(),
             "divider",
             size=1,
-            position=Gf.Vec3d(0, Constants.trackDims[1] * 0.5, 0),
-            rotation=Gf.Vec3f(0, 0, -Constants.trackAngle),
-            scale=Gf.Vec3f(Constants.trackDividerLength, 4, 2),
+            position=Gf.Vec3d(0, 0, Constants.trackDims[1] * 0.5),
+            rotation=Gf.Vec3f(0, Constants.trackAngle, 0),
+            scale=Gf.Vec3f(Constants.trackDividerLength, 0.02, 0.04),
         )
     )
     dividers.append(
@@ -324,9 +337,9 @@ def createTrackComponent(args) -> Usd.Stage:
             geomScope.GetPrim(),
             "divider",
             size=1,
-            position=Gf.Vec3d(0, Constants.trackDims[1] * 0.5, -Constants.trackDims[2] * 0.5 + 1.1),
-            rotation=Gf.Vec3f(0, 0, -Constants.trackAngle),
-            scale=Gf.Vec3f(Constants.trackDividerLength, 4, 2),
+            position=Gf.Vec3d(0, Constants.trackDims[2] * 0.5 - 0.011, Constants.trackDims[1] * 0.5),
+            rotation=Gf.Vec3f(0, Constants.trackAngle, 0),
+            scale=Gf.Vec3f(Constants.trackDividerLength, 0.02, 0.04),
         )
     )
     dividers.append(
@@ -334,9 +347,9 @@ def createTrackComponent(args) -> Usd.Stage:
             geomScope.GetPrim(),
             "divider",
             size=1,
-            position=Gf.Vec3d(0, Constants.trackDims[1] * 0.5, Constants.trackDims[2] * 0.5 - 1.1),
-            rotation=Gf.Vec3f(0, 0, -Constants.trackAngle),
-            scale=Gf.Vec3f(Constants.trackDividerLength, 4, 2),
+            position=Gf.Vec3d(0, -Constants.trackDims[2] * 0.5 + 0.011, Constants.trackDims[1] * 0.5),
+            rotation=Gf.Vec3f(0, Constants.trackAngle, 0),
+            scale=Gf.Vec3f(Constants.trackDividerLength, 0.02, 0.04),
         )
     )
 
@@ -364,20 +377,20 @@ def createTrackComponent(args) -> Usd.Stage:
     return assetStage
 
 
-def createPinewoodDerbyAssembly(stage, trackComponentStage, carComponentStage) -> Usd.Stage:
+def createPinewoodDerbyAssembly(stage, trackComponentStage, carComponentStage) -> bool:
     transform = Gf.Transform()
-    transform.SetTranslation(Gf.Vec3d(400, -50, 600))
+    transform.SetTranslation(Gf.Vec3d(4, -6, -0.5))
     pinewoodDerbyAssembly = usdex.core.defineXform(parent=stage.GetDefaultPrim(), name="PinewoodDerbyAssembly", transform=transform)
 
     usdex.core.defineReference(parent=pinewoodDerbyAssembly.GetPrim(), source=trackComponentStage.GetDefaultPrim(), name="Track")
 
     car0Prim = usdex.core.defineReference(parent=pinewoodDerbyAssembly.GetPrim(), source=carComponentStage.GetDefaultPrim(), name="BlueCar")
-    colorPrimvar = UsdGeom.PrimvarsAPI(car0Prim.GetPrim()).GetPrimvar(sampleTokens.bodyPaintColor)
-    colorPrimvar.Set(Gf.Vec3f(0.3284, 0.7490, 0.7098))  # light blue
+    if not usdex.core.setConstantPrimvar(car0Prim.GetPrim(), sampleTokens.bodyPaintColor, Constants.lightBlue):
+        return False
 
     car1Prim = usdex.core.defineReference(parent=pinewoodDerbyAssembly.GetPrim(), source=carComponentStage.GetDefaultPrim(), name="GreenCar")
-    colorPrimvar = UsdGeom.PrimvarsAPI(car1Prim.GetPrim()).GetPrimvar(sampleTokens.bodyPaintColor)
-    colorPrimvar.Set(Gf.Vec3f(0.294, 0.725, 0))  # green
+    if not usdex.core.setConstantPrimvar(car1Prim.GetPrim(), sampleTokens.bodyPaintColor, Constants.green):
+        return False
 
     # Place the cars on the track (at the start with the appropriate spacing and rotation)
     carOffsetFromBackOfTrack = Constants.carDims[0] * 0.5 - Constants.trackDims[0] * 0.5
@@ -386,15 +399,16 @@ def createPinewoodDerbyAssembly(stage, trackComponentStage, carComponentStage) -
     carLaneOffset = Constants.trackDims[2] * 0.25
 
     transform = Gf.Transform()
-    transform.SetTranslation(Gf.Vec3d(carOffsetFromBackOfTrack, carHeight - carDropHeight, carLaneOffset))
-    transform.SetRotation(Gf.Rotation(Gf.Vec3d(0, 0, 1), -Constants.trackAngle))
+    transform.SetTranslation(Gf.Vec3d(carOffsetFromBackOfTrack, -carLaneOffset, carHeight - carDropHeight))
+    transform.SetRotation(Gf.Rotation(Gf.Vec3d(0, 1, 0), Constants.trackAngle))
     usdex.core.setLocalTransform(car0Prim, transform=transform)
 
-    transform.SetTranslation(Gf.Vec3d(carOffsetFromBackOfTrack, carHeight - carDropHeight, -carLaneOffset))
-    transform.SetRotation(Gf.Rotation(Gf.Vec3d(0, 0, 1), -Constants.trackAngle))
+    transform.SetTranslation(Gf.Vec3d(carOffsetFromBackOfTrack, carLaneOffset, carHeight - carDropHeight))
+    transform.SetRotation(Gf.Rotation(Gf.Vec3d(0, 1, 0), Constants.trackAngle))
     usdex.core.setLocalTransform(car1Prim, transform=transform)
 
     usdex.core.configureAssemblyHierarchy(pinewoodDerbyAssembly.GetPrim())
+    return True
 
 
 def main(args):
@@ -417,9 +431,12 @@ def main(args):
     print(f"Car Component: {carComponentStage.GetRootLayer().identifier}")
     print(f"Track Component: {trackComponentStage.GetRootLayer().identifier}")
 
-    createPinewoodDerbyAssembly(stage, trackComponentStage, carComponentStage)
+    if not createPinewoodDerbyAssembly(stage, trackComponentStage, carComponentStage):
+        print("Error creating assembly, exiting")
+        sys.exit(-1)
 
-    usdex.core.saveStage(stage, "OpenUSD Exchange Samples")
+    if not common.usdUtils.saveStage(stage, "OpenUSD Exchange Samples", args.usdzPath):
+        sys.exit(-1)
 
 
 if __name__ == "__main__":

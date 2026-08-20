@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: Copyright (c) 2024-2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-FileCopyrightText: Copyright (c) 2024-2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: MIT
 #
 
@@ -13,7 +13,7 @@ from pxr import Gf, Usd, UsdGeom, UsdSkel, Vt
 g_animName = "anim"
 g_skelName = "skel"
 g_skinnedMeshName = "skinnedMesh"
-g_boneSize = 100.0
+g_boneSize = 1.0
 g_timeCodesPerSecond = 24
 g_endTimeCode = 48
 
@@ -26,7 +26,7 @@ def createAndBindAnimForSkel(skeleton: UsdSkel.Skeleton, animPrimPath: str, elbo
         skeleton: The skeleton prim
         animPrimPath: The path to the animation prim to be created
         elbowMaxAngle: The max angle for the elbow joint in the animation (on the joint's X axis)
-        wristMaxAngle: The max angle for the wrist joint in the animation (on the joint's Z axis)
+        wristMaxAngle: The max angle for the wrist joint in the animation (on the joint's Y axis)
 
     Returns:
         The created UsdSkel.Animation prim
@@ -43,8 +43,8 @@ def createAndBindAnimForSkel(skeleton: UsdSkel.Skeleton, animPrimPath: str, elbo
 
     # Set constant relative translation and scale attributes
     translations = [
-        Gf.Vec3f(0, 0, g_boneSize),  # elbow
-        Gf.Vec3f(0, 0, g_boneSize),  # wrist
+        Gf.Vec3f(0, -g_boneSize, 0),  # elbow
+        Gf.Vec3f(0, -g_boneSize, 0),  # wrist
     ]
 
     # Rotate the elbow
@@ -57,7 +57,7 @@ def createAndBindAnimForSkel(skeleton: UsdSkel.Skeleton, animPrimPath: str, elbo
     # Rotate the wrist
     wristRots = [
         Gf.Rotation(Gf.Vec3d(1, 0, 0), 0),
-        Gf.Rotation(Gf.Vec3d(0, 0, 1), wristMaxAngle),
+        Gf.Rotation(Gf.Vec3d(0, 1, 0), -wristMaxAngle),
         Gf.Rotation(Gf.Vec3d(1, 0, 0), 0),
     ]
 
@@ -147,9 +147,9 @@ def createSkelMesh(parent: Usd.Prim, skelRootName: str = "skelRootGroup", initia
     # bind transforms - provide the world space transform of each joint at bind time
     bindTransforms = Vt.Matrix4dArray(
         [
-            Gf.Matrix4d(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, -g_boneSize, 1),
+            Gf.Matrix4d(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, g_boneSize, 0, 1),
             Gf.Matrix4d(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1),
-            Gf.Matrix4d(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, g_boneSize, 1),
+            Gf.Matrix4d(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, -g_boneSize, 0, 1),
         ]
     )
     skeleton.GetBindTransformsAttr().Set(bindTransforms)
@@ -159,8 +159,8 @@ def createSkelMesh(parent: Usd.Prim, skelRootName: str = "skelRootGroup", initia
     restTransforms = Vt.Matrix4dArray(
         [
             Gf.Matrix4d(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1),
-            Gf.Matrix4d(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, g_boneSize, 1),
-            Gf.Matrix4d(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, g_boneSize, 1),
+            Gf.Matrix4d(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, -g_boneSize, 0, 1),
+            Gf.Matrix4d(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, -g_boneSize, 0, 1),
         ]
     )
     skeleton.GetRestTransformsAttr().Set(restTransforms)
@@ -197,12 +197,12 @@ def createSkelMesh(parent: Usd.Prim, skelRootName: str = "skelRootGroup", initia
     #  0---j0---5
     ##############################
     points = [
-        (-g_boneSize, 0.0, -g_boneSize),
+        (-g_boneSize, g_boneSize, 0.0),
         (-g_boneSize, 0.0, 0.0),
-        (-g_boneSize, 0.0, g_boneSize),
-        (g_boneSize, 0.0, g_boneSize),
+        (-g_boneSize, -g_boneSize, 0.0),
+        (g_boneSize, -g_boneSize, 0.0),
         (g_boneSize, 0.0, 0.0),
-        (g_boneSize, 0.0, -g_boneSize),
+        (g_boneSize, g_boneSize, 0.0),
     ]
 
     # Indices for each quad
@@ -212,7 +212,7 @@ def createSkelMesh(parent: Usd.Prim, skelRootName: str = "skelRootGroup", initia
     faceVertexCounts = [4, 4]
 
     # Vertex normals
-    normals = [(0.0, 1.0, 0.0)]
+    normals = [(0.0, 0.0, 1.0)]
     normalIndices = [0, 0, 0, 0, 0, 0]
     normalsPrimvarData = usdex.core.Vec3fPrimvarData(UsdGeom.Tokens.vertex, normals, normalIndices)
 
@@ -275,12 +275,13 @@ def main(args):
         print("Error opening or creating stage, exiting")
         sys.exit(-1)
 
-    skelRoot = createSkelMesh(stage.GetDefaultPrim(), "skelRootGroup", (-300, 0, 0))
+    skelRoot = createSkelMesh(stage.GetDefaultPrim(), "skelRootGroup", (-3, 0, 0))
     if not skelRoot:
         print("Error creating skeletal mesh group, exiting")
         sys.exit(-1)
 
-    usdex.core.saveStage(stage, "OpenUSD Exchange Samples")
+    if not common.usdUtils.saveStage(stage, "OpenUSD Exchange Samples", args.usdzPath):
+        sys.exit(-1)
 
 
 if __name__ == "__main__":

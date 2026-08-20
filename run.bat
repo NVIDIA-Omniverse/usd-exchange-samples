@@ -5,7 +5,8 @@ setlocal enabledelayedexpansion
 pushd "%~dp0"
 
 set SCRIPT_DIR=%~dp0
-set RUNTIME_DIR=%SCRIPT_DIR%_build\windows-x86_64\release
+set RUNTIME_DIR=%SCRIPT_DIR%_install\windows-x86_64\release
+set PATH=%RUNTIME_DIR%\bin;%PATH%
 
 :: Read samples from allSamples.txt
 set SAMPLES=
@@ -25,7 +26,7 @@ if "%1"=="all" (
     for %%s in (%SAMPLES%) do (
         echo.
         echo === Running %%s ===
-        set SAMPLE_PATH=%RUNTIME_DIR%\%%s.exe
+        set SAMPLE_PATH=%RUNTIME_DIR%\bin\%%s.exe
         if exist "!SAMPLE_PATH!" (
             call "!SAMPLE_PATH!" !scriptArgs!
         ) else (
@@ -39,7 +40,7 @@ if "%1"=="all" (
     exit /b 0
 )
 
-set SAMPLE=%RUNTIME_DIR%\%1.exe
+set SAMPLE=%RUNTIME_DIR%\bin\%1.exe
 if exist "%SAMPLE%" (
     goto :run_sample
 )

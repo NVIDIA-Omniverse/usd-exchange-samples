@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: Copyright (c) 2024-2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-FileCopyrightText: Copyright (c) 2024-2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: MIT
 #
 
@@ -18,7 +18,7 @@ class SetDisplayNamesTestCase(BaseTestCaseModule.BaseTestCase):
 
     sampleName = "setDisplayNames"
 
-    def _checkStageContents(self, stagePath, primName):
+    def _checkStageContents(self, stagePath, primName, uniqueNamesPrimName):
         self.runAssetValidator(stagePath)
 
         stage = Usd.Stage.Open(stagePath)
@@ -43,6 +43,19 @@ class SetDisplayNamesTestCase(BaseTestCaseModule.BaseTestCase):
         for idx, child in enumerate(prim.GetChildren()):
             self.assertTrue(displayChars[idx] in usdex.core.computeEffectiveDisplayName(child))
 
+        # Check that preferred names are only authored as display names when uniqueness changed the prim name.
+        uniqueNamesPrim = stage.GetPrimAtPath(defaultPrim.GetPath().AppendChild(uniqueNamesPrimName))
+        self.assertTrue(uniqueNamesPrim)
+        expectedPrimNames = ["foo", "foo_1", "bar", "bar_1", "foo_2"]
+        expectedDisplayNames = ["", "foo", "", "bar", "foo"]
+        expectedEffectiveDisplayNames = ["foo", "foo", "bar", "bar", "foo"]
+        children = uniqueNamesPrim.GetChildren()
+        self.assertEqual(len(children), len(expectedPrimNames))
+        for idx, child in enumerate(children):
+            self.assertEqual(child.GetName(), expectedPrimNames[idx])
+            self.assertEqual(usdex.core.getDisplayName(child), expectedDisplayNames[idx])
+            self.assertEqual(usdex.core.computeEffectiveDisplayName(child), expectedEffectiveDisplayNames[idx])
+
         stage = None
 
     def runSampleOptions(self, script, programPath):
@@ -55,6 +68,7 @@ class SetDisplayNamesTestCase(BaseTestCaseModule.BaseTestCase):
                 (pathlib.Path(tempDir / "test_stage_text.usd").as_posix(), "--usda"),
             ]
             primNames = ["rocket", "rocket_1"]
+            uniqueNamesPrimNames = ["uniqueNames", "uniqueNames_1"]
 
             for args in argsRuns:
                 for idx in range(len(primNames)):
@@ -64,7 +78,7 @@ class SetDisplayNamesTestCase(BaseTestCaseModule.BaseTestCase):
                         return_code, output = utils.shell.run_shell_script(script, programPath, "-p", args[0])
 
                     self.assertEqual(return_code, 0, output)
-                    self._checkStageContents(args[0], primNames[idx])
+                    self._checkStageContents(args[0], primNames[idx], uniqueNamesPrimNames[idx])
                     utils.fileFormat.checkLayerFormat(self, args[0], args[1])
 
             # Test invalid options

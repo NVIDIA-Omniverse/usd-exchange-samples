@@ -1,9 +1,7 @@
 <project toolsVersion="5.0">
   <import path="../_build/target-deps/usd-exchange/$config/dev/deps/all-deps.packman.xml">
     <filter include="cxxopts"/>
-    <filter include="premake"/>
   </import>
 
-  <dependency name="premake" linkPath="../_build/host-deps/premake" />
   <dependency name="cxxopts" linkPath="../_build/target-deps/cxxopts" />
 </project>

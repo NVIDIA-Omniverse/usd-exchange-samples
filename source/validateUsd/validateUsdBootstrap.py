@@ -1,11 +1,11 @@
-# SPDX-FileCopyrightText: Copyright (c) 2022-2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-FileCopyrightText: Copyright (c) 2022-2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: MIT
 #
 
 import os
 
-from omni.asset_validator import ValidationArgsExec, create_validation_parser
 from pxr import Ar
+from usd_validation_nvidia import ValidationArgsExec, create_validation_parser
 
 
 def getCoreMaterialsPath():

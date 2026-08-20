@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: Copyright (c) 2024-2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-FileCopyrightText: Copyright (c) 2024-2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: MIT
 #
 
@@ -10,7 +10,7 @@ import usdex.core
 import utils.BaseTestCase as BaseTestCaseModule
 import utils.fileFormat
 import utils.shell
-from pxr import Usd, UsdGeom
+from pxr import Gf, Usd, UsdGeom
 
 
 class CreateCamerasTestCase(BaseTestCaseModule.BaseTestCase):
@@ -34,6 +34,10 @@ class CreateCamerasTestCase(BaseTestCaseModule.BaseTestCase):
         self.assertIsInstance(typedPrim, UsdGeom.Camera)
         translation, pivot, rotation, rotationOrder, scale = usdex.core.getLocalTransformComponents(prim)
         focusDistance = typedPrim.GetFocusDistanceAttr().Get()
+        self.assertTrue(Gf.IsClose(translation, Gf.Vec3d(65.71555, -58.62940, 14.15558), 0.00001))
+        self.assertTrue(Gf.IsClose(rotation, Gf.Vec3f(81.474, -0.314, 47.484), 0.001))
+        self.assertAlmostEqual(focusDistance, 88.62, 2)
+        self.assertAlmostEqual(typedPrim.GetFocalLengthAttr().Get(), 1.0)
         self.assertAlmostEqual(translation.GetLength() / focusDistance, 1, 0)
         self.assertAlmostEqual(typedPrim.GetFStopAttr().Get(), 1.4)
 
@@ -45,6 +49,10 @@ class CreateCamerasTestCase(BaseTestCaseModule.BaseTestCase):
         self.assertIsInstance(typedPrim, UsdGeom.Camera)
         translation, pivot, rotation, rotationOrder, scale = usdex.core.getLocalTransformComponents(prim)
         focusDistance = typedPrim.GetFocusDistanceAttr().Get()
+        self.assertTrue(Gf.IsClose(translation, Gf.Vec3d(-5.06538, -2.03795, 3.04977), 0.00001))
+        self.assertTrue(Gf.IsClose(rotation, Gf.Vec3f(53.976, 1.109, -45.364), 0.001))
+        self.assertAlmostEqual(focusDistance, 5.63, 2)
+        self.assertAlmostEqual(typedPrim.GetFocalLengthAttr().Get(), 0.035)
         self.assertAlmostEqual(translation.GetLength() / focusDistance, 1, 0)
         self.assertAlmostEqual(typedPrim.GetFStopAttr().Get(), 32)
 

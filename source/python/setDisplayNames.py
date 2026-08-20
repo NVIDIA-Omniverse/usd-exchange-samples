@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: Copyright (c) 2024-2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-FileCopyrightText: Copyright (c) 2024-2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: MIT
 #
 
@@ -18,7 +18,7 @@ def createRocket(stage):
 
     # Create Xform prim with an initial transform
     validTokens = usdex.core.getValidChildNames(stage.GetDefaultPrim(), ["rocket"])
-    transform.SetTranslation(Gf.Vec3d(0, 0, -300))
+    transform.SetTranslation(Gf.Vec3d(0, 3, 0))
     xformPrim = usdex.core.defineXform(stage.GetDefaultPrim(), validTokens[0], transform)
 
     #################################
@@ -26,7 +26,7 @@ def createRocket(stage):
     #################################
     cylinder = common.usdUtils.createCylinder(xformPrim.GetPrim(), "tube")
     # Set the translation
-    transform.SetTranslation(Gf.Vec3d(0, 150, 0))
+    transform.SetTranslation(Gf.Vec3d(0, 0, 1.5))
     usdex.core.setLocalTransform(cylinder, transform)
 
     #################################
@@ -35,7 +35,7 @@ def createRocket(stage):
     cone = common.usdUtils.createCone(xformPrim.GetPrim(), "nose")
     # Set the translation
     transform.SetIdentity()
-    transform.SetTranslation(Gf.Vec3d(0, 400, 0))
+    transform.SetTranslation(Gf.Vec3d(0, 0, 4))
     usdex.core.setLocalTransform(cone, transform)
 
     #################################
@@ -44,7 +44,7 @@ def createRocket(stage):
     fin1 = common.usdUtils.createCube(xformPrim.GetPrim(), "fin")
     # Set the scale
     transform.SetIdentity()
-    transform.SetScale(Gf.Vec3d(0.01, 1, 2))
+    transform.SetScale(Gf.Vec3d(0.01, 2, 1))
     usdex.core.setLocalTransform(fin1, transform)
 
     #################################
@@ -53,7 +53,7 @@ def createRocket(stage):
     fin2 = common.usdUtils.createCube(xformPrim.GetPrim(), "fin")
     # Set the scale
     transform.SetIdentity()
-    transform.SetScale(Gf.Vec3d(2, 1, 0.01))
+    transform.SetScale(Gf.Vec3d(2, 0.01, 1))
     usdex.core.setLocalTransform(fin2, transform)
 
     #################################
@@ -84,6 +84,23 @@ def createRocket(stage):
         print(f" {child.GetName()} - {usdex.core.computeEffectiveDisplayName(child)}")
 
 
+def createUniquelyNamedPrims(stage):
+    groupName = usdex.core.getValidChildName(stage.GetDefaultPrim(), "uniqueNames")
+    groupXform = usdex.core.defineXform(stage.GetDefaultPrim(), groupName)
+
+    preferredNames = ["foo", "foo", "bar", "bar", "foo"]
+    primNames = usdex.core.getValidChildNames(groupXform.GetPrim(), preferredNames)
+
+    print("Unique prim names and their authored display names:")
+    for primName, preferredName in zip(primNames, preferredNames):
+        xformPrim = usdex.core.defineXform(groupXform.GetPrim(), primName)
+
+        # The preferred name is only authored as a display name when uniqueness changed the prim name.
+        usdex.core.setEffectiveDisplayName(xformPrim.GetPrim(), preferredName)
+
+        print(f" {xformPrim.GetPrim().GetName()} - <{usdex.core.getDisplayName(xformPrim.GetPrim())}>")
+
+
 def main(args):
     print(f"Stage path: {args.path}")
 
@@ -93,8 +110,10 @@ def main(args):
         sys.exit(-1)
 
     createRocket(stage)
+    createUniquelyNamedPrims(stage)
 
-    usdex.core.saveStage(stage, "OpenUSD Exchange Samples")
+    if not common.usdUtils.saveStage(stage, "OpenUSD Exchange Samples", args.usdzPath):
+        sys.exit(-1)
 
 
 if __name__ == "__main__":

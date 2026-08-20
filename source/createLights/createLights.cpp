@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright (c) 2024-2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+// SPDX-FileCopyrightText: Copyright (c) 2024-2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 // SPDX-License-Identifier: MIT
 //
 
@@ -37,24 +37,24 @@ pxr::UsdLuxRectLight createRectLight(pxr::UsdStagePtr stage)
     pxr::UsdLuxRectLight rectLightPrim = usdex::core::defineRectLight(
         stage->GetDefaultPrim(), /* parent prim */
         rectLightNames[0], /* light name */
-        100.0f, /* width */
-        33.0f, /* height */
-        5000.0f /* intensity */
+        0.25f, /* width */
+        0.25f, /* height */
+        500.0f /* intensity */
     );
 
-    // Move the light up and rotate it so it shines down onto the stage
+    // Move the light up; identity rotation keeps local -Z aimed down the stage up-axis
     usdex::core::setLocalTransform(
         rectLightPrim, /* xformable */
-        pxr::GfVec3d(0.0, 300.0, 0.0), /* translation */
+        pxr::GfVec3d(0.0, 0.0, 0.6), /* translation */
         pxr::GfVec3d(0.0), /* pivot */
-        pxr::GfVec3f(-90.0, 0.0, 0.0), /* rotation - pointing -z down */
+        pxr::GfVec3f(0.0, 0.0, 0.0), /* rotation - local -Z points down */
         usdex::core::RotationOrder::eXyz,
         pxr::GfVec3f(1.0) /* scale */
     );
 
     // Grab the LuxLightAPI so we can set generic light attributes
     pxr::UsdLuxLightAPI lightApi = pxr::UsdLuxLightAPI(rectLightPrim);
-    lightApi.CreateColorAttr().Set(pxr::GfVec3f(0.0f, 0.0f, 1.0f));
+    lightApi.CreateColorAttr().Set(pxr::GfVec3f(0.3f, 0.0f, 1.0f));
 
     return rectLightPrim;
 }
@@ -74,7 +74,6 @@ pxr::UsdLuxDomeLight createDomeLight(pxr::UsdStagePtr stage, const std::string& 
 
     // Create the dome light (note that some renderers have issues with more than one visible domelight)
     // NOTE: Kit/RTX wants a high intensity (1000), USDView likes a low intensity (0.3)
-    // NOTE: Kit/RTX renders domelights with a Z-up axis, rather than Y-up as USDView does
     pxr::UsdLuxDomeLight domeLightPrim = usdex::core::defineDomeLight(
         stage->GetDefaultPrim(), /* parent prim */
         domeLightNames[0], /* light name */
@@ -82,15 +81,11 @@ pxr::UsdLuxDomeLight createDomeLight(pxr::UsdStagePtr stage, const std::string& 
         texturePath.c_str() /* texturePath */
     );
 
-    // Rotate the dome light if using Kit/RTX for rendering
-    // usdex::core::setLocalTransform(
-    //     domeLightPrim, /* xformable */
-    //     pxr::GfVec3d(0.0), /* translation */
-    //     pxr::GfVec3d(0.0), /* pivot */
-    //     pxr::GfVec3f(-90.0, 0.0, 0.0), /* rotation - pointing -z down */
-    //     usdex::core::RotationOrder::eXyz,
-    //     pxr::GfVec3f(1.0) /* scale */
-    // );
+    // Align the dome's default Y-up orientation with the stage up-axis
+    domeLightPrim.OrientToStageUpAxis();
+
+    // Preserve the previous 1 km guide size now that each stage unit represents one meter
+    domeLightPrim.CreateGuideRadiusAttr().Set(1000.0f);
 
     return domeLightPrim;
 }
@@ -113,11 +108,14 @@ int main(int argc, char* argv[])
     createRectLight(stage);
 
     // Create a textured dome light
-    std::string texturePath = samples::copyTextureToStagePath(args.stagePath, "kloofendal_48d_partly_cloudy.hdr");
+    std::string texturePath = samples::copyTextureToStagePath(args.stagePath, "kloofendal_48d_partly_cloudy.exr");
     createDomeLight(stage, texturePath);
 
     // Save the stage to disk
-    usdex::core::saveStage(stage, "OpenUSD Exchange Samples");
+    if (!samples::saveStage(stage, "OpenUSD Exchange Samples", args.usdzPath))
+    {
+        return -1;
+    }
 
     return 0;
 }

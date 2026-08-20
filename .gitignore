@@ -64,5 +64,3 @@ pyLogging.log
 
 # packman packaging file
 PACKAGE-DEPS.yaml
-
-deps/host-deps.packman.xml

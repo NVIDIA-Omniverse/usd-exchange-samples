@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: Copyright (c) 2024-2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-FileCopyrightText: Copyright (c) 2024-2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: MIT
 #
 
@@ -9,7 +9,7 @@ import traceback
 import common.commandLine
 import common.usdUtils
 import usdex.core
-from pxr import Tf, Usd, UsdGeom, UsdLux
+from pxr import Gf, Tf, Usd, UsdGeom, UsdLux
 
 
 def main(args):
@@ -18,12 +18,12 @@ def main(args):
     usdex.core.activateDiagnosticsDelegate()
     try:
         # Create/overwrite a USD stage, ensuring that key metadata is set
-        # NOTE: UsdGeom.GetFallbackUpAxis() is typically set to UsdGeom.Tokens.y
+        # NOTE: Samples use Z-up (UsdGeom.Tokens.z)
         stage = usdex.core.createStage(
             identifier=args.path,
             defaultPrimName="World",
-            upAxis=UsdGeom.GetFallbackUpAxis(),
-            linearUnits=UsdGeom.LinearUnits.centimeters,
+            upAxis=UsdGeom.Tokens.z,
+            linearUnits=UsdGeom.LinearUnits.meters,
             authoringMetadata=common.usdUtils.getSamplesAuthoringMetadata(),
             fileFormatArgs=args.fileFormatArgs,
         )
@@ -50,8 +50,22 @@ def main(args):
         print("Error creating distant light, exiting")
         sys.exit(-1)
 
+    # Set the light intensity to 1000
+    light.CreateIntensityAttr().Set(1000.0)
+
+    # Tilt the light down and to the side
+    usdex.core.setLocalTransform(
+        xformable=light,
+        translation=Gf.Vec3d(0.0),
+        pivot=Gf.Vec3d(0.0),
+        rotation=Gf.Vec3f(20.0, 0.0, 10.0),
+        rotationOrder=usdex.core.RotationOrder.eXyz,
+        scale=Gf.Vec3f(1.0),
+    )
+
     # Save the stage to disk
-    usdex.core.saveStage(stage, "OpenUSD Exchange Samples")
+    if not common.usdUtils.saveStage(stage, "OpenUSD Exchange Samples", args.usdzPath):
+        sys.exit(-1)
 
 
 if __name__ == "__main__":

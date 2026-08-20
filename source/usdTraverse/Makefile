@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: Copyright (c) 2023-2024 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-FileCopyrightText: Copyright (c) 2023-2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: MIT
 
 # This makefile is a simple example for an application, or converter for including, linking, and executing with
@@ -8,7 +8,7 @@
 
 # The expectation is that OpenUSD, the OpenUSD Exchange SDK, and other dependencies are present in the `$project_root/usdex/target-deps` directory
 DEPSDIR = $(CURDIR)/usdex/target-deps
-PYTHONVER = python3.10
+PYTHONVER = python3.12
 PROGRAMNAME = UsdTraverse
 
 ifndef CONFIG
@@ -39,7 +39,8 @@ endif
 # Include search directories
 USDEX_INCLUDE_DIRS = \
  -isystem $(DEPSDIR)/usd-exchange/$(CONFIG)/include \
- -isystem $(DEPSDIR)/usd/$(CONFIG)/include
+ -isystem $(DEPSDIR)/usd/$(CONFIG)/include \
+ -isystem $(DEPSDIR)/tbb/$(CONFIG)/include
 
 # USD libs (most of these not required, but this is a proper set for a fully featured converter)
 USD_LIBS = \
@@ -50,32 +51,28 @@ USD_LIBS = \
  -lusd_kind \
  -lusd_pcp \
  -lusd_plug \
+ -lusd_python \
  -lusd_sdf \
  -lusd_tf \
  -lusd_trace \
+ -lusd_ts \
  -lusd_usd \
  -lusd_usdGeom \
  -lusd_usdLux \
+ -lusd_usdMtlx \
  -lusd_usdPhysics \
  -lusd_usdShade \
+ -lusd_usdUI \
  -lusd_usdUtils \
  -lusd_vt \
  -lusd_work
 
-# For USD 24.11 and newer
-USD_LIBS += \
- -lusd_python \
- -lusd_ts
-
+# OpenUSD's shared libs pull in oneTBB; link it explicitly (the name differs by config) so the executable resolves the transitive TBB symbols they reference
 ifeq ($(CONFIG),debug)
 	USD_LIBS += -ltbb_debug
+else
+	USD_LIBS += -ltbb
 endif
-
-# For USD 24.08 and older, uncomment and remove the block above.
-# USDEX_INCLUDE_DIRS += \
-#  -isystem $(DEPSDIR)/usd/$(CONFIG)/include/boost-1_78
-# USD_LIBS += \
-#  -lboost_python310
 
 USDEX_LIBS = \
  -lusdex_core
@@ -83,7 +80,11 @@ USDEX_LIBS = \
 # Library dependency directories
 USDEX_LIB_DIRS = \
  -L$(DEPSDIR)/usd-exchange/$(CONFIG)/lib \
- -L$(DEPSDIR)/usd/$(CONFIG)/lib
+ -L$(DEPSDIR)/usd/$(CONFIG)/lib \
+ -L$(DEPSDIR)/tbb/$(CONFIG)/lib
+
+# usdMtlx depends on MaterialX, which lives in a separate dependency directory
+MATERIALX_LIB_DIR = $(DEPSDIR)/materialx/$(CONFIG)/lib
 
 # Python specifics
 ifndef PYTHON_INCLUDE_DIR
@@ -102,7 +103,7 @@ endif
 CXXFLAGS += $(CONFIG_DEFINES) $(ABI_DEFINES) $(IGNORED_WARNINGS)
 INCLUDES += $(USDEX_INCLUDE_DIRS) $(PYTHON_INCLUDE_DIR)
 LIBS += $(USD_LIBS) $(USDEX_LIBS) $(PYTHON_LIB)
-LDFLAGS += $(USDEX_LIB_DIRS) $(PYTHON_LIB_DIR)
+LDFLAGS += $(USDEX_LIB_DIRS) $(PYTHON_LIB_DIR) -Wl,-rpath-link,$(MATERIALX_LIB_DIR)
 
 OBJS = $(TARGETDIR)/$(PROGRAMNAME).o
 

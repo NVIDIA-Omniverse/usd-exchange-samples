@@ -1,12 +1,13 @@
-# SPDX-FileCopyrightText: Copyright (c) 2024-2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-FileCopyrightText: Copyright (c) 2024-2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: MIT
 #
 
+import pathlib
 import traceback
 from typing import Optional
 
 import usdex.core
-from pxr import Gf, Sdf, Tf, Usd, UsdGeom, UsdShade
+from pxr import Gf, Sdf, Tf, Usd, UsdGeom, UsdUtils
 
 
 def getSamplesAuthoringMetadata():
@@ -32,13 +33,13 @@ def openOrCreateStage(identifier: str, defaultPrimName: str = "World", fileForma
     try:
         if not layer:
             # Create/overwrite a USD stage, ensuring that key metadata is set
-            # NOTE: UsdGeom.GetFallbackUpAxis() is typically set to UsdGeom.Tokens.y
+            # NOTE: Samples use Z-up (UsdGeom.Tokens.z)
             fileFormatArgs = fileFormatArgs or dict()
             stage = usdex.core.createStage(
                 identifier=identifier,
                 defaultPrimName=defaultPrimName,
-                upAxis=UsdGeom.GetFallbackUpAxis(),
-                linearUnits=UsdGeom.LinearUnits.centimeters,
+                upAxis=UsdGeom.Tokens.z,
+                linearUnits=UsdGeom.LinearUnits.meters,
                 authoringMetadata=getSamplesAuthoringMetadata(),
                 fileFormatArgs=fileFormatArgs,
             )
@@ -48,6 +49,44 @@ def openOrCreateStage(identifier: str, defaultPrimName: str = "World", fileForma
         print(traceback.format_exc())
 
     return stage
+
+
+def packageStageAsUsdz(stage: Usd.Stage, usdzPath: str) -> bool:
+    """Package a saved stage and its dependencies into a USDZ archive."""
+    if not stage:
+        print("Error packaging USDZ: invalid stage")
+        return False
+
+    rootLayer = stage.GetRootLayer()
+    rootLayerPath = rootLayer.realPath or rootLayer.identifier
+    if not rootLayerPath:
+        print("Error packaging USDZ: stage root layer has no file path")
+        return False
+
+    rootLayerPathObj = pathlib.Path(rootLayerPath).resolve()
+    usdzPathObj = pathlib.Path(usdzPath).resolve()
+    asset = Sdf.AssetPath(rootLayerPathObj.as_posix())
+    try:
+        if not UsdUtils.CreateNewUsdzPackage(asset, usdzPathObj.as_posix()):
+            usdzPathObj.unlink(missing_ok=True)
+            print(f"Error creating USDZ package: {usdzPath}")
+            return False
+    except Tf.ErrorException as exc:
+        print(exc)
+        usdzPathObj.unlink(missing_ok=True)
+        print(f"Error creating USDZ package: {usdzPath}")
+        return False
+
+    print(f"Created USDZ package: {usdzPath}")
+    return True
+
+
+def saveStage(stage: Usd.Stage, authoringMetadata: str, usdzPath: Optional[str] = None) -> bool:
+    """Save a stage and optionally package it as USDZ."""
+    usdex.core.saveStage(stage, authoringMetadata)
+    if usdzPath:
+        return packageStageAsUsdz(stage, usdzPath)
+    return True
 
 
 def setOmniverseRefinement(prim: Usd.Prim, enabled: bool = True, level: int = 2):
@@ -91,7 +130,7 @@ def setTransform(
 def createSphere(
     parent: Usd.Prim,
     name: str = "sphere",
-    radius: float = 50,
+    radius: float = 0.5,
     position: Gf.Vec3d = None,
     rotation: Gf.Vec3f = None,
     scale: Gf.Vec3f = None,
@@ -102,7 +141,7 @@ def createSphere(
     Args:
         parent (Usd.Prim): The parent prim to create the sphere under
         name (str): The proposed name of the sphere prim
-        radius (float, optional): The radius of the sphere. Defaults to 50
+        radius (float, optional): The radius of the sphere. Defaults to 0.5
         position (Gf.Vec3d, optional): The position of the sphere. Defaults to None
         rotation (Gf.Vec3f, optional): The rotation of the sphere. Defaults to None
         scale (Gf.Vec3f, optional): The scale of the sphere. Defaults to None
@@ -124,7 +163,7 @@ def createSphere(
 def createCube(
     parent: Usd.Prim,
     name: str = "cube",
-    size: float = 100,
+    size: float = 1,
     position: Gf.Vec3d = None,
     rotation: Gf.Vec3f = None,
     scale: Gf.Vec3f = None,
@@ -135,7 +174,7 @@ def createCube(
     Args:
         parent (Usd.Prim): The parent prim to create the cube under
         name (str): The proposed name of the cube prim
-        size (float, optional): The size of the cube. Defaults to 100
+        size (float, optional): The size of the cube. Defaults to 1
         position (Gf.Vec3d, optional): The position of the cube. Defaults to None
         rotation (Gf.Vec3f, optional): The rotation of the cube. Defaults to None
         scale (Gf.Vec3f, optional): The scale of the cube. Defaults to None
@@ -157,9 +196,9 @@ def createCube(
 def createCone(
     parent: Usd.Prim,
     name: str = "cone",
-    axis: str = UsdGeom.GetFallbackUpAxis(),
-    height: float = 100,
-    radius: float = 50,
+    axis: str = UsdGeom.Tokens.z,
+    height: float = 1,
+    radius: float = 0.5,
     position: Gf.Vec3d = None,
     rotation: Gf.Vec3f = None,
     scale: Gf.Vec3f = None,
@@ -170,9 +209,9 @@ def createCone(
     Args:
         parent (Usd.Prim): The parent prim to create the cone under
         name (str, optional): The proposed name of the cone prim. Defaults to "cone"
-        axis (str, optional): The axis along which the cone is aligned. Defaults to UsdGeom.GetFallbackUpAxis(), which is typically UsdGeomTokens->y
-        height (float, optional): The height of the cone. Defaults to 100
-        radius (float, optional): The radius of the cone. Defaults to 50
+        axis (str, optional): The axis along which the cone is aligned. Defaults to UsdGeom.Tokens.z
+        height (float, optional): The height of the cone. Defaults to 1
+        radius (float, optional): The radius of the cone. Defaults to 0.5
         position (Gf.Vec3d, optional): The position of the cone. Defaults to None
         rotation (Gf.Vec3f, optional): The rotation of the cone. Defaults to None
         scale (Gf.Vec3f, optional): The scale of the cone. Defaults to None
@@ -194,9 +233,9 @@ def createCone(
 def createCylinder(
     parent: Usd.Prim,
     name: str = "cylinder",
-    axis: str = UsdGeom.GetFallbackUpAxis(),
-    height: float = 400,
-    radius: float = 50,
+    axis: str = UsdGeom.Tokens.z,
+    height: float = 4,
+    radius: float = 0.5,
     position: Gf.Vec3d = None,
     rotation: Gf.Vec3f = None,
     scale: Gf.Vec3f = None,
@@ -207,9 +246,9 @@ def createCylinder(
     Args:
         parent (Usd.Prim): The parent prim to create the cylinder under
         name (str, optional): The proposed name of the cylinder prim. Defaults to "cylinder"
-        axis (str, optional): The axis along which the cylinder is aligned. Defaults to UsdGeom.GetFallbackUpAxis(), which is typically UsdGeomTokens->y
-        height (float, optional): The height of the cylinder. Defaults to 400
-        radius (float, optional): The radius of the cylinder. Defaults to 50
+        axis (str, optional): The axis along which the cylinder is aligned. Defaults to UsdGeom.Tokens.z
+        height (float, optional): The height of the cylinder. Defaults to 4
+        radius (float, optional): The radius of the cylinder. Defaults to 0.5
         position (Gf.Vec3d, optional): The position of the cylinder. Defaults to None
         rotation (Gf.Vec3f, optional): The rotation of the cylinder. Defaults to None
         scale (Gf.Vec3f, optional): The scale of the cylinder. Defaults to None
@@ -231,9 +270,9 @@ def createCylinder(
 def createCapsule(
     parent: Usd.Prim,
     name: str = "capsule",
-    axis: str = UsdGeom.GetFallbackUpAxis(),
-    height: float = 100,
-    radius: float = 50,
+    axis: str = UsdGeom.Tokens.z,
+    height: float = 1,
+    radius: float = 0.5,
     position: Gf.Vec3d = None,
     rotation: Gf.Vec3f = None,
     scale: Gf.Vec3f = None,
@@ -244,9 +283,9 @@ def createCapsule(
     Args:
         parent (Usd.Prim): The parent prim to create the capsule under
         name (str, optional): The proposed name of the capsule prim. Defaults to "capsule"
-        axis (str, optional): The axis along which the capsule is aligned. Defaults to UsdGeom.GetFallbackUpAxis(), which is typically UsdGeomTokens->y
-        height (float, optional): The height of the capsule. Defaults to 400
-        radius (float, optional): The radius of the capsule. Defaults to 50
+        axis (str, optional): The axis along which the capsule is aligned. Defaults to UsdGeom.Tokens.z
+        height (float, optional): The height of the capsule. Defaults to 1
+        radius (float, optional): The radius of the capsule. Defaults to 0.5
 
     Returns:
         UsdGeom.Capsule: The created capsule prim
@@ -261,14 +300,14 @@ def createCapsule(
     return capsule
 
 
-def createCubeMesh(parent: str, meshName: str = "cubeMesh", halfHeight: float = 50.0, localPos: Gf.Vec3d = Gf.Vec3d(0.0)) -> UsdGeom.Mesh:
+def createCubeMesh(parent: str, meshName: str = "cubeMesh", halfHeight: float = 0.5, localPos: Gf.Vec3d = Gf.Vec3d(0.0)) -> UsdGeom.Mesh:
     """
     Creates a cube mesh with the specified half height and local position
 
     Args:
         parent (str): The parent prim for the new cube mesh
         meshName (str, optional): The name of the mesh. Defaults to "cubeMesh"
-        halfHeight (float, optional): The half height of the cube. Defaults to 50.0
+        halfHeight (float, optional): The half height of the cube. Defaults to 0.5
         localPos (Gf.Vec3d, optional): The local position of the cube. Defaults to 0,0,0
 
     Returns:
@@ -286,20 +325,20 @@ def createCubeMesh(parent: str, meshName: str = "cubeMesh", halfHeight: float = 
     ]
     faceVertexCounts = [3] * 12
     normals = [
-        (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1),
-        (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1),
-        (0, -1, 0), (0, -1, 0), (0, -1, 0), (0, -1, 0),
-        (1, 0, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0),
         (0, 1, 0), (0, 1, 0), (0, 1, 0), (0, 1, 0),
+        (0, -1, 0), (0, -1, 0), (0, -1, 0), (0, -1, 0),
+        (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1),
+        (1, 0, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0),
+        (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1),
         (-1, 0, 0), (-1, 0, 0), (-1, 0, 0), (-1, 0, 0),
     ]
     points = [
-        (h, -h, -h), (-h, -h, -h), (h, h, -h), (-h, h, -h),
-        (h, h, h), (-h, h, h), (-h, -h, h), (h, -h, h),
+        (h, h, -h), (-h, h, -h), (h, h, h), (-h, h, h),
         (h, -h, h), (-h, -h, h), (-h, -h, -h), (h, -h, -h),
-        (h, h, h), (h, -h, h), (h, -h, -h), (h, h, -h),
-        (-h, h, h), (h, h, h), (h, h, -h), (-h, h, -h),
-        (-h, -h, h), (-h, h, h), (-h, h, -h), (-h, -h, -h),
+        (h, -h, -h), (-h, -h, -h), (-h, h, -h), (h, h, -h),
+        (h, -h, h), (h, -h, -h), (h, h, -h), (h, h, h),
+        (-h, -h, h), (h, -h, h), (h, h, h), (-h, h, h),
+        (-h, -h, -h), (-h, -h, h), (-h, h, h), (-h, h, -h),
     ]
     uvs = [
         (0, 0), (0, 1), (1, 1), (1, 0),
@@ -389,22 +428,22 @@ def createWedge(
 
     # Normals for each face vertex (18 normals total)
     normals = [
-        (0, 0, 1), (0, 0, 1), (0, 0, 1),  # Face 1 (3 vertices)
-        (0, -1, 0), (0, -1, 0), (0, -1, 0), (0, -1, 0),  # Face 2 (4 vertices)
+        (0, -1, 0), (0, -1, 0), (0, -1, 0),  # Face 1 (3 vertices)
+        (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1),  # Face 2 (4 vertices)
         (-1, 0, 0), (-1, 0, 0), (-1, 0, 0), (-1, 0, 0),  # Face 3 (4 vertices)
-        (0, 0, -1), (0, 0, -1), (0, 0, -1),  # Face 4 (3 vertices)
-        (0.70710677, 0.70710677, 0), (0.70710677, 0.70710677, 0), (0.70710677, 0.70710677, 0), (0.70710677, 0.70710677, 0),  # Face 5 (4 vertices)
+        (0, 1, 0), (0, 1, 0), (0, 1, 0),  # Face 4 (3 vertices)
+        (0.70710677, 0, 0.70710677), (0.70710677, 0, 0.70710677), (0.70710677, 0, 0.70710677), (0.70710677, 0, 0.70710677),  # Face 5 (4 vertices)
     ]
 
     # Wedge points (6 vertices total)
     # Scale the reference points to match our dimensions
     points = [
-        (h, -h, h),  # Vertex 0: (1, -1, 1) scaled
-        (h, -h, -h),  # Vertex 1: (1, -1, -1) scaled
-        (-h, h, h),  # Vertex 2: (-1, 1, 1) scaled
-        (-h, h, -h),  # Vertex 3: (-1, 1, -1) scaled
-        (-h, -h, h),  # Vertex 4: (-1, -1, 1) scaled
-        (-h, -h, -h),  # Vertex 5: (-1, -1, -1) scaled
+        (h, -h, -h),  # Vertex 0: (1, -1, -1) scaled
+        (h, h, -h),  # Vertex 1: (1, 1, -1) scaled
+        (-h, -h, h),  # Vertex 2: (-1, -1, 1) scaled
+        (-h, h, h),  # Vertex 3: (-1, 1, 1) scaled
+        (-h, -h, -h),  # Vertex 4: (-1, -1, -1) scaled
+        (-h, h, -h),  # Vertex 5: (-1, 1, -1) scaled
     ]
     # fmt: on
 
@@ -441,42 +480,97 @@ def createWedge(
         pivot=Gf.Vec3d(0.0),
         rotation=Gf.Vec3f(0.0),
         rotationOrder=usdex.core.RotationOrder.eXyz,
-        scale=Gf.Vec3f(length, height, width),
+        scale=Gf.Vec3f(length, width, height),
         time=Usd.TimeCode.Default(),
     )
 
     return meshPrim
 
 
-def addPrimvarShader(material: UsdShade.Material, surfaceInputName: str, primvarName: str) -> UsdShade.Shader:
-    class ShaderTokens:
-        PrimvarReader = "PrimvarReader"
-        UsdPrimvarReader_ = "UsdPrimvarReader_"
-        varname = "varname"
-        result = "result"
+def createMeshTabletExample(
+    parent: Usd.Prim,
+    meshName: str = "meshWithGeomsubsets",
+    localPos: Gf.Vec3d = Gf.Vec3d(0.0),
+) -> UsdGeom.Mesh:
+    """Creates a tablet-like mesh used by the createMaterials GeomSubset example.
 
-    # Get the surface shader and connect the diffuse color to the primvar reader output
-    surfaceShader = usdex.core.computeEffectivePreviewSurfaceShader(material)
-    shaderId = ""
-    # Get the input and type name needed to create the primvar reader
-    shaderInput = surfaceShader.GetInput(surfaceInputName)
-    if shaderInput:
-        typeName = shaderInput.GetTypeName()
-        if typeName == Sdf.ValueTypeNames.Color3f:
-            typeName = Sdf.ValueTypeNames.Float3
-        shaderId = f"{ShaderTokens.UsdPrimvarReader_}{typeName}"
-    else:
-        print(f"Error: Cannot connect primvar <{primvarName}> to input <{surfaceInputName}> on surface shader <{surfaceShader.GetPrim().GetPath()}>")
-        return False
+    Face partitions for material binding are authored separately with
+    ``definePartitionedSubsets``.
 
-    # Create the primvar reader
-    primvarReader = UsdShade.Shader.Define(material.GetPrim().GetStage(), material.GetPrim().GetPath().AppendChild(ShaderTokens.PrimvarReader))
+    Args:
+        parent: The parent prim for the new mesh
+        meshName: The name of the mesh. Defaults to "meshWithGeomsubsets"
+        localPos: The local position of the mesh. Defaults to 0,0,0
 
-    # Set the id and input
-    primvarReader.SetShaderId(shaderId)
-    primvarReader.CreateInput(ShaderTokens.varname, Sdf.ValueTypeNames.String).Set(primvarName)
-    primvarOutput = primvarReader.CreateOutput(ShaderTokens.result, typeName)
+    Returns:
+        UsdGeom.Mesh: The created mesh
+    """
+    # fmt: off
+    faceVertexCounts = [4] * 10
+    faceVertexIndices = [
+        0, 1, 3, 2, 2, 3, 7, 6, 6, 7, 5, 4, 4, 5, 1, 0,
+        2, 6, 4, 0, 8, 9, 10, 11, 9, 8, 7, 3, 10, 9, 3, 1,
+        11, 10, 1, 5, 8, 11, 5, 7,
+    ]
+    # Uniform normals: one normal per face (collapsed from faceVarying source data).
+    normals = [
+        (-1, 0, 0), (0, 0, 1), (1, 0, 0), (0, 0, -1), (0, 1, 0),
+        (0, -1, 0), (0, -1, 0), (0, -1, 0), (0, -1, 0), (0, -1, 0),
+    ]
+    points = [
+        (-0.25, 0.0525, -0.4), (-0.25, 0.0025, -0.4), (-0.25, 0.0525, 0.4), (-0.25, 0.0025, 0.4),
+        (0.25, 0.0525, -0.4), (0.25, 0.0025, -0.4), (0.25, 0.0525, 0.4), (0.25, 0.0025, 0.4),
+        (0.2, 0.0025, 0.3), (-0.2, 0.0025, 0.3), (-0.2, 0.0025, -0.3), (0.2, 0.0025, -0.3),
+    ]
+    uvs = [
+        (0.913, 0.696), (1.0, 0.435), (0.435, 0.0), (0.87, 0.696),
+        (0.957, 0.435), (0.913, 0.0), (1.0, 0.435), (0.435, 0.696),
+        (0.87, 0.0), (0.957, 0.435), (0.957, 0.0), (1.0, 0.87),
+        (0.0, 0.0), (0.913, 0.0), (0.957, 0.87), (1.0, 0.0),
+        (0.957, 0.696), (0.0, 0.696), (0.957, 0.0), (0.913, 0.696),
+        (0.826, 0.609), (0.478, 0.609), (0.478, 0.087), (0.826, 0.087),
+        (0.435, 0.696), (0.87, 0.696), (0.435, 0.0), (0.87, 0.0),
+    ]
+    uvIndices = [
+        0, 3, 8, 5, 6, 9, 18, 15, 16, 19, 13, 10, 11, 14, 4, 1,
+        7, 17, 12, 2, 20, 21, 22, 23, 21, 20, 25, 24, 22, 21, 24, 26,
+        23, 22, 26, 27, 20, 23, 27, 25,
+    ]
+    # fmt: on
 
-    # Connect the primvar reader output to the surface shader input
-    shaderInput.ConnectToSource(primvarOutput)
-    return True
+    meshPrimName = usdex.core.getValidChildName(parent, meshName)
+    if meshPrimName != meshName:
+        print(f"Renaming input mesh name <{meshName}> to the valid USD prim name <{meshPrimName}>")
+
+    normalsPrimvarData = usdex.core.Vec3fPrimvarData(UsdGeom.Tokens.uniform, normals)
+    normalsPrimvarData.index()
+    uvsPrimvarData = usdex.core.Vec2fPrimvarData(UsdGeom.Tokens.faceVarying, uvs, uvIndices)
+    uvsPrimvarData.index()
+
+    meshPrim = usdex.core.definePolyMesh(
+        parent=parent,
+        name=meshPrimName,
+        faceVertexCounts=faceVertexCounts,
+        faceVertexIndices=faceVertexIndices,
+        points=points,
+        normals=normalsPrimvarData,
+        uvs=uvsPrimvarData,
+        displayColor=usdex.core.Vec3fPrimvarData(UsdGeom.Tokens.constant, [Gf.Vec3f(0.5, 0.5, 0.5)]),
+    )
+    if not meshPrim:
+        return meshPrim
+
+    usdex.core.setEffectiveDisplayName(meshPrim.GetPrim(), meshName)
+
+    if localPos != Gf.Vec3d(0.0):
+        usdex.core.setLocalTransform(
+            xformable=meshPrim,
+            translation=localPos,
+            pivot=Gf.Vec3d(0.0),
+            rotation=Gf.Vec3f(0.0),
+            rotationOrder=usdex.core.RotationOrder.eXyz,
+            scale=Gf.Vec3f(1),
+            time=Usd.TimeCode.Default(),
+        )
+
+    return meshPrim

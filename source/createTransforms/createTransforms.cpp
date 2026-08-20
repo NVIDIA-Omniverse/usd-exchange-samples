@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright (c) 2024-2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+// SPDX-FileCopyrightText: Copyright (c) 2024-2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 // SPDX-License-Identifier: MIT
 //
 
@@ -58,7 +58,7 @@ int main(int argc, char* argv[])
     {
         xformable = pxr::UsdGeomXformable(samples::createCube(stage->GetDefaultPrim(), "cube"));
     }
-    std::cout << "Rotating xformable< " << xformable.GetPrim().GetPath() << "> 45 degrees in the Y axis" << std::endl;
+    std::cout << "Rotating xformable< " << xformable.GetPrim().GetPath() << "> 45 degrees in the Z axis" << std::endl;
 
     pxr::GfVec3d position(0);
     pxr::GfVec3d pivot(0);
@@ -67,7 +67,7 @@ int main(int argc, char* argv[])
     pxr::GfVec3f scale(1);
     usdex::core::getLocalTransformComponents(xformable, position, pivot, rotation, rotationOrder, scale);
 
-    rotation += pxr::GfVec3f(0, 45, 0);
+    rotation += pxr::GfVec3f(0, 0, 45);
     usdex::core::setLocalTransform(
         xformable, /* xformable */
         position, /* translation */
@@ -79,19 +79,19 @@ int main(int argc, char* argv[])
 
     // Create a Xform prim with an initial transform matrix
     pxr::TfToken validToken = usdex::core::getValidChildName(stage->GetDefaultPrim(), "matrixXform");
-    // Matrix with scale 0.5, translation (100, 22, 100), rotation 22.5° around x, y, z
+    // Matrix with scale 0.5, translation (1, -1, 0.22), rotation approx. (13.49, -20.70, 24.15) XYZ
     // Note: GfMatrix4d constructor is row-major. For USD, translation belongs in the last row.
     // clang-format off
-    pxr::GfMatrix4d matrix(0.42677669529663687,  0.17677669529663687, -0.19134171618254486, 0.0,
-                           -0.10912718277836225, 0.45479804086963466,  0.17677669529663687, 0.0,
-                           0.23654367531291015, -0.10912718277836225,  0.42677669529663687, 0.0,
-                           100.0,                22.0,                 100.0,               1.0);
+    pxr::GfMatrix4d matrix(0.42677669529663687,   0.19134171618254486, 0.17677669529663687, 0.0,
+                           -0.23654367531291015,  0.42677669529663687, 0.10912718277836225, 0.0,
+                           -0.10912718277836225, -0.17677669529663687, 0.45479804086963466, 0.0,
+                           1.0,                  -1.0,                 0.22,                1.0);
     // clang-format on
     pxr::UsdGeomXform matrixXformPrim = usdex::core::defineXform(stage->GetDefaultPrim(), validToken, matrix);
     samples::createCube(
         matrixXformPrim.GetPrim(), /* parent */
         "matrixCube", /* name */
-        100.0, /* size */
+        1.0, /* size */
         std::nullopt, /* position */
         std::nullopt, /* rotation */
         std::nullopt, /* scale */
@@ -101,12 +101,12 @@ int main(int argc, char* argv[])
     // Create a Xform prim with an initial transform
     pxr::TfTokenVector validTokens = usdex::core::getValidChildNames(stage->GetDefaultPrim(), std::vector<std::string>{ "groundXform" });
     pxr::GfTransform transform;
-    transform.SetTranslation(pxr::GfVec3d(0, -55, 0));
+    transform.SetTranslation(pxr::GfVec3d(0, 0, -0.55));
     pxr::UsdGeomXform xformPrim = usdex::core::defineXform(stage->GetDefaultPrim(), validTokens[0], transform);
 
     // Create a "ground plane" cube that is scaled, use the GfMatrix arg to set the transform
     transform = pxr::GfTransform();
-    transform.SetScale(pxr::GfVec3d(20, 0.1, 20));
+    transform.SetScale(pxr::GfVec3d(20, 20, 0.1));
     pxr::UsdGeomCube cube = samples::createCube(xformPrim.GetPrim(), "groundCube");
     usdex::core::setLocalTransform(cube, transform.GetMatrix());
 
@@ -116,14 +116,17 @@ int main(int argc, char* argv[])
     double edgeLength;
     quatCube.GetSizeAttr().Get(&edgeLength);
     const double centerHeight = sqrt((edgeLength * edgeLength) / 2.0);
-    const double cubeHeight = centerHeight - 50.0; // Adjust for the height and thickness of the ground plane
+    const double cubeHeight = centerHeight - 0.5; // Adjust for the height and thickness of the ground plane
 
     // Set the orientation as a quaternion with a 45 degree rotation around the X axis - GfQuatf(real, i, j, k)
     const pxr::GfQuatf quat(0.9238795f, 0.38268343f, 0, 0);
-    usdex::core::setLocalTransform(quatCube, pxr::GfVec3d(300, cubeHeight, -300), quat);
+    usdex::core::setLocalTransform(quatCube, pxr::GfVec3d(3, 3, cubeHeight), quat);
 
     // Save the stage to disk
-    usdex::core::saveStage(stage, "OpenUSD Exchange Samples");
+    if (!samples::saveStage(stage, "OpenUSD Exchange Samples", args.usdzPath))
+    {
+        return -1;
+    }
 
     return 0;
 }

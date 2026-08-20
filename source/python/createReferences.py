@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: Copyright (c) 2024-2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-FileCopyrightText: Copyright (c) 2024-2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: MIT
 #
 
@@ -27,8 +27,8 @@ def createComponentStage(args) -> Usd.Stage:
     usdex.core.configureStage(
         stage=componentStage,
         defaultPrimName=componentName,
-        upAxis=UsdGeom.GetFallbackUpAxis(),
-        linearUnits=UsdGeom.LinearUnits.centimeters,
+        upAxis=UsdGeom.Tokens.z,
+        linearUnits=UsdGeom.LinearUnits.meters,
         authoringMetadata="OpenUSD Exchange Samples",
     )
 
@@ -39,17 +39,19 @@ def createComponentStage(args) -> Usd.Stage:
     )
 
     # Create 8 cubes in a 2x2x2 grid
-    cubeSize = 25
-    cubeSpacing = 30
+    cubeSize = 0.25
+    cubeSpacing = 0.3
     offset = -(cubeSize + (cubeSpacing - cubeSize) / 2)
     for i in range(2):
         for j in range(2):
             for k in range(2):
                 cubeName = f"Cube_{i}_{j}_{k}"
+                # Negate the k term so Cube_i_j_k maps to (+X, -Z, +Y) of the
+                # grid indices: i -> X, j -> Z (up), k -> -Y.
                 pos = Gf.Vec3d(
                     i * (cubeSize + cubeSpacing) + offset,
+                    -(k * (cubeSize + cubeSpacing) + offset),
                     j * (cubeSize + cubeSpacing) + offset,
-                    k * (cubeSize + cubeSpacing) + offset,
                 )
                 common.usdUtils.createCubeMesh(parent=componentStage.GetDefaultPrim(), meshName=cubeName, halfHeight=cubeSize, localPos=pos)
 
@@ -87,7 +89,7 @@ def main(args):
     # Create a reference prim
     primNames = usdex.core.getValidChildNames(stage.GetDefaultPrim(), ["referencePrim", "payloadPrim"])
     refTransform = Gf.Transform()
-    refTransform.SetTranslation(Gf.Vec3d(0, 2.5, 300))
+    refTransform.SetTranslation(Gf.Vec3d(0, -3, 0.025))
     prim = usdex.core.defineReference(parent=defaultPrim, source=componentStage.GetDefaultPrim(), name=primNames[0])
     xform = UsdGeom.Xform(prim)
     usdex.core.setLocalTransform(xform, refTransform)
@@ -100,7 +102,7 @@ def main(args):
         usdex.core.setLocalTransform(xformable, transform)
 
     # Create a payload prim
-    refTransform.SetTranslation(Gf.Vec3d(300, 2.5, 0))
+    refTransform.SetTranslation(Gf.Vec3d(3, 0, 0.025))
     prim = usdex.core.definePayload(parent=defaultPrim, source=componentStage.GetDefaultPrim(), name=primNames[1])
     xform = UsdGeom.Xform(prim)
     usdex.core.setLocalTransform(xform, refTransform)
@@ -112,7 +114,8 @@ def main(args):
         primvar = mesh.GetDisplayColorPrimvar()
         usdex.core.Vec3fPrimvarData(UsdGeom.Tokens.constant, color).setPrimvar(primvar)
 
-    usdex.core.saveStage(stage, "OpenUSD Exchange Samples")
+    if not common.usdUtils.saveStage(stage, "OpenUSD Exchange Samples", args.usdzPath):
+        sys.exit(-1)
 
 
 if __name__ == "__main__":

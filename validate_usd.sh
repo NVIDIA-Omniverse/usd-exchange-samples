@@ -3,6 +3,7 @@
 set -e
 
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+source "${SCRIPT_DIR}/tools/wheel/configure_python_package_index.sh"
 export PYTHONPATH=${SCRIPT_DIR}/source/python
 export PACKMAN_PYTHON=${SCRIPT_DIR}/tools/packman/python.sh
 export VENV=${SCRIPT_DIR}/_build/usdex_env
@@ -24,4 +25,4 @@ else
     python3 -m pip install "usd-exchange[test]==${USDEX_VERSION}"
 fi
 
-python3 ${SCRIPT_DIR}/source/assetValidator/assetValidatorBootstrap.py "$@"
+python3 ${SCRIPT_DIR}/source/validateUsd/validateUsdBootstrap.py "$@"

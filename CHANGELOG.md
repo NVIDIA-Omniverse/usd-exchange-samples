@@ -1,3 +1,29 @@
+3.0.0
+-----
+Release: August 2026
+
+OpenUSD Exchange SDK v3.0.0
+
+* Samples
+    * Add [createCurves](./source/createCurves/README.md) to demonstrate linear and cubic `UsdGeomBasisCurves`
+    * Add USDZ packaging to the C++ and Python samples with the `--usdz` argument
+    * Expand [createMaterials](./source/createMaterials/README.md) with OpenPBR, MaterialX, glass, and `GeomSubset` examples
+    * Demonstrate effective display names in [setDisplayNames](./source/setDisplayNames/README.md)
+    * Apply articulation roots to the joint chains in [createPhysics](./source/createPhysics/README.md)
+    * Use stage metrics for Physical AI across all samples: Z-up axes, one-meter linear units, and 1 kilo mass units
+    * Update the camera and rect light properties for the new stage units
+    * Rename "Omniverse Asset Validator" to "USD Validation NVIDIA"
+
+* Build
+    * Switch the C++ sample build from Premake to CMake with `build.sh` and `build.bat`
+    * Update the packaged Python runtime to 3.12
+    * Remove the `usdview` launch scripts
+
+* Dependencies
+    * OpenUSD [v26.08](https://github.com/PixarAnimationStudios/OpenUSD/blob/v26.08/CHANGELOG.md)
+    * OpenUSD Exchange SDK [v3.0.0](https://docs.omniverse.nvidia.com/usd/code-docs/usd-exchange-sdk)
+    * USD Validation NVIDIA [v1.21.0](https://github.com/NVIDIA-Omniverse/usd-validation-nvidia)
+
 2.3.0
 -----
 Release: May 2026

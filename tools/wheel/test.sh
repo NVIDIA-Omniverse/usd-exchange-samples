@@ -3,6 +3,7 @@
 set -e
 
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+source "${SCRIPT_DIR}/configure_python_package_index.sh"
 SOURCE_DIR=${SCRIPT_DIR}/../../source
 export PYTHONPATH=${SOURCE_DIR}/python:${SOURCE_DIR}/tests:${PYTHONPATH}
 

@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-FileCopyrightText: Copyright (c) 2025-2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: MIT
 #
 
@@ -39,11 +39,13 @@ class CreateAssemblyTestCase(BaseTestCaseModule.BaseTestCase):
         CAR_BODY_COLOR_PRIMVAR = "bodyPaintColor"
         blueCarPrim = derbyPrim.GetPrimAtPath(derbyPrim.GetPath().AppendChild("BlueCar"))
         self.assertTrue(blueCarPrim)
-        self.assertTrue(UsdGeom.PrimvarsAPI(blueCarPrim.GetPrim()).GetPrimvar(CAR_BODY_COLOR_PRIMVAR).Get() == Gf.Vec3f(0.3284, 0.7490, 0.7098))
+        blueCarColor = UsdGeom.PrimvarsAPI(blueCarPrim.GetPrim()).GetPrimvar(CAR_BODY_COLOR_PRIMVAR).Get()
+        self.assertEqual(blueCarColor[0], Gf.Vec3f(0.3284, 0.7490, 0.7098))
 
         greenCarPrim = derbyPrim.GetPrimAtPath(derbyPrim.GetPath().AppendChild("GreenCar"))
         self.assertTrue(greenCarPrim)
-        self.assertTrue(UsdGeom.PrimvarsAPI(greenCarPrim.GetPrim()).GetPrimvar(CAR_BODY_COLOR_PRIMVAR).Get() == Gf.Vec3f(0.294, 0.725, 0))
+        greenCarColor = UsdGeom.PrimvarsAPI(greenCarPrim.GetPrim()).GetPrimvar(CAR_BODY_COLOR_PRIMVAR).Get()
+        self.assertEqual(greenCarColor[0], Gf.Vec3f(0.294, 0.725, 0))
 
     def _checkAssetStageContents(self, assetStagePath):
         """Check the contents of the created asset stage"""

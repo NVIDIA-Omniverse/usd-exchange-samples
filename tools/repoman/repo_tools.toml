@@ -1,0 +1,3 @@
+[repo_build_redirect]
+command = "build"
+entry_point = "${root}/tools/repoman/build_redirect.py:setup_repo_tool"

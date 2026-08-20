@@ -1,0 +1,9 @@
+<project toolsVersion="5.0">
+
+  <!-- Cross platform. Pulled by fetch_deps so build.sh/build.bat can use a pinned cmake instead of relying on a
+       system install (see the CMAKE selection in those scripts). -->
+  <dependency name="cmake" linkPath="../_build/host-deps/cmake" tags="non-redist">
+    <package name="cmake" version="4.3.2-${platform_target}" />
+  </dependency>
+
+</project>

@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright (c) 2024 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+// SPDX-FileCopyrightText: Copyright (c) 2024-2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 // SPDX-License-Identifier: MIT
 //
 
@@ -27,12 +27,12 @@ int main(int argc, char* argv[])
     std::cout << "Stage path: " << args.stagePath << std::endl;
 
     // Create/overwrite a USD stage, ensuring that key metadata is set
-    // NOTE: UsdGeomGetFallbackUpAxis() is typically set to UsdGeomTokens->y
+    // NOTE: Samples use Z-up (UsdGeomTokens->z)
     pxr::UsdStageRefPtr stage = usdex::core::createStage(
         /* identifier */ args.stagePath,
         /* defaultPrimName */ "World",
-        /* upAxis */ pxr::UsdGeomGetFallbackUpAxis(),
-        /* linearUnits */ pxr::UsdGeomLinearUnits::centimeters,
+        /* upAxis */ pxr::UsdGeomTokens->z,
+        /* linearUnits */ pxr::UsdGeomLinearUnits::meters,
         /* authoringMetadata */ samples::getSamplesAuthoringMetadata(),
         /* file format args */ args.fileFormatArgs
     );
@@ -58,8 +58,24 @@ int main(int argc, char* argv[])
         return -1;
     }
 
+    // Set the light intensity to 1000
+    light.CreateIntensityAttr().Set(1000.0f);
+
+    // Tilt the light down and to the side
+    usdex::core::setLocalTransform(
+        light,
+        pxr::GfVec3d(0.0, 0.0, 0.0),
+        pxr::GfVec3d(0.0, 0.0, 0.0),
+        pxr::GfVec3f(20.0, 0.0, 10.0),
+        usdex::core::RotationOrder::eXyz,
+        pxr::GfVec3f(1.0)
+    );
+
     // Save the stage to disk
-    usdex::core::saveStage(stage, "OpenUSD Exchange Samples");
+    if (!samples::saveStage(stage, "OpenUSD Exchange Samples", args.usdzPath))
+    {
+        return -1;
+    }
 
     return 0;
 }

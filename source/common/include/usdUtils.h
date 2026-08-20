@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright (c) 2024-2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+// SPDX-FileCopyrightText: Copyright (c) 2024-2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 // SPDX-License-Identifier: MIT
 //
 
@@ -8,7 +8,6 @@
 #include <usdex/core/Core.h>
 #include <usdex/core/Diagnostics.h>
 #include <usdex/core/GprimAlgo.h>
-#include <usdex/core/MaterialAlgo.h>
 #include <usdex/core/MeshAlgo.h>
 #include <usdex/core/NameAlgo.h>
 #include <usdex/core/StageAlgo.h>
@@ -29,12 +28,13 @@
 #include <pxr/usd/usdGeom/metrics.h>
 #include <pxr/usd/usdGeom/sphere.h>
 #include <pxr/usd/usdGeom/tokens.h>
-#include <pxr/usd/usdShade/material.h>
-#include <pxr/usd/usdShade/shader.h>
+#include <pxr/usd/usdUtils/usdzPackage.h>
 
+#include <filesystem>
 #include <iostream>
 #include <optional>
 #include <string>
+#include <system_error>
 
 
 namespace samples
@@ -47,10 +47,6 @@ TF_DEFINE_PRIVATE_TOKENS(
     sampleAttrTokens,
     (refinementEnableOverride)
     (refinementLevel)
-    (PrimvarReader)
-    (UsdPrimvarReader_)
-    (varname)
-    (result)
 );
 // clang-format on
 
@@ -81,11 +77,12 @@ pxr::UsdStageRefPtr openOrCreateStage(
     pxr::SdfLayerRefPtr layer = pxr::SdfLayer::FindOrOpen(identifier);
     if (!layer)
     {
+        // NOTE: Samples use Z-up (UsdGeomTokens->z)
         stage = usdex::core::createStage(
             /* identifier */ identifier,
             /* defaultPrimName */ defaultPrimName,
-            /* upAxis */ pxr::UsdGeomGetFallbackUpAxis(),
-            /* linearUnits */ pxr::UsdGeomLinearUnits::centimeters,
+            /* upAxis */ pxr::UsdGeomTokens->z,
+            /* linearUnits */ pxr::UsdGeomLinearUnits::meters,
             /* authoringMetadata */ getSamplesAuthoringMetadata(),
             /* file format args */ fileFormatArgs
         );
@@ -95,6 +92,63 @@ pxr::UsdStageRefPtr openOrCreateStage(
         stage = pxr::UsdStage::Open(layer);
     }
     return stage;
+}
+
+//! Package a saved stage and its dependencies into a USDZ archive
+//!
+//! @param stage The stage whose root layer should be packaged
+//! @param usdzPath Destination path for the USDZ package
+//!
+//! @returns true if the USDZ package was created
+bool packageStageAsUsdz(const pxr::UsdStageRefPtr& stage, const std::string& usdzPath)
+{
+    if (!stage)
+    {
+        std::cout << "Error packaging USDZ: invalid stage" << std::endl;
+        return false;
+    }
+
+    std::string rootLayerPath = stage->GetRootLayer()->GetRealPath();
+    if (rootLayerPath.empty())
+    {
+        rootLayerPath = stage->GetRootLayer()->GetIdentifier();
+    }
+    if (rootLayerPath.empty())
+    {
+        std::cout << "Error packaging USDZ: stage root layer has no file path" << std::endl;
+        return false;
+    }
+
+    const std::filesystem::path absRootLayerPath = std::filesystem::absolute(rootLayerPath);
+    const std::filesystem::path absUsdzPath = std::filesystem::absolute(usdzPath);
+    const pxr::SdfAssetPath asset(absRootLayerPath.string());
+    if (!pxr::UsdUtilsCreateNewUsdzPackage(asset, absUsdzPath.string()))
+    {
+        std::error_code error;
+        std::filesystem::remove(absUsdzPath, error);
+        std::cout << "Error creating USDZ package: " << usdzPath << std::endl;
+        return false;
+    }
+
+    std::cout << "Created USDZ package: " << usdzPath << std::endl;
+    return true;
+}
+
+//! Save a stage and optionally package it as USDZ
+//!
+//! @param stage The stage to save
+//! @param authoringMetadata The metadata written to authored layers
+//! @param usdzPath Optional USDZ package destination. If empty, no package is created.
+//!
+//! @returns true if the stage saved and optional USDZ package was created
+bool saveStage(const pxr::UsdStageRefPtr& stage, const std::string& authoringMetadata, const std::string& usdzPath = std::string())
+{
+    usdex::core::saveStage(stage, authoringMetadata);
+    if (!usdzPath.empty())
+    {
+        return packageStageAsUsdz(stage, usdzPath);
+    }
+    return true;
 }
 
 
@@ -147,9 +201,9 @@ void setTransform(
 //!
 //! @param parent The parent prim to create the cone under
 //! @param name The proposed name of the cone prim. Defaults to "cone"
-//! @param axis The axis of the cone. Defaults to UsdGeomGetFallbackUpAxis(), which is typically UsdGeomTokens->y
-//! @param height The height of the cone. Defaults to 100
-//! @param radius The radius of the cone. Defaults to 50
+//! @param axis The axis of the cone. Defaults to UsdGeomTokens->z
+//! @param height The height of the cone. Defaults to 1
+//! @param radius The radius of the cone. Defaults to 0.5
 //! @param position Position of the cone
 //! @param rotation Rotation of the cone
 //! @param scale Scale of the cone
@@ -158,9 +212,9 @@ void setTransform(
 pxr::UsdGeomCone createCone(
     pxr::UsdPrim parent,
     const std::string& name = "cone",
-    pxr::TfToken axis = pxr::UsdGeomGetFallbackUpAxis(),
-    double height = 100.0,
-    double radius = 50.0,
+    pxr::TfToken axis = pxr::UsdGeomTokens->z,
+    double height = 1.0,
+    double radius = 0.5,
     std::optional<pxr::GfVec3d> position = std::nullopt,
     std::optional<pxr::GfVec3f> rotation = std::nullopt,
     std::optional<pxr::GfVec3f> scale = std::nullopt,
@@ -183,7 +237,7 @@ pxr::UsdGeomCone createCone(
 //!
 //! @param parent The parent prim to create the sphere under
 //! @param name The proposed name of the sphere prim. Defaults to "sphere"
-//! @param radius The radius of the sphere. Defaults to 50
+//! @param radius The radius of the sphere. Defaults to 0.5
 //! @param position Position of the sphere
 //! @param rotation Rotation of the sphere
 //! @param scale Scale of the sphere
@@ -192,7 +246,7 @@ pxr::UsdGeomCone createCone(
 pxr::UsdGeomSphere createSphere(
     pxr::UsdPrim parent,
     const std::string& name = "sphere",
-    double radius = 50.0,
+    double radius = 0.5,
     std::optional<pxr::GfVec3d> position = std::nullopt,
     std::optional<pxr::GfVec3f> rotation = std::nullopt,
     std::optional<pxr::GfVec3f> scale = std::nullopt,
@@ -215,7 +269,7 @@ pxr::UsdGeomSphere createSphere(
 //!
 //! @param parent The parent prim to create the cube under
 //! @param name The proposed name of the cube prim
-//! @param size The size of the cube. Defaults to 100
+//! @param size The size of the cube. Defaults to 1
 //! @param position Position of the cube
 //! @param rotation Rotation of the cube
 //! @param scale Scale of the cube
@@ -224,7 +278,7 @@ pxr::UsdGeomSphere createSphere(
 pxr::UsdGeomCube createCube(
     pxr::UsdPrim parent,
     const std::string& name = "cube",
-    double size = 100.0,
+    double size = 1.0,
     std::optional<pxr::GfVec3d> position = std::nullopt,
     std::optional<pxr::GfVec3f> rotation = std::nullopt,
     std::optional<pxr::GfVec3f> scale = std::nullopt,
@@ -246,9 +300,9 @@ pxr::UsdGeomCube createCube(
 //!
 //! @param parent The parent prim to create the cylinder under
 //! @param name The proposed name of the cylinder prim. Defaults to "cylinder"
-//! @param axis The axis of the cylinder. Defaults to UsdGeomGetFallbackUpAxis(), which is typically UsdGeomTokens->y
-//! @param height The height of the cylinder. Defaults to 400
-//! @param radius The radius of the cylinder. Defaults to 50
+//! @param axis The axis of the cylinder. Defaults to UsdGeomTokens->z
+//! @param height The height of the cylinder. Defaults to 4
+//! @param radius The radius of the cylinder. Defaults to 0.5
 //! @param position Position of the cylinder
 //! @param rotation Rotation of the cylinder
 //! @param scale Scale of the cylinder
@@ -257,9 +311,9 @@ pxr::UsdGeomCube createCube(
 pxr::UsdGeomCylinder createCylinder(
     pxr::UsdPrim parent,
     const std::string& name = "cylinder",
-    pxr::TfToken axis = pxr::UsdGeomGetFallbackUpAxis(),
-    double height = 400.0,
-    double radius = 50.0,
+    pxr::TfToken axis = pxr::UsdGeomTokens->z,
+    double height = 4.0,
+    double radius = 0.5,
     std::optional<pxr::GfVec3d> position = std::nullopt,
     std::optional<pxr::GfVec3f> rotation = std::nullopt,
     std::optional<pxr::GfVec3f> scale = std::nullopt,
@@ -282,9 +336,9 @@ pxr::UsdGeomCylinder createCylinder(
 //!
 //! @param parent The parent prim to create the capsule under
 //! @param name The proposed name of the capsule prim. Defaults to "capsule"
-//! @param axis The axis of the capsule. Defaults to UsdGeomGetFallbackUpAxis(), which is typically UsdGeomTokens->y
-//! @param height The height of the capsule. Defaults to 100
-//! @param radius The radius of the capsule. Defaults to 50
+//! @param axis The axis of the capsule. Defaults to UsdGeomTokens->z
+//! @param height The height of the capsule. Defaults to 1
+//! @param radius The radius of the capsule. Defaults to 0.5
 //! @param position Position of the capsule
 //! @param rotation Rotation of the capsule
 //! @param scale Scale of the capsule
@@ -293,9 +347,9 @@ pxr::UsdGeomCylinder createCylinder(
 pxr::UsdGeomCapsule createCapsule(
     pxr::UsdPrim parent,
     const std::string& name = "capsule",
-    pxr::TfToken axis = pxr::UsdGeomGetFallbackUpAxis(),
-    double height = 100.0,
-    double radius = 50.0,
+    pxr::TfToken axis = pxr::UsdGeomTokens->z,
+    double height = 1.0,
+    double radius = 0.5,
     std::optional<pxr::GfVec3d> position = std::nullopt,
     std::optional<pxr::GfVec3f> rotation = std::nullopt,
     std::optional<pxr::GfVec3f> scale = std::nullopt,
@@ -319,13 +373,13 @@ pxr::UsdGeomCapsule createCapsule(
 //!
 //! @param parent The parent prim for the new cube mesh
 //! @param meshName The name of the mesh. Defaults to "cubeMesh"
-//! @param halfHeight The half height of the cube. Defaults to 50.0
+//! @param halfHeight The half height of the cube. Defaults to 0.5
 //! @param localPos The local position of the cube. Defaults to 0,0,0
 //! @return The created pxr::UsdGeomMesh
 pxr::UsdGeomMesh createCubeMesh(
     pxr::UsdPrim parent,
     const std::string& meshName = "cubeMesh",
-    float halfHeight = 50.0f,
+    float halfHeight = 0.5f,
     const pxr::GfVec3d& localPos = pxr::GfVec3d(0.0)
 )
 {
@@ -340,20 +394,20 @@ pxr::UsdGeomMesh createCubeMesh(
         20, 21, 22, 20, 22, 23
     };
     static const pxr::VtArray<pxr::GfVec3f> normals = {
-        {0, 0, -1}, {0, 0, -1}, {0, 0, -1}, {0, 0, -1},
-        {0, 0, 1}, {0, 0, 1}, {0, 0, 1}, {0, 0, 1},
-        {0, -1, 0}, {0, -1, 0}, {0, -1, 0}, {0, -1, 0},
-        {1, 0, 0}, {1, 0, 0}, {1, 0, 0}, {1, 0, 0},
         {0, 1, 0}, {0, 1, 0}, {0, 1, 0}, {0, 1, 0},
+        {0, -1, 0}, {0, -1, 0}, {0, -1, 0}, {0, -1, 0},
+        {0, 0, -1}, {0, 0, -1}, {0, 0, -1}, {0, 0, -1},
+        {1, 0, 0}, {1, 0, 0}, {1, 0, 0}, {1, 0, 0},
+        {0, 0, 1}, {0, 0, 1}, {0, 0, 1}, {0, 0, 1},
         {-1, 0, 0}, {-1, 0, 0}, {-1, 0, 0}, {-1, 0, 0}
     };
     const pxr::VtArray<pxr::GfVec3f> points = {
-        {h, -h, -h}, {-h, -h, -h}, {h, h, -h}, {-h, h, -h},
-        {h, h, h}, {-h, h, h}, {-h, -h, h}, {h, -h, h},
+        {h, h, -h}, {-h, h, -h}, {h, h, h}, {-h, h, h},
         {h, -h, h}, {-h, -h, h}, {-h, -h, -h}, {h, -h, -h},
-        {h, h, h}, {h, -h, h}, {h, -h, -h}, {h, h, -h},
-        {-h, h, h}, {h, h, h}, {h, h, -h}, {-h, h, -h},
-        {-h, -h, h}, {-h, h, h}, {-h, h, -h}, {-h, -h, -h}
+        {h, -h, -h}, {-h, -h, -h}, {-h, h, -h}, {h, h, -h},
+        {h, -h, h}, {h, -h, -h}, {h, h, -h}, {h, h, h},
+        {-h, -h, h}, {h, -h, h}, {h, h, h}, {-h, h, h},
+        {-h, -h, -h}, {-h, -h, h}, {-h, h, h}, {-h, h, -h}
     };
     static const pxr::VtArray<pxr::GfVec2f> uvs = {
         {0, 0}, {0, 1}, {1, 1}, {1, 0},
@@ -421,6 +475,91 @@ pxr::UsdGeomMesh createCubeMesh(
 }
 
 
+//! Creates a tablet-like mesh used by the createMaterials GeomSubset example
+//!
+//! @brief The mesh prim will be a child of the parent parameter. Face partitions
+//! for material binding are authored separately with `definePartitionedSubsets`.
+//!
+//! @param parent The parent prim for the new mesh
+//! @param meshName The name of the mesh. Defaults to "meshWithGeomsubsets"
+//! @param localPos The local position of the mesh. Defaults to 0,0,0
+//! @return The created pxr::UsdGeomMesh
+pxr::UsdGeomMesh createMeshTabletExample(
+    pxr::UsdPrim parent,
+    const std::string& meshName = "meshWithGeomsubsets",
+    const pxr::GfVec3d& localPos = pxr::GfVec3d(0.0)
+)
+{
+    // clang-format off
+    static const pxr::VtArray<int> faceVertexCounts(10, 4);
+    static const pxr::VtArray<int> faceVertexIndices = {
+        0, 1, 3, 2, 2, 3, 7, 6, 6, 7, 5, 4, 4, 5, 1, 0,
+        2, 6, 4, 0, 8, 9, 10, 11, 9, 8, 7, 3, 10, 9, 3, 1,
+        11, 10, 1, 5, 8, 11, 5, 7,
+    };
+    // Uniform normals: one normal per face (collapsed from faceVarying source data).
+    static const pxr::VtArray<pxr::GfVec3f> normals = {
+        {-1, 0, 0}, {0, 0, 1}, {1, 0, 0}, {0, 0, -1}, {0, 1, 0},
+        {0, -1, 0}, {0, -1, 0}, {0, -1, 0}, {0, -1, 0}, {0, -1, 0},
+    };
+    static const pxr::VtArray<pxr::GfVec3f> points = {
+        {-0.25f, 0.0525f, -0.4f}, {-0.25f, 0.0025f, -0.4f}, {-0.25f, 0.0525f, 0.4f}, {-0.25f, 0.0025f, 0.4f},
+        {0.25f, 0.0525f, -0.4f}, {0.25f, 0.0025f, -0.4f}, {0.25f, 0.0525f, 0.4f}, {0.25f, 0.0025f, 0.4f},
+        {0.2f, 0.0025f, 0.3f}, {-0.2f, 0.0025f, 0.3f}, {-0.2f, 0.0025f, -0.3f}, {0.2f, 0.0025f, -0.3f},
+    };
+    static const pxr::VtArray<pxr::GfVec2f> uvs = {
+        {0.913f, 0.696f}, {1.0f, 0.435f}, {0.435f, 0.0f}, {0.87f, 0.696f},
+        {0.957f, 0.435f}, {0.913f, 0.0f}, {1.0f, 0.435f}, {0.435f, 0.696f},
+        {0.87f, 0.0f}, {0.957f, 0.435f}, {0.957f, 0.0f}, {1.0f, 0.87f},
+        {0.0f, 0.0f}, {0.913f, 0.0f}, {0.957f, 0.87f}, {1.0f, 0.0f},
+        {0.957f, 0.696f}, {0.0f, 0.696f}, {0.957f, 0.0f}, {0.913f, 0.696f},
+        {0.826f, 0.609f}, {0.478f, 0.609f}, {0.478f, 0.087f}, {0.826f, 0.087f},
+        {0.435f, 0.696f}, {0.87f, 0.696f}, {0.435f, 0.0f}, {0.87f, 0.0f},
+    };
+    static const pxr::VtArray<int> uvIndices = {
+        0, 3, 8, 5, 6, 9, 18, 15, 16, 19, 13, 10, 11, 14, 4, 1,
+        7, 17, 12, 2, 20, 21, 22, 23, 21, 20, 25, 24, 22, 21, 24, 26,
+        23, 22, 26, 27, 20, 23, 27, 25,
+    };
+    // clang-format on
+
+    const pxr::TfToken meshPrimName = usdex::core::getValidChildName(parent, meshName);
+    if (meshPrimName != meshName)
+    {
+        std::cout << "Renaming input mesh name <" << meshName << "> to the valid USD prim name <" << meshPrimName << ">" << std::endl;
+    }
+
+    auto normalsPrimvarData = usdex::core::Vec3fPrimvarData(pxr::UsdGeomTokens->uniform, normals);
+    normalsPrimvarData.index();
+    auto uvsPrimvarData = usdex::core::Vec2fPrimvarData(pxr::UsdGeomTokens->faceVarying, uvs, uvIndices);
+    uvsPrimvarData.index();
+
+    pxr::UsdGeomMesh mesh = usdex::core::definePolyMesh(
+        parent,
+        meshPrimName.GetString(),
+        faceVertexCounts,
+        faceVertexIndices,
+        points,
+        normalsPrimvarData,
+        uvsPrimvarData,
+        usdex::core::Vec3fPrimvarData(pxr::UsdGeomTokens->constant, { { 0.5f, 0.5f, 0.5f } })
+    );
+    if (!mesh)
+    {
+        return mesh;
+    }
+
+    usdex::core::setEffectiveDisplayName(mesh.GetPrim(), meshName);
+
+    if (localPos != pxr::GfVec3d(0.0))
+    {
+        usdex::core::setLocalTransform(mesh, localPos, pxr::GfVec3d(0.0), pxr::GfVec3f(0.0), usdex::core::RotationOrder::eXyz, pxr::GfVec3f(1.0));
+    }
+
+    return mesh;
+}
+
+
 //! Creates a wedge mesh (triangular prism) with the specified dimensions and local position
 //!
 //! @brief The wedge mesh prim will be a child of the parent parameter
@@ -446,12 +585,12 @@ pxr::UsdGeomMesh createWedge(
     // Wedge points (6 vertices total)
     // clang-format off
     static const pxr::VtArray<pxr::GfVec3f> points = {
-        { h, -h, h }, // Vertex 0: (1, -1, 1) scaled
-        { h, -h, -h }, // Vertex 1: (1, -1, -1) scaled
-        { -h, h, h }, // Vertex 2: (-1, 1, 1) scaled
-        { -h, h, -h }, // Vertex 3: (-1, 1, -1) scaled
-        { -h, -h, h }, // Vertex 4: (-1, -1, 1) scaled
-        { -h, -h, -h }, // Vertex 5: (-1, -1, -1) scaled
+        { h, -h, -h }, // Vertex 0: (1, -1, -1) scaled
+        { h, h, -h }, // Vertex 1: (1, 1, -1) scaled
+        { -h, -h, h }, // Vertex 2: (-1, -1, 1) scaled
+        { -h, h, h }, // Vertex 3: (-1, 1, 1) scaled
+        { -h, -h, -h }, // Vertex 4: (-1, -1, -1) scaled
+        { -h, h, -h }, // Vertex 5: (-1, 1, -1) scaled
     };
     // Wedge vertex indices and counts
     // 5 faces: 3 triangular (3 vertices each), 2 rectangular (4 vertices each)
@@ -466,11 +605,11 @@ pxr::UsdGeomMesh createWedge(
 
     // Normals for each face vertex (18 normals total)
     static const pxr::VtArray<pxr::GfVec3f> normals = {
-        { 0, 0, 1 }, { 0, 0, 1 }, { 0, 0, 1 }, // Face 1 (3 vertices)
-        { 0, -1, 0 }, { 0, -1, 0 }, { 0, -1, 0 }, { 0, -1, 0 }, // Face 2 (4 vertices)
+        { 0, -1, 0 }, { 0, -1, 0 }, { 0, -1, 0 }, // Face 1 (3 vertices)
+        { 0, 0, -1 }, { 0, 0, -1 }, { 0, 0, -1 }, { 0, 0, -1 }, // Face 2 (4 vertices)
         { -1, 0, 0 }, { -1, 0, 0 }, { -1, 0, 0 }, { -1, 0, 0 }, // Face 3 (4 vertices)
-        { 0, 0, -1 }, { 0, 0, -1 }, { 0, 0, -1 }, // Face 4 (3 vertices)
-        { 0.70710677f, 0.70710677f, 0 }, { 0.70710677f, 0.70710677f, 0 }, { 0.70710677f, 0.70710677f, 0 }, { 0.70710677f, 0.70710677f, 0 } // Face 5
+        { 0, 1, 0 }, { 0, 1, 0 }, { 0, 1, 0 }, // Face 4 (3 vertices)
+        { 0.70710677f, 0, 0.70710677f }, { 0.70710677f, 0, 0.70710677f }, { 0.70710677f, 0, 0.70710677f }, { 0.70710677f, 0, 0.70710677f } // Face 5
     };
     // clang-format on
 
@@ -514,60 +653,10 @@ pxr::UsdGeomMesh createWedge(
         pxr::GfVec3d(0.0), /* pivot */
         pxr::GfVec3f(0.0), /* rotation */
         usdex::core::RotationOrder::eXyz,
-        pxr::GfVec3f(length, height, width) /* scale */
+        pxr::GfVec3f(length, width, height) /* scale */
     );
 
     return mesh;
 }
-
-
-//! Add a primvar shader to a material
-//!
-//! @param material The material to add the primvar shader to
-//! @param surfaceInputName The name of the surface input to connect to
-//! @param primvarName The name of the primvar to read
-//! @return True if successful, false otherwise
-bool addPrimvarShader(pxr::UsdShadeMaterial material, const std::string& surfaceInputName, const std::string& primvarName)
-{
-    pxr::SdfValueTypeName typeName;
-    std::string shaderId;
-
-    pxr::UsdShadeShader surfaceShader = usdex::core::computeEffectivePreviewSurfaceShader(material);
-
-    // Get the input and type name needed to create the primvar reader
-    pxr::UsdShadeInput shaderInput = surfaceShader.GetInput(pxr::TfToken(surfaceInputName));
-    if (shaderInput)
-    {
-        typeName = shaderInput.GetTypeName();
-        if (typeName == pxr::SdfValueTypeNames->Color3f)
-        {
-            typeName = pxr::SdfValueTypeNames->Float3;
-        }
-
-        shaderId = sampleAttrTokens->UsdPrimvarReader_.GetString() + typeName.GetAsToken().GetString();
-    }
-    else
-    {
-        std::cout << "Error: Cannot connect primvar <" << primvarName << "> to input <" << surfaceInputName << "> on surface shader <"
-                  << surfaceShader.GetPrim().GetPath() << ">" << std::endl;
-        return false;
-    }
-
-    // Create the primvar reader
-    pxr::UsdShadeShader primvarReader = pxr::UsdShadeShader::Define(
-        material.GetPrim().GetStage(),
-        material.GetPrim().GetPath().AppendChild(sampleAttrTokens->PrimvarReader)
-    );
-
-    // Set the id and input
-    primvarReader.SetShaderId(pxr::TfToken(shaderId));
-    primvarReader.CreateInput(sampleAttrTokens->varname, pxr::SdfValueTypeNames->String).Set(primvarName);
-    pxr::UsdShadeOutput primvarOutput = primvarReader.CreateOutput(sampleAttrTokens->result, typeName);
-
-    // Connect the primvar reader output to the surface shader input
-    shaderInput.ConnectToSource(primvarOutput);
-    return true;
-}
-
 
 } // namespace samples

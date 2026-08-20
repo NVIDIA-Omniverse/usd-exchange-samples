@@ -18,17 +18,18 @@ The Gf, Sdf, Usd, UsdGeom, UsdShade, and Kind modules are used.
 - defineReference()
 - defineXform()
 - definePreviewMaterial()
+- addPrimvarShaderToPreviewMaterial()
 - bindMaterial()
+- createConstantPrimvar()
+- setConstantPrimvar()
 - createAssetPayload()
 - addAssetLibrary()
 - addAssetContent()
 - addAssetInterface()
 - configureAssemblyHierarchy()
 - setLocalTransform()
-- setDisplayName()
 - getGeometryToken()
 - getMaterialsToken()
-- getValidChildNames()
 
 ## Languages
 
@@ -39,9 +40,9 @@ This sample is implemented in both C++ and Python.  To run:
 
 ## Hardcoded items
 
-- If a stage is created, it will have a default prim named "World", Y-up axis, 1 cm linear units
+- If a stage is created, it will have a default prim named "World", Z-up axis, 1 m linear units
 - New Pinewood derby car and track atomic component assets are created
-    - The car assets have a "bodyPaintColor" [primvar](https://openusd.org/release/api/class_usd_geom_primvar.html#details) as a form of [asset parameterization](https://docs.omniverse.nvidia.com/usd/latest/learn-openusd/independent/asset-structure-principles.html#asset-parameterization).
+    - The car assets have a "bodyPaintColor" [primvar](https://openusd.org/release/api/class_usd_geom_primvar.html#details) as a form of [asset parameterization](https://docs.omniverse.nvidia.com/usd/latest/learn-openusd/independent/asset-structure-principles.html#asset-parameterization). The sample creates it with the scalar Color3f type, and OpenUSD Exchange SDK authors the required array-valued constant primvar.
 - A Pinewood derby race "assembly" is setup using the track and two cars (one blue, one green) as "components"
 
 ## Command Line Arguments
@@ -53,4 +54,5 @@ Usage:
   -a, --usda          Output a text stage rather than binary
   -h, --help          Print usage
   -p, --path arg      Alternate destination stage path (default: c:/Users/username/AppData/Local/Temp/usdex/sample.usdc)
+  -z, --usdz          Package the output stage as USDZ
 ```

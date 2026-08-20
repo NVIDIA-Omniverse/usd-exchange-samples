@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: Copyright (c) 2024-2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-FileCopyrightText: Copyright (c) 2024-2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: MIT
 #
 
@@ -19,12 +19,13 @@ def main(args):
         print("Error opening or creating stage, exiting")
         sys.exit(-1)
 
-    meshPrim = common.usdUtils.createCubeMesh(stage.GetDefaultPrim(), "cubeMesh", 50.0, Gf.Vec3d(0.0, 150.0, 0.0))
+    meshPrim = common.usdUtils.createCubeMesh(stage.GetDefaultPrim(), "cubeMesh", 0.5, Gf.Vec3d(0.0, 0.0, 1.5))
     if not meshPrim:
         print("Failure to create mesh prim")
         sys.exit(-1)
 
-    usdex.core.saveStage(stage, "OpenUSD Exchange Samples")
+    if not common.usdUtils.saveStage(stage, "OpenUSD Exchange Samples", args.usdzPath):
+        sys.exit(-1)
 
 
 if __name__ == "__main__":

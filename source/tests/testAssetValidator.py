@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: Copyright (c) 2024-2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-FileCopyrightText: Copyright (c) 2024-2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: MIT
 #
 
@@ -6,8 +6,8 @@ import pathlib
 import tempfile
 import unittest
 
-import utils.BaseTestCase as BaseTestCaseModule
 import utils.shell
+import utils.validation
 from pxr import Usd
 
 
@@ -20,7 +20,7 @@ class AssetValidatorTestCase(unittest.TestCase):
             self.assertEqual(return_code, 0, output)
 
             # This should not assert
-            BaseTestCaseModule.BaseTestCase.runAssetValidator(self, stagePath)
+            utils.validation.assertValidatorCliSucceeds(self, stagePath)
 
             # Make the stage less valid
             stage = Usd.Stage.Open(stagePath)
@@ -31,7 +31,7 @@ class AssetValidatorTestCase(unittest.TestCase):
 
             # Run this twice to make sure that "--no-fix" is default behavior
             for i in range(2):
-                return_code, output = utils.shell.run_shell_script("omni_asset_validator", stagePath)
+                return_code, output = utils.shell.run_shell_script("validate_usd", stagePath)
                 self.assertEqual(return_code, 0, output)
                 foundError = False
                 for line in output.splitlines():

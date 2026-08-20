@@ -23,13 +23,16 @@ If you want to implement a feature, or change the logic of existing features, yo
 
 ## Building
 
-To build the OpenUSD Exchange SDK yourself, use `repo.bat build` or `repo.sh build`, depending on your local platform.
+To build the samples yourself, use `build.bat` or `build.sh`, depending on your local platform.
 
-The `repo build` command accepts additional arguments (e.g. `-config release`), see `repo build --help` for more information. Internally, `repo build` is using [Premake](https://premake.github.io) to perform cross-platform builds. See the `premake5.lua` file a the root of the repository to learn how the libraries are compiled.
+The build script assembles the OpenUSD Exchange SDK + OpenUSD runtime (via `install_usdex`) and then compiles the C++ samples with CMake, consuming the SDK through `find_package(usd-exchange)`. Pass `-d`/`--debug` for a debug build. See [CMakeLists.txt](./CMakeLists.txt) to learn how the samples are compiled and linked.
+
+If the required Python packages are hosted on an additional package index, set `USDEX_PYPI_EXTRA_INDEX_URL` before building, testing, or running `validate_usd`. The samples translate this USD Exchange-specific setting to the native pip and uv environment variables used by each workflow. Explicit `PIP_EXTRA_INDEX_URL` or `UV_EXTRA_INDEX_URL` values take precedence for their respective installer.
+
 
 ## Testing
 
-To run all of the sample tests, use `repo test`. The tests are split into two suites. The `main` suite, run by default, contains all of the sample tests and is run within a virtual environment. There is an additional suite, `usdview`, which tests the `usdview.bat|sh` scripts. It can be run using `repo test -s usdview`.
+To run all of the sample tests, use `repo test`. The tests run in a single `main` suite, which contains all of the sample tests and is run within a virtual environment.
 
 To run only certain sample tests the test scripts must be run directly. For instance, the following command will reuse the existing test virtual environment and run just the `createAsset` tests, run:
 

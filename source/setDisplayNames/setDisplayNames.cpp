@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright (c) 2024-2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+// SPDX-FileCopyrightText: Copyright (c) 2024-2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 // SPDX-License-Identifier: MIT
 //
 
@@ -28,21 +28,21 @@ void createRocket(pxr::UsdStageRefPtr stage)
 
     // Create Xform prim with an initial transform
     pxr::TfTokenVector validTokens = usdex::core::getValidChildNames(stage->GetDefaultPrim(), std::vector<std::string>{ "rocket" });
-    transform.SetTranslation(pxr::GfVec3d(0, 0, -300));
+    transform.SetTranslation(pxr::GfVec3d(0, 3, 0));
     pxr::UsdGeomXform xformPrim = usdex::core::defineXform(stage->GetDefaultPrim(), validTokens[0], transform);
 
     ///////////////////////////////////
     // Create cylindrical rocket tube
     ///////////////////////////////////
     pxr::UsdGeomCylinder cylinder = samples::createCylinder(xformPrim.GetPrim(), "tube");
-    transform.SetTranslation(pxr::GfVec3d(0, 150, 0));
+    transform.SetTranslation(pxr::GfVec3d(0, 0, 1.5));
     usdex::core::setLocalTransform(cylinder, transform);
 
     ///////////////////////////////////
     // Create nose cone
     ///////////////////////////////////
     pxr::UsdGeomCone cone = samples::createCone(xformPrim.GetPrim(), "nose");
-    transform.SetTranslation(pxr::GfVec3d(0, 400, 0));
+    transform.SetTranslation(pxr::GfVec3d(0, 0, 4));
     usdex::core::setLocalTransform(cone, transform);
 
     ///////////////////////////////////
@@ -50,7 +50,7 @@ void createRocket(pxr::UsdStageRefPtr stage)
     ///////////////////////////////////
     pxr::UsdGeomCube fin1 = samples::createCube(xformPrim.GetPrim(), "fin");
     transform.SetIdentity();
-    transform.SetScale(pxr::GfVec3d(0.01, 1, 2));
+    transform.SetScale(pxr::GfVec3d(0.01, 2, 1));
     usdex::core::setLocalTransform(fin1, transform);
 
     ///////////////////////////////////
@@ -58,7 +58,7 @@ void createRocket(pxr::UsdStageRefPtr stage)
     ///////////////////////////////////
     pxr::UsdGeomCube fin2 = samples::createCube(xformPrim.GetPrim(), "fin");
     transform.SetIdentity();
-    transform.SetScale(pxr::GfVec3d(2, 1, 0.01));
+    transform.SetScale(pxr::GfVec3d(2, 0.01, 1));
     usdex::core::setLocalTransform(fin2, transform);
 
     ///////////////////////////////////
@@ -87,6 +87,27 @@ void createRocket(pxr::UsdStageRefPtr stage)
 }
 
 
+void createUniquelyNamedPrims(pxr::UsdStageRefPtr stage)
+{
+    pxr::TfToken groupName = usdex::core::getValidChildName(stage->GetDefaultPrim(), "uniqueNames");
+    pxr::UsdGeomXform groupXform = usdex::core::defineXform(stage->GetDefaultPrim(), groupName);
+
+    const std::vector<std::string> preferredNames = { "foo", "foo", "bar", "bar", "foo" };
+    pxr::TfTokenVector primNames = usdex::core::getValidChildNames(groupXform.GetPrim(), preferredNames);
+
+    std::cout << "Unique prim names and their authored display names:" << std::endl;
+    for (size_t i = 0; i < preferredNames.size(); ++i)
+    {
+        pxr::UsdGeomXform xformPrim = usdex::core::defineXform(groupXform.GetPrim(), primNames[i]);
+
+        // The preferred name is only authored as a display name when uniqueness changed the prim name.
+        usdex::core::setEffectiveDisplayName(xformPrim.GetPrim(), preferredNames[i]);
+
+        std::cout << " " << xformPrim.GetPrim().GetName() << " - <" << usdex::core::getDisplayName(xformPrim.GetPrim()) << ">" << std::endl;
+    }
+}
+
+
 int main(int argc, char* argv[])
 {
 #ifdef ARCH_OS_WINDOWS
@@ -108,8 +129,14 @@ int main(int argc, char* argv[])
     // Make a multi-shape 🚀
     createRocket(stage);
 
+    // Demonstrate display names for uniquified prim names
+    createUniquelyNamedPrims(stage);
+
     // Save the stage to disk
-    usdex::core::saveStage(stage, "OpenUSD Exchange Samples");
+    if (!samples::saveStage(stage, "OpenUSD Exchange Samples", args.usdzPath))
+    {
+        return -1;
+    }
 
     return 0;
 }

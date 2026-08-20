@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+// SPDX-FileCopyrightText: Copyright (c) 2025-2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 // SPDX-License-Identifier: MIT
 //
 
@@ -10,6 +10,7 @@
 #include <usdex/core/Core.h>
 #include <usdex/core/LayerAlgo.h>
 #include <usdex/core/MaterialAlgo.h>
+#include <usdex/core/PrimvarData.h>
 #include <usdex/core/StageAlgo.h>
 #include <usdex/core/XformAlgo.h>
 
@@ -26,7 +27,6 @@
 #include <pxr/usd/usdGeom/tokens.h>
 #include <pxr/usd/usdGeom/xformable.h>
 #include <pxr/usd/usdShade/material.h>
-#include <pxr/usd/usdShade/shader.h>
 
 #include <cmath>
 #include <filesystem>
@@ -48,25 +48,27 @@ TF_DEFINE_PRIVATE_TOKENS(
 struct Constants
 {
     // Car component constants
-    static constexpr pxr::GfVec3d carDims{ 17.8, 3.18, 4.45 }; // length, height, width in cm
+    static constexpr pxr::GfVec3d carDims{ 0.178, 0.0318, 0.0445 }; // length, height, width in m
     static constexpr pxr::GfVec3f carBodyColor{ 1, 0, 0 }; // red
+    static constexpr pxr::GfVec3f lightBlue{ 0.3284f, 0.7490f, 0.7098f }; // light blue
+    static constexpr pxr::GfVec3f green{ 0.294f, 0.725f, 0.0f }; // green
 
     // Axle constants
-    static constexpr double axleLength = 2.54;
-    static constexpr double axleRadius = 0.11;
-    static constexpr double axleHeadRadius = 0.3;
-    static constexpr double axleHeadLength = 0.1;
+    static constexpr double axleLength = 0.0254;
+    static constexpr double axleRadius = 0.0011;
+    static constexpr double axleHeadRadius = 0.003;
+    static constexpr double axleHeadLength = 0.001;
     static constexpr pxr::GfVec3f axleColor{ 0.5f, 0.5f, 0.75f };
-    static constexpr double axleRearOffset = 2.0;
-    static constexpr double axleFrontOffset = 5.08;
+    static constexpr double axleRearOffset = 0.02;
+    static constexpr double axleFrontOffset = 0.0508;
 
     // Wheel constants
-    static constexpr double wheelRadius = 1.5;
-    static constexpr double wheelWidth = 1.0;
+    static constexpr double wheelRadius = 0.015;
+    static constexpr double wheelWidth = 0.01;
     static constexpr pxr::GfVec3f wheelColor{ 0, 0, 0 }; // black
 
     // Track component constants
-    static constexpr pxr::GfVec3d trackDims{ 400, 100, 50 }; // length, height, width in cm
+    static constexpr pxr::GfVec3d trackDims{ 4, 1, 0.5 }; // length, height, width in m
     static constexpr pxr::GfVec3f trackRampColor{ 0.6f, 0.4f, 0.2f }; // brown
     // Calculated constants
     static constexpr double trackAngle = 14.0362434679264787; // height/length in degrees (precalculated: std::atan(100/400) * 180.0 / M_PI)
@@ -92,8 +94,8 @@ pxr::UsdStageRefPtr createCarComponent(const samples::Args& args)
     pxr::UsdStageRefPtr assetStage = usdex::core::createStage(
         stagePath.string(),
         componentName,
-        pxr::UsdGeomTokens->y,
-        pxr::UsdGeomLinearUnits::centimeters,
+        pxr::UsdGeomTokens->z,
+        pxr::UsdGeomLinearUnits::meters,
         samples::getSamplesAuthoringMetadata()
     );
     if (!assetStage)
@@ -137,7 +139,7 @@ pxr::UsdStageRefPtr createCarComponent(const samples::Args& args)
     );
 
     // Create primvar reader for the body paint color
-    samples::addPrimvarShader(bodyMat, sampleTokens->diffuseColor.GetString(), sampleTokens->bodyPaintColor.GetString());
+    usdex::core::addPrimvarShaderToPreviewMaterial(bodyMat, sampleTokens->diffuseColor, sampleTokens->bodyPaintColor);
 
     pxr::UsdShadeMaterial axleMat = usdex::core::definePreviewMaterial(
         materialsLibStage->GetDefaultPrim(),
@@ -163,15 +165,15 @@ pxr::UsdStageRefPtr createCarComponent(const samples::Args& args)
 
     // The car is offset by the wheel radius and the axle radius to ensure the wheels are on the ground when the carXform is on the ground
     pxr::GfTransform transform;
-    transform.SetTranslation(pxr::GfVec3d(0, Constants::wheelRadius - Constants::axleRadius * 2, 0));
+    transform.SetTranslation(pxr::GfVec3d(0, 0, Constants::wheelRadius - Constants::axleRadius * 2));
     pxr::UsdGeomXform carXform = usdex::core::defineXform(geomScope, "pinewoodCar", transform);
     transform.SetIdentity();
-    transform.SetTranslation(pxr::GfVec3d(0, Constants::carDims[1] * 0.5, 0));
+    transform.SetTranslation(pxr::GfVec3d(0, 0, Constants::carDims[1] * 0.5));
     pxr::UsdGeomXform bodyXform = usdex::core::defineXform(carXform.GetPrim(), "bodyOffset", transform);
     pxr::UsdPrim bodyMeshRef = usdex::core::defineReference(bodyXform.GetPrim(), bodyMesh.GetPrim());
 
     // Add a class definition for the wheel-axle subcomponent
-    pxr::UsdGeomScope classesScope = usdex::core::defineScope(geometryStage->GetPseudoRoot(), sampleTokens->Classes.GetString());
+    pxr::UsdGeomScope classesScope = usdex::core::defineScope(geometryStage->GetPseudoRoot(), sampleTokens->Classes);
     classesScope.GetPrim().SetSpecifier(pxr::SdfSpecifierClass);
 
     // Make a wheel-axle subcomponent
@@ -182,7 +184,7 @@ pxr::UsdStageRefPtr createCarComponent(const samples::Args& args)
     pxr::UsdGeomCylinder axleShaft = samples::createCylinder(
         wheelAxleXform.GetPrim(),
         "axleShaft",
-        pxr::UsdGeomTokens->z,
+        pxr::UsdGeomTokens->y,
         Constants::axleLength,
         Constants::axleRadius,
         std::nullopt,
@@ -193,10 +195,10 @@ pxr::UsdStageRefPtr createCarComponent(const samples::Args& args)
     pxr::UsdGeomCylinder axleHead = samples::createCylinder(
         wheelAxleXform.GetPrim(),
         "axleHead",
-        pxr::UsdGeomTokens->z,
+        pxr::UsdGeomTokens->y,
         Constants::axleHeadLength,
         Constants::axleHeadRadius,
-        pxr::GfVec3d(0, 0, -Constants::axleLength * 0.5),
+        pxr::GfVec3d(0, Constants::axleLength * 0.5, 0),
         std::nullopt,
         std::nullopt,
         Constants::axleColor
@@ -204,10 +206,10 @@ pxr::UsdStageRefPtr createCarComponent(const samples::Args& args)
     pxr::UsdGeomCylinder wheel = samples::createCylinder(
         wheelAxleXform.GetPrim(),
         "wheel",
-        pxr::UsdGeomTokens->z,
+        pxr::UsdGeomTokens->y,
         Constants::wheelWidth,
         Constants::wheelRadius,
-        pxr::GfVec3d(0, 0, -Constants::wheelWidth * 0.65),
+        pxr::GfVec3d(0, Constants::wheelWidth * 0.65, 0),
         std::nullopt,
         std::nullopt,
         Constants::wheelColor
@@ -218,8 +220,8 @@ pxr::UsdStageRefPtr createCarComponent(const samples::Args& args)
     transform.SetIdentity();
     transform.SetTranslation(pxr::GfVec3d(
         Constants::carDims[0] * 0.5 - Constants::axleFrontOffset,
-        -Constants::carDims[1] * 0.5 + Constants::axleRadius * 2,
-        -Constants::carDims[2] * 0.5
+        Constants::carDims[2] * 0.5,
+        -Constants::carDims[1] * 0.5 + Constants::axleRadius * 2
     ));
     usdex::core::setLocalTransform(axleXform, transform);
 
@@ -228,10 +230,10 @@ pxr::UsdStageRefPtr createCarComponent(const samples::Args& args)
     transform.SetIdentity();
     transform.SetTranslation(pxr::GfVec3d(
         Constants::carDims[0] * 0.5 - Constants::axleFrontOffset,
-        -Constants::carDims[1] * 0.5 + Constants::axleRadius * 2,
-        Constants::carDims[2] * 0.5
+        -Constants::carDims[2] * 0.5,
+        -Constants::carDims[1] * 0.5 + Constants::axleRadius * 2
     ));
-    transform.SetRotation(pxr::GfRotation(pxr::GfVec3d(0, 1, 0), 180));
+    transform.SetRotation(pxr::GfRotation(pxr::GfVec3d(0, 0, 1), -180));
     usdex::core::setLocalTransform(axleXform, transform);
 
     // Left rear axle
@@ -239,8 +241,8 @@ pxr::UsdStageRefPtr createCarComponent(const samples::Args& args)
     transform.SetIdentity();
     transform.SetTranslation(pxr::GfVec3d(
         -Constants::carDims[0] * 0.5 + Constants::axleRearOffset,
-        -Constants::carDims[1] * 0.5 + Constants::axleRadius * 2,
-        -Constants::carDims[2] * 0.5
+        Constants::carDims[2] * 0.5,
+        -Constants::carDims[1] * 0.5 + Constants::axleRadius * 2
     ));
     usdex::core::setLocalTransform(axleXform, transform);
 
@@ -249,10 +251,10 @@ pxr::UsdStageRefPtr createCarComponent(const samples::Args& args)
     transform.SetIdentity();
     transform.SetTranslation(pxr::GfVec3d(
         -Constants::carDims[0] * 0.5 + Constants::axleRearOffset,
-        -Constants::carDims[1] * 0.5 + Constants::axleRadius * 2,
-        Constants::carDims[2] * 0.5
+        -Constants::carDims[2] * 0.5,
+        -Constants::carDims[1] * 0.5 + Constants::axleRadius * 2
     ));
-    transform.SetRotation(pxr::GfRotation(pxr::GfVec3d(0, 1, 0), 180));
+    transform.SetRotation(pxr::GfRotation(pxr::GfVec3d(0, 0, 1), -180));
     usdex::core::setLocalTransform(axleXform, transform);
 
     // Create materials content layer and bind materials to geometry
@@ -287,10 +289,15 @@ pxr::UsdStageRefPtr createCarComponent(const samples::Args& args)
 
     // Add asset parameterization interface, the car body paint color using a primvar (defaults to red)
     UsdPrim prim = assetXform.GetPrim();
-    pxr::UsdGeomPrimvar primvar = pxr::UsdGeomPrimvarsAPI(prim).CreatePrimvar(sampleTokens->bodyPaintColor, pxr::SdfValueTypeNames->Color3f);
-    primvar.SetInterpolation(pxr::UsdGeomTokens->constant);
+    pxr::UsdGeomPrimvar primvar;
+    primvar = usdex::core::createConstantPrimvar(prim, sampleTokens->bodyPaintColor, Constants::carBodyColor, pxr::SdfValueTypeNames->Color3f);
+    if (!primvar)
+    {
+        std::cout << "Error creating body paint color primvar" << std::endl;
+        return nullptr;
+    }
+
     primvar.GetAttr().SetDisplayName("Car Body Paint Color");
-    primvar.Set(Constants::carBodyColor);
 
     return assetStage;
 }
@@ -311,8 +318,8 @@ pxr::UsdStageRefPtr createTrackComponent(const samples::Args& args)
     pxr::UsdStageRefPtr assetStage = usdex::core::createStage(
         stagePath.string(),
         componentName,
-        pxr::UsdGeomTokens->y,
-        pxr::UsdGeomLinearUnits::centimeters,
+        pxr::UsdGeomTokens->z,
+        pxr::UsdGeomLinearUnits::meters,
         samples::getSamplesAuthoringMetadata()
     );
     if (!assetStage)
@@ -362,7 +369,7 @@ pxr::UsdStageRefPtr createTrackComponent(const samples::Args& args)
 
     pxr::UsdPrim rampRef = usdex::core::defineReference(geomScope, rampMesh.GetPrim());
     pxr::GfTransform transform = usdex::core::getLocalTransform(rampRef);
-    transform.SetTranslation(pxr::GfVec3d(0, Constants::trackDims[1] * 0.5, 0));
+    transform.SetTranslation(pxr::GfVec3d(0, 0, Constants::trackDims[1] * 0.5));
     usdex::core::setLocalTransform(rampRef, transform);
 
     std::vector<pxr::UsdGeomCube> dividers;
@@ -370,25 +377,25 @@ pxr::UsdStageRefPtr createTrackComponent(const samples::Args& args)
         geomScope,
         "divider",
         1.0,
-        pxr::GfVec3d(0, Constants::trackDims[1] * 0.5, 0),
-        pxr::GfVec3f(0, 0, static_cast<float>(-Constants::trackAngle)),
-        pxr::GfVec3f(static_cast<float>(Constants::trackDividerLength), 4, 2)
+        pxr::GfVec3d(0, 0, Constants::trackDims[1] * 0.5),
+        pxr::GfVec3f(0, static_cast<float>(Constants::trackAngle), 0),
+        pxr::GfVec3f(static_cast<float>(Constants::trackDividerLength), 0.02f, 0.04f)
     ));
     dividers.push_back(samples::createCube(
         geomScope,
         "divider",
         1.0,
-        pxr::GfVec3d(0, Constants::trackDims[1] * 0.5, -Constants::trackDims[2] * 0.5 + 1.1),
-        pxr::GfVec3f(0, 0, static_cast<float>(-Constants::trackAngle)),
-        pxr::GfVec3f(static_cast<float>(Constants::trackDividerLength), 4, 2)
+        pxr::GfVec3d(0, Constants::trackDims[2] * 0.5 - 0.011, Constants::trackDims[1] * 0.5),
+        pxr::GfVec3f(0, static_cast<float>(Constants::trackAngle), 0),
+        pxr::GfVec3f(static_cast<float>(Constants::trackDividerLength), 0.02f, 0.04f)
     ));
     dividers.push_back(samples::createCube(
         geomScope,
         "divider",
         1.0,
-        pxr::GfVec3d(0, Constants::trackDims[1] * 0.5, Constants::trackDims[2] * 0.5 - 1.1),
-        pxr::GfVec3f(0, 0, static_cast<float>(-Constants::trackAngle)),
-        pxr::GfVec3f(static_cast<float>(Constants::trackDividerLength), 4, 2)
+        pxr::GfVec3d(0, -Constants::trackDims[2] * 0.5 + 0.011, Constants::trackDims[1] * 0.5),
+        pxr::GfVec3f(0, static_cast<float>(Constants::trackAngle), 0),
+        pxr::GfVec3f(static_cast<float>(Constants::trackDividerLength), 0.02f, 0.04f)
     ));
 
     // Create materials content layer and bind materials to geometry
@@ -419,22 +426,25 @@ pxr::UsdStageRefPtr createTrackComponent(const samples::Args& args)
     return assetStage;
 }
 
-
-void createPinewoodDerbyAssembly(pxr::UsdStageRefPtr stage, pxr::UsdStageRefPtr trackComponentStage, pxr::UsdStageRefPtr carComponentStage)
+bool createPinewoodDerbyAssembly(pxr::UsdStageRefPtr stage, pxr::UsdStageRefPtr trackComponentStage, pxr::UsdStageRefPtr carComponentStage)
 {
     pxr::GfTransform transform;
-    transform.SetTranslation(pxr::GfVec3d(400, -50, 600));
+    transform.SetTranslation(pxr::GfVec3d(4, -6, -0.5));
     pxr::UsdGeomXform pinewoodDerbyAssembly = usdex::core::defineXform(stage->GetDefaultPrim(), "PinewoodDerbyAssembly", transform);
 
     usdex::core::defineReference(pinewoodDerbyAssembly.GetPrim(), trackComponentStage->GetDefaultPrim(), "Track");
 
     pxr::UsdPrim car0Prim = usdex::core::defineReference(pinewoodDerbyAssembly.GetPrim(), carComponentStage->GetDefaultPrim(), "BlueCar");
-    pxr::UsdGeomPrimvar colorPrimvar = pxr::UsdGeomPrimvarsAPI(car0Prim.GetPrim()).GetPrimvar(sampleTokens->bodyPaintColor);
-    colorPrimvar.Set(pxr::GfVec3f(0.3284f, 0.7490f, 0.7098f)); // light blue
+    bool success = usdex::core::setConstantPrimvar(car0Prim.GetPrim(), sampleTokens->bodyPaintColor, Constants::lightBlue);
 
     pxr::UsdPrim car1Prim = usdex::core::defineReference(pinewoodDerbyAssembly.GetPrim(), carComponentStage->GetDefaultPrim(), "GreenCar");
-    colorPrimvar = pxr::UsdGeomPrimvarsAPI(car1Prim.GetPrim()).GetPrimvar(sampleTokens->bodyPaintColor);
-    colorPrimvar.Set(pxr::GfVec3f(0.294f, 0.725f, 0.0f)); // green
+    success &= usdex::core::setConstantPrimvar(car1Prim.GetPrim(), sampleTokens->bodyPaintColor, Constants::green);
+
+    if (!success)
+    {
+        std::cout << "Error setting body paint color primvars, exiting" << std::endl;
+        return false;
+    }
 
     // Place the cars on the track (at the start with the appropriate spacing and rotation)
     double carOffsetFromBackOfTrack = Constants::carDims[0] * 0.5 - Constants::trackDims[0] * 0.5;
@@ -443,15 +453,16 @@ void createPinewoodDerbyAssembly(pxr::UsdStageRefPtr stage, pxr::UsdStageRefPtr 
     double carLaneOffset = Constants::trackDims[2] * 0.25;
 
     transform.SetIdentity();
-    transform.SetTranslation(pxr::GfVec3d(carOffsetFromBackOfTrack, carHeight - carDropHeight, carLaneOffset));
-    transform.SetRotation(pxr::GfRotation(pxr::GfVec3d(0, 0, 1), -Constants::trackAngle));
+    transform.SetTranslation(pxr::GfVec3d(carOffsetFromBackOfTrack, -carLaneOffset, carHeight - carDropHeight));
+    transform.SetRotation(pxr::GfRotation(pxr::GfVec3d(0, 1, 0), Constants::trackAngle));
     usdex::core::setLocalTransform(car0Prim, transform);
 
-    transform.SetTranslation(pxr::GfVec3d(carOffsetFromBackOfTrack, carHeight - carDropHeight, -carLaneOffset));
-    transform.SetRotation(pxr::GfRotation(pxr::GfVec3d(0, 0, 1), -Constants::trackAngle));
+    transform.SetTranslation(pxr::GfVec3d(carOffsetFromBackOfTrack, carLaneOffset, carHeight - carDropHeight));
+    transform.SetRotation(pxr::GfRotation(pxr::GfVec3d(0, 1, 0), Constants::trackAngle));
     usdex::core::setLocalTransform(car1Prim, transform);
 
     usdex::core::configureAssemblyHierarchy(pinewoodDerbyAssembly.GetPrim());
+    return true;
 }
 
 
@@ -482,9 +493,16 @@ int main(int argc, char* argv[])
     std::cout << "Component stage: " << carComponentStage->GetRootLayer()->GetIdentifier() << std::endl;
     std::cout << "Component stage: " << trackComponentStage->GetRootLayer()->GetIdentifier() << std::endl;
 
-    createPinewoodDerbyAssembly(stage, trackComponentStage, carComponentStage);
+    if (!createPinewoodDerbyAssembly(stage, trackComponentStage, carComponentStage))
+    {
+        std::cout << "Error creating assembly, exiting" << std::endl;
+        return -1;
+    }
 
-    usdex::core::saveStage(stage, "OpenUSD Exchange Samples");
+    if (!samples::saveStage(stage, "OpenUSD Exchange Samples", args.usdzPath))
+    {
+        return -1;
+    }
 
     return 0;
 }

@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright (c) 2024-2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+// SPDX-FileCopyrightText: Copyright (c) 2024-2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 // SPDX-License-Identifier: MIT
 //
 
@@ -40,19 +40,22 @@ int main(int argc, char* argv[])
     pxr::TfTokenVector validTokens = usdex::core::getValidChildNames(defaultPrim, cameraNames);
 
     // GfCamera is a container for camera attributes, used by the Exchange SDK defineCamera function
-    // Put the telephoto camera about 3000 units from the origin and focus on the cube we created in createStage
+    // Configure the telephoto camera with a long focus distance
+    // Lens and filmback values are expressed in tenths of a scene unit, so the GfCamera defaults (sized for a
+    // centimeter stage) and the focal length must be divided by 100 for this meter stage, otherwise the physical
+    // lens aperture becomes meters wide and the render is heavily defocused
     pxr::GfCamera gfCam = pxr::GfCamera(
         /* transform */ pxr::GfMatrix4d(1.0),
         /* projection */ pxr::GfCamera::Projection::Perspective,
-        /* horizontalAperture */ static_cast<float>(pxr::GfCamera::DEFAULT_HORIZONTAL_APERTURE),
-        /* verticalAperture */ static_cast<float>(pxr::GfCamera::DEFAULT_VERTICAL_APERTURE),
+        /* horizontalAperture */ static_cast<float>(pxr::GfCamera::DEFAULT_HORIZONTAL_APERTURE / 100.0),
+        /* verticalAperture */ static_cast<float>(pxr::GfCamera::DEFAULT_VERTICAL_APERTURE / 100.0),
         /* horizontalApertureOffset */ 0.0f,
         /* verticalApertureOffset */ 0.0f,
-        /* focalLength */ 100.0f,
-        /* clippingRange */ pxr::GfRange1f(1, 1000000),
+        /* focalLength */ 1.0f, // 100 mm
+        /* clippingRange */ pxr::GfRange1f(0.01f, 10000.0f),
         /* clippingPlanes */ std::vector<pxr::GfVec4f>(),
         /* fStop */ 1.4f,
-        /* focusDistance */ 3000.0f
+        /* focusDistance */ 88.62f
     );
 
     // Define the camera
@@ -61,16 +64,16 @@ int main(int argc, char* argv[])
     // We could configure the xform in the GfCamera, but we can also do so with:
     usdex::core::setLocalTransform(
         telephotoCamera, /* xformable */
-        pxr::GfVec3d(2531.459, 49.592, 1707.792), /* translation */
+        pxr::GfVec3d(65.71555, -58.62940, 14.15558), /* translation */
         pxr::GfVec3d(0.0), /* pivot */
-        pxr::GfVec3f(-0.379f, 56.203f, 0.565f), /* rotation */
+        pxr::GfVec3f(81.474f, -0.314f, 47.484f), /* rotation */
         usdex::core::RotationOrder::eXyz, /* rotation order */
         pxr::GfVec3f(1.0f) /* scale */
     );
 
-    // Put the wide-angle camera about 250 units from the origin and look towards the cube we created in createStage
-    gfCam.SetFocusDistance(250.0f);
-    gfCam.SetFocalLength(3.5f);
+    // Configure the wide-angle camera with a shorter focus distance
+    gfCam.SetFocusDistance(5.63f);
+    gfCam.SetFocalLength(0.035f); // 3.5 mm
     gfCam.SetFStop(32.0f);
 
     // Define the camera
@@ -79,15 +82,18 @@ int main(int argc, char* argv[])
     // We could configure the xform in the GfCamera, but we can also do so with:
     usdex::core::setLocalTransform(
         wideCamera, /* xformable */
-        pxr::GfVec3d(-283.657, 12.826, 140.9), /* translation */
+        pxr::GfVec3d(-5.06538, -2.03795, 3.04977), /* translation */
         pxr::GfVec3d(0.0), /* pivot */
-        pxr::GfVec3f(-1.234f, -64.0f, -2.53f), /* rotation */
+        pxr::GfVec3f(53.976f, 1.109f, -45.364f), /* rotation */
         usdex::core::RotationOrder::eXyz, /* rotation order */
         pxr::GfVec3f(1.0f) /* scale */
     );
 
     // Save the stage to disk
-    usdex::core::saveStage(stage, "OpenUSD Exchange Samples");
+    if (!samples::saveStage(stage, "OpenUSD Exchange Samples", args.usdzPath))
+    {
+        return -1;
+    }
 
     return 0;
 }

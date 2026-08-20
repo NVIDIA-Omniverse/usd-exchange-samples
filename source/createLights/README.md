@@ -28,19 +28,22 @@ This sample is implemented in both C++ and Python.  To run:
 
 ## Hardcoded items
 
-- If a stage is created, it will have a default prim named "World", Y-up axis, 1 cm linear units
+- If a stage is created, it will have a default prim named "World", Z-up axis, 1 m linear units
 - The rect light named "rectLight" is created with these properties:
-    - 100x33 cm
-    - 5,000 intensity
-        - Note: this intensity is fairly high, the intention is to make a very visible blue light.  Also note that the default material in Omniverse Kit is very reflective so it's difficult to see the light on the `createStage` and `createMesh` geometry outside of the light's reflection.
-        - Different DCC applications and renders will treat light intensity, exposure, etc. differently. When authoring lights, the target renderer and application should be considered.
-    - 300 cm high, rotated to point down
+    - A width and height of 0.25 m
+    - An intensity of 500
+    - A color value of (0.3, 0, 1)
+    - A position of (0, 0, 0.6) m
+    - A downward direction along the local -Z axis
+    - Different applications and renderers can interpret light properties differently. Consider the target application and renderer when you author a light.
 - The dome light named "domeLight" is created with these properties:
     - 0.3 intensity
         - USDView likes a much lower intensity (0.3) than Omniverse Kit/RTX (1000). An intensity of 1000 washes out everything in USDView.
     - an HDRI texture is copied to the stage folder and set as the light texture file
-    - to render properly in Omniverse Kit/RTX, apply a rotation -90 on the X axis to point -Z down
-        - USDView correctly expects the [dome's top pole to be aligned with the world's +Y axis](https://openusd.org/dev/api/class_usd_lux_dome_light.html#details)
+    - a 90-degree X-axis rotation aligns the dome's +Y top pole with the stage's +Z up-axis
+        - Omniverse Kit/RTX does not currently render this authored DomeLight rotation correctly
+        - Kit/RTX treats the DomeLight environment as Z-up, unlike the OpenUSD +Y pole convention
+    - a 1,000 m guide radius preserves the previous 1 km guide size after the stage-unit conversion
 
 ## Command Line Arguments
 
@@ -51,4 +54,5 @@ Usage:
   -a, --usda          Output a text stage rather than binary
   -h, --help          Print usage
   -p, --path arg      Alternate destination stage path (default: c:/Users/username/AppData/Local/Temp/usdex/sample.usdc)
+  -z, --usdz          Package the output stage as USDZ
 ```

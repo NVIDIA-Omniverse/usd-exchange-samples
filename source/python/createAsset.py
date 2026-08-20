@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-FileCopyrightText: Copyright (c) 2025-2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: MIT
 #
 
@@ -25,8 +25,8 @@ def createAsset(args) -> Usd.Stage:
     assetStage = usdex.core.createStage(
         identifier=stagePath.as_posix(),
         defaultPrimName="FlowerPlanter",
-        upAxis=UsdGeom.Tokens.y,
-        linearUnits=UsdGeom.LinearUnits.centimeters,
+        upAxis=UsdGeom.Tokens.z,
+        linearUnits=UsdGeom.LinearUnits.meters,
         authoringMetadata="OpenUSD Exchange Samples",
     )
     if not assetStage:
@@ -46,10 +46,10 @@ def createAsset(args) -> Usd.Stage:
 
     # Define the basic geometric shapes for our flower components
     planterLibraryGeom = common.usdUtils.createCylinder(
-        geometryLibraryStage.GetDefaultPrim(), "Planter", height=10, radius=15
+        geometryLibraryStage.GetDefaultPrim(), "Planter", height=0.1, radius=0.15
     )  # Larger planter for 3 flowers
-    stemLibraryGeom = common.usdUtils.createCylinder(geometryLibraryStage.GetDefaultPrim(), "Stem", height=20, radius=1)
-    petalLibraryGeom = common.usdUtils.createCylinder(geometryLibraryStage.GetDefaultPrim(), "Petal", height=2.5, radius=8)
+    stemLibraryGeom = common.usdUtils.createCylinder(geometryLibraryStage.GetDefaultPrim(), "Stem", height=0.2, radius=0.01)
+    petalLibraryGeom = common.usdUtils.createCylinder(geometryLibraryStage.GetDefaultPrim(), "Petal", height=0.025, radius=0.08)
 
     # Create a materials library to store reusable material definitions
     materialsLibraryStage = usdex.core.addAssetLibrary(payloadStage, usdex.core.getMaterialsToken(), libraryExtension)
@@ -72,7 +72,7 @@ def createAsset(args) -> Usd.Stage:
     planterRef = usdex.core.defineReference(parent=flowerPlanterXform.GetPrim(), source=planterLibraryGeom.GetPrim())
     usdex.core.setLocalTransform(
         prim=planterRef,
-        translation=Gf.Vec3d(0, 5, 0),  # Position planter at ground level
+        translation=Gf.Vec3d(0, 0, 0.05),  # Position planter at ground level
         pivot=Gf.Vec3d(0.0),
         rotation=Gf.Vec3f(0, 0, 0),
         rotationOrder=usdex.core.RotationOrder.eXyz,
@@ -86,15 +86,15 @@ def createAsset(args) -> Usd.Stage:
 
     # Create 3 flowers with different positions
     flowerPositions = [
-        Gf.Vec3d(-8, 0, 0),  # Left flower
+        Gf.Vec3d(-0.08, 0, 0),  # Left flower
         Gf.Vec3d(0, 0, 0),  # Center flower
-        Gf.Vec3d(8, 0, 0),  # Right flower
+        Gf.Vec3d(0.08, 0, 0),  # Right flower
     ]
 
     flowerRotation = [
-        Gf.Vec3f(0, 0, 30),
+        Gf.Vec3f(0, -30, 0),
         Gf.Vec3f(0, 0, 0),
-        Gf.Vec3f(0, 0, -30),
+        Gf.Vec3f(0, 30, 0),
     ]
 
     for i, position in enumerate(flowerPositions):
@@ -105,7 +105,7 @@ def createAsset(args) -> Usd.Stage:
         stemXform = usdex.core.defineXform(parent=flowerXform.GetPrim(), name="StemXform")
         usdex.core.setLocalTransform(
             prim=stemXform.GetPrim(),
-            translation=Gf.Vec3d(position[0], 15, position[2]),  # Position stem relative to planter top
+            translation=Gf.Vec3d(position[0], position[1], 0.15),  # Position stem relative to planter top
             pivot=Gf.Vec3d(0.0),
             rotation=flowerRotation[i],
             rotationOrder=usdex.core.RotationOrder.eXyz,
@@ -118,7 +118,7 @@ def createAsset(args) -> Usd.Stage:
         petalXform = usdex.core.defineXform(parent=stemXform.GetPrim(), name="PetalXform")
         usdex.core.setLocalTransform(
             prim=petalXform.GetPrim(),
-            translation=Gf.Vec3d(0, 10, 0),  # Position petals relative to stem top
+            translation=Gf.Vec3d(0, 0, 0.1),  # Position petals relative to stem top
             pivot=Gf.Vec3d(0.0),
             rotation=Gf.Vec3f(90, 0, 0),  # Rotate petals to face outward
             rotationOrder=usdex.core.RotationOrder.eXyz,
@@ -189,13 +189,14 @@ def main(args):
 
     # Create a reference to the asset
     refTransform = Gf.Transform()
-    refTransform.SetTranslation(Gf.Vec3d(-300, -50, 300))
+    refTransform.SetTranslation(Gf.Vec3d(-3, -3, -0.5))
     refTransform.SetScale(Gf.Vec3d(5))
     prim = usdex.core.defineReference(parent=defaultPrim, source=assetStage.GetDefaultPrim(), name="FlowerPlanter")
     xform = UsdGeom.Xform(prim)
     usdex.core.setLocalTransform(xform, refTransform)
 
-    usdex.core.saveStage(stage, "OpenUSD Exchange Samples")
+    if not common.usdUtils.saveStage(stage, "OpenUSD Exchange Samples", args.usdzPath):
+        sys.exit(-1)
 
 
 if __name__ == "__main__":

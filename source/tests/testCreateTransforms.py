@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: Copyright (c) 2024-2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-FileCopyrightText: Copyright (c) 2024-2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: MIT
 #
 
@@ -42,9 +42,9 @@ class CreateTransformsTestCase(BaseTestCaseModule.BaseTestCase):
         self.assertTrue(typedPrim)
         self.assertIsInstance(typedPrim, UsdGeom.Xform)
         translation, pivot, rotation, rotationOrder, scale = usdex.core.getLocalTransformComponents(prim)
-        self.assertAlmostEqual(translation, Gf.Vec3f(100, 22, 100))
+        self.assertTrue(Gf.IsClose(translation, Gf.Vec3d(1, -1, 0.22), 1e-6))
         self.assertAlmostEqual(scale, Gf.Vec3f(0.5, 0.5, 0.5))
-        self.assertAlmostEqual(rotation, Gf.Vec3f(22.5, 22.5, 22.5))
+        self.assertTrue(Gf.IsClose(rotation, Gf.Vec3f(13.492833, -20.704811, 24.148674), 1e-5))
         self.assertAlmostEqual(rotationOrder, usdex.core.RotationOrder.eXyz)
 
         # Check the xform
@@ -54,7 +54,7 @@ class CreateTransformsTestCase(BaseTestCaseModule.BaseTestCase):
         self.assertTrue(typedPrim)
         self.assertIsInstance(typedPrim, UsdGeom.Xform)
         translation, pivot, rotation, rotationOrder, scale = usdex.core.getLocalTransformComponents(prim)
-        self.assertAlmostEqual(translation, Gf.Vec3f(0, -55, 0))
+        self.assertTrue(Gf.IsClose(translation, Gf.Vec3d(0, 0, -0.55), 1e-6))
 
         # check the ground cube under the xform prim
         prim = stage.GetPrimAtPath(prim.GetPath().AppendChild(groundName))
@@ -63,7 +63,7 @@ class CreateTransformsTestCase(BaseTestCaseModule.BaseTestCase):
         self.assertTrue(typedPrim)
         self.assertIsInstance(typedPrim, UsdGeom.Cube)
         translation, pivot, rotation, rotationOrder, scale = usdex.core.getLocalTransformComponents(prim)
-        self.assertAlmostEqual(scale, Gf.Vec3f(20, 0.1, 20))
+        self.assertAlmostEqual(scale, Gf.Vec3f(20, 20, 0.1))
 
         # check the quat cube
         prim = stage.GetPrimAtPath(defaultPrim.GetPath().AppendChild(quatName))

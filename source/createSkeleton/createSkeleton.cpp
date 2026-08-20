@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright (c) 2024 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+// SPDX-FileCopyrightText: Copyright (c) 2024-2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 // SPDX-License-Identifier: MIT
 //
 
@@ -30,7 +30,7 @@ namespace
 static constexpr const char g_animName[] = "anim";
 static constexpr const char g_skelName[] = "skel";
 static constexpr const char g_skinnedMeshName[] = "skinnedMesh";
-static const double g_boneSize = 100.0;
+static const double g_boneSize = 1.0;
 static const double g_timeCodesPerSecond = 24;
 static const double g_endTimeCode = 48;
 } // namespace
@@ -41,7 +41,7 @@ static const double g_endTimeCode = 48;
 //! @param skeleton The skeleton prim
 //! @param animPrimPath The path to the animation prim to be created
 //! @param elbowMaxAngle The max angle for the elbow joint in the animation (on the joint's X axis)
-//! @param wristMaxAngle The max angle for the wrist joint in the animation (on the joint's Z axis)
+//! @param wristMaxAngle The max angle for the wrist joint in the animation (on the joint's Y axis)
 //! @return The created UsdSkelAnimation prim
 pxr::UsdSkelAnimation createAndBindAnimForSkel(
     pxr::UsdSkelSkeleton& skeleton,
@@ -63,8 +63,8 @@ pxr::UsdSkelAnimation createAndBindAnimForSkel(
 
     // Set constant relative translation and scale attributes
     pxr::VtVec3fArray translations = {
-        pxr::GfVec3f(0, 0, g_boneSize), // elbow
-        pxr::GfVec3f(0, 0, g_boneSize) // wrist
+        pxr::GfVec3f(0, -g_boneSize, 0), // elbow
+        pxr::GfVec3f(0, -g_boneSize, 0) // wrist
     };
 
     // Rotate the elbow
@@ -74,7 +74,7 @@ pxr::UsdSkelAnimation createAndBindAnimForSkel(
 
     // Rotate the wrist
     std::vector<pxr::GfRotation> wristRots = { pxr::GfRotation(pxr::GfVec3d(1, 0, 0), 0),
-                                               pxr::GfRotation(pxr::GfVec3d(0, 0, 1), wristMaxAngle),
+                                               pxr::GfRotation(pxr::GfVec3d(0, 1, 0), -wristMaxAngle),
                                                pxr::GfRotation(pxr::GfVec3d(1, 0, 0), 0) };
 
     // Time samples over 2 seconds (g_endTimeCode frames at timeCodesPerSecond FPS)
@@ -165,16 +165,16 @@ pxr::UsdSkelRoot createSkelMesh(
     skeleton.GetJointsAttr().Set(jointTokens);
 
     // bind transforms - provide the world space transform of each joint at bind time
-    pxr::VtMatrix4dArray bindTransforms({ pxr::GfMatrix4d(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, -g_boneSize, 1),
+    pxr::VtMatrix4dArray bindTransforms({ pxr::GfMatrix4d(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, g_boneSize, 0, 1),
                                           pxr::GfMatrix4d(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1),
-                                          pxr::GfMatrix4d(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, g_boneSize, 1) });
+                                          pxr::GfMatrix4d(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, -g_boneSize, 0, 1) });
     skeleton.GetBindTransformsAttr().Set(bindTransforms);
 
     // rest transforms - provides local space rest transforms of each joint
     // (serve as a fallback values for joints not overridden by an animation)
     pxr::VtMatrix4dArray restTransforms({ pxr::GfMatrix4d(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1),
-                                          pxr::GfMatrix4d(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, g_boneSize, 1),
-                                          pxr::GfMatrix4d(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, g_boneSize, 1) });
+                                          pxr::GfMatrix4d(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, -g_boneSize, 0, 1),
+                                          pxr::GfMatrix4d(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, -g_boneSize, 0, 1) });
     skeleton.GetRestTransformsAttr().Set(restTransforms);
 
     ///////////////
@@ -211,8 +211,8 @@ pxr::UsdSkelRoot createSkelMesh(
        0---j0---5
    ****************/
     pxr::VtVec3fArray points = {
-        pxr::GfVec3f(-g_boneSize, 0.0, -g_boneSize), pxr::GfVec3f(-g_boneSize, 0.0, 0.0), pxr::GfVec3f(-g_boneSize, 0.0, g_boneSize),
-        pxr::GfVec3f(g_boneSize, 0.0, g_boneSize),   pxr::GfVec3f(g_boneSize, 0.0, 0.0),  pxr::GfVec3f(g_boneSize, 0.0, -g_boneSize),
+        pxr::GfVec3f(-g_boneSize, g_boneSize, 0.0), pxr::GfVec3f(-g_boneSize, 0.0, 0.0), pxr::GfVec3f(-g_boneSize, -g_boneSize, 0.0),
+        pxr::GfVec3f(g_boneSize, -g_boneSize, 0.0), pxr::GfVec3f(g_boneSize, 0.0, 0.0),  pxr::GfVec3f(g_boneSize, g_boneSize, 0.0),
     };
 
     // Indices for each quad
@@ -222,7 +222,7 @@ pxr::UsdSkelRoot createSkelMesh(
     pxr::VtIntArray faceVertexCounts = { 4, 4 };
 
     // Vertex normals
-    pxr::VtVec3fArray normals = { pxr::GfVec3f(0.0, 1.0, 0.0) };
+    pxr::VtVec3fArray normals = { pxr::GfVec3f(0.0, 0.0, 1.0) };
     pxr::VtIntArray normalIndices = { 0, 0, 0, 0, 0, 0 };
 
     pxr::UsdGeomMesh mesh = usdex::core::definePolyMesh(
@@ -296,7 +296,7 @@ int main(int argc, char* argv[])
         return -1;
     }
 
-    pxr::UsdSkelRoot skelRoot = createSkelMesh(stage->GetDefaultPrim(), "skelRootGroup", pxr::GfVec3d(-300, 0, 0));
+    pxr::UsdSkelRoot skelRoot = createSkelMesh(stage->GetDefaultPrim(), "skelRootGroup", pxr::GfVec3d(-3, 0, 0));
     if (!skelRoot)
     {
         std::cout << "Error creating skeletal mesh group, exiting" << std::endl;
@@ -304,7 +304,10 @@ int main(int argc, char* argv[])
     }
 
     // Save the stage to disk
-    usdex::core::saveStage(stage, "OpenUSD Exchange Samples");
+    if (!samples::saveStage(stage, "OpenUSD Exchange Samples", args.usdzPath))
+    {
+        return -1;
+    }
 
     return 0;
 }

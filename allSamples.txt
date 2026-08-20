@@ -1,6 +1,7 @@
 createStage
 createTransforms
 createMesh
+createCurves
 createMaterials
 createReferences
 createAsset

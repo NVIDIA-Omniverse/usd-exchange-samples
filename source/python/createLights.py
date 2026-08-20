@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: Copyright (c) 2024-2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-FileCopyrightText: Copyright (c) 2024-2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: MIT
 #
 
@@ -29,21 +29,21 @@ def createRectLight(stage):
     # Get a valid name for the rect light (in case it already exists)
     lightPrimNames = usdex.core.getValidChildNames(stage.GetDefaultPrim(), ["rectLight"])
 
-    rectLightPrim = usdex.core.defineRectLight(parent=stage.GetDefaultPrim(), name=lightPrimNames[0], width=100.0, height=33.0, intensity=5000)
+    rectLightPrim = usdex.core.defineRectLight(parent=stage.GetDefaultPrim(), name=lightPrimNames[0], width=0.25, height=0.25, intensity=500)
 
-    # Move the light up and rotate it so it shines down onto the stage
+    # Move the light up; identity rotation keeps local -Z aimed down the stage up-axis
     usdex.core.setLocalTransform(
         xformable=rectLightPrim,
-        translation=Gf.Vec3d(0.0, 300.0, 0.0),
+        translation=Gf.Vec3d(0.0, 0.0, 0.6),
         pivot=Gf.Vec3d(0.0),
-        rotation=Gf.Vec3f(-90.0, 0.0, 0.0),  # pointing -z down
+        rotation=Gf.Vec3f(0.0, 0.0, 0.0),  # local -Z points down
         rotationOrder=usdex.core.RotationOrder.eXyz,
         scale=Gf.Vec3f(1),
     )
 
     # Grab the LuxLightAPI so we can set generic light attributes
     lightApi = UsdLux.LightAPI(rectLightPrim)
-    lightApi.CreateColorAttr().Set(Gf.Vec3f(0.0, 0.0, 1.0))
+    lightApi.CreateColorAttr().Set(Gf.Vec3f(0.3, 0.0, 1.0))
     return rectLightPrim
 
 
@@ -64,21 +64,17 @@ def createDomeLight(stage, texturePath):
 
     # Create the dome light (note that some renderers have issues with more than one visible domelight)
     # NOTE: Kit/RTX wants a high intensity (1000), USDView likes a low intensity (0.3)
-    # NOTE: Kit/RTX renders domelights with a Z-up axis, rather than Y-up as USDView does
     domeLightPrim = usdex.core.defineDomeLight(parent=stage.GetDefaultPrim(), name=lightPrimNames[0], intensity=0.3, texturePath=texturePath)
     if not domeLightPrim:
         print("Failure to create dome light prim")
         sys.exit(-1)
 
-    # Rotate the dome light if using Kit/RTX for rendering
-    # usdex.core.setLocalTransform(
-    #    xformable=domeLightPrim,
-    #    translation=Gf.Vec3d(0.0),
-    #    pivot=Gf.Vec3d(0.0),
-    #    rotation=Gf.Vec3f(-90.0, 0.0, 0.0),  # pointing -z down
-    #    rotationOrder=usdex.core.RotationOrder.eXyz,
-    #    scale=Gf.Vec3f(1),
-    # )
+    # Align the dome's default Y-up orientation with the stage up-axis
+    domeLightPrim.OrientToStageUpAxis()
+
+    # Preserve the previous 1 km guide size now that each stage unit represents one meter
+    domeLightPrim.CreateGuideRadiusAttr(1000.0)
+
     return domeLightPrim
 
 
@@ -94,10 +90,11 @@ def main(args):
     createRectLight(stage)
 
     # Create a UsdLux.DomeLight
-    relTexturePath = common.sysUtils.copyTextureToStagePath(args.path, "kloofendal_48d_partly_cloudy.hdr")
+    relTexturePath = common.sysUtils.copyTextureToStagePath(args.path, "kloofendal_48d_partly_cloudy.exr")
     createDomeLight(stage, relTexturePath)
 
-    usdex.core.saveStage(stage, "OpenUSD Exchange Samples")
+    if not common.usdUtils.saveStage(stage, "OpenUSD Exchange Samples", args.usdzPath):
+        sys.exit(-1)
 
 
 if __name__ == "__main__":

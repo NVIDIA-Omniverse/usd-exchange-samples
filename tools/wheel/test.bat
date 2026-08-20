@@ -2,6 +2,7 @@
 setlocal enabledelayedexpansion
 
 set SCRIPT_DIR=%~dp0
+call "%SCRIPT_DIR%configure_python_package_index.bat"
 set SOURCE_DIR=%SCRIPT_DIR%..\..\source
 set PYTHONPATH=%SOURCE_DIR%\python;%SOURCE_DIR%\tests;%PYTHONPATH%
 

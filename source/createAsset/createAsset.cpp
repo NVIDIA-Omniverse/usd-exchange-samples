@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+// SPDX-FileCopyrightText: Copyright (c) 2025-2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 // SPDX-License-Identifier: MIT
 //
 
@@ -42,8 +42,8 @@ pxr::UsdStageRefPtr createAsset(const samples::Args& args)
     pxr::UsdStageRefPtr assetStage = usdex::core::createStage(
         stagePath.string(),
         "FlowerPlanter",
-        pxr::UsdGeomGetFallbackUpAxis(),
-        pxr::UsdGeomLinearUnits::centimeters,
+        pxr::UsdGeomTokens->z,
+        pxr::UsdGeomLinearUnits::meters,
         samples::getSamplesAuthoringMetadata()
     );
     if (!assetStage)
@@ -69,14 +69,13 @@ pxr::UsdStageRefPtr createAsset(const samples::Args& args)
     pxr::UsdGeomCylinder planterLibraryGeom = samples::createCylinder(
         geometryLibraryStage->GetDefaultPrim(),
         "Planter",
-        pxr::UsdGeomGetFallbackUpAxis(),
-        10.0f,
-        15.0f // Larger planter for 3 flowers
+        pxr::UsdGeomTokens->z,
+        0.1,
+        0.15 // Larger planter for 3 flowers
     );
+    pxr::UsdGeomCylinder stemLibraryGeom = samples::createCylinder(geometryLibraryStage->GetDefaultPrim(), "Stem", pxr::UsdGeomTokens->z, 0.2, 0.01);
     pxr::UsdGeomCylinder
-        stemLibraryGeom = samples::createCylinder(geometryLibraryStage->GetDefaultPrim(), "Stem", pxr::UsdGeomGetFallbackUpAxis(), 20.0f, 1.0f);
-    pxr::UsdGeomCylinder
-        petalLibraryGeom = samples::createCylinder(geometryLibraryStage->GetDefaultPrim(), "Petal", pxr::UsdGeomGetFallbackUpAxis(), 2.5f, 8.0f);
+        petalLibraryGeom = samples::createCylinder(geometryLibraryStage->GetDefaultPrim(), "Petal", pxr::UsdGeomTokens->z, 0.025, 0.08);
 
     // Create a materials library to store reusable material definitions
     pxr::UsdStageRefPtr materialsLibraryStage = usdex::core::addAssetLibrary(payloadStage, usdex::core::getMaterialsToken(), libraryExtension);
@@ -110,7 +109,7 @@ pxr::UsdStageRefPtr createAsset(const samples::Args& args)
     pxr::UsdPrim planterRef = usdex::core::defineReference(flowerPlanterXform.GetPrim(), planterLibraryGeom.GetPrim());
     usdex::core::setLocalTransform(
         planterRef,
-        pxr::GfVec3d(0, 5, 0), // Position planter at ground level
+        pxr::GfVec3d(0, 0, 0.05), // Position planter at ground level
         pxr::GfVec3d(0.0),
         pxr::GfVec3f(0, 0, 0),
         usdex::core::RotationOrder::eXyz,
@@ -124,15 +123,15 @@ pxr::UsdStageRefPtr createAsset(const samples::Args& args)
 
     // Create 3 flowers with different positions
     std::vector<pxr::GfVec3d> flowerPositions = {
-        pxr::GfVec3d(-8, 0, 0), // Left flower
+        pxr::GfVec3d(-0.08, 0, 0), // Left flower
         pxr::GfVec3d(0, 0, 0), // Center flower
-        pxr::GfVec3d(8, 0, 0), // Right flower
+        pxr::GfVec3d(0.08, 0, 0), // Right flower
     };
 
     std::vector<pxr::GfVec3f> flowerRotation = {
-        pxr::GfVec3f(0, 0, 30),
+        pxr::GfVec3f(0, -30, 0),
         pxr::GfVec3f(0, 0, 0),
-        pxr::GfVec3f(0, 0, -30),
+        pxr::GfVec3f(0, 30, 0),
     };
 
     for (size_t i = 0; i < numFlowers; ++i)
@@ -145,7 +144,7 @@ pxr::UsdStageRefPtr createAsset(const samples::Args& args)
         pxr::UsdGeomXform stemXform = usdex::core::defineXform(flowerXform.GetPrim(), "StemXform");
         usdex::core::setLocalTransform(
             stemXform.GetPrim(),
-            pxr::GfVec3d(flowerPositions[i][0], 15, flowerPositions[i][2]), // Position stem relative to planter top
+            pxr::GfVec3d(flowerPositions[i][0], flowerPositions[i][1], 0.15), // Position stem relative to planter top
             pxr::GfVec3d(0.0),
             flowerRotation[i],
             usdex::core::RotationOrder::eXyz,
@@ -159,7 +158,7 @@ pxr::UsdStageRefPtr createAsset(const samples::Args& args)
         pxr::UsdGeomXform petalXform = usdex::core::defineXform(stemXform.GetPrim(), "PetalXform");
         usdex::core::setLocalTransform(
             petalXform.GetPrim(),
-            pxr::GfVec3d(0, 10, 0), // Position petals relative to stem top
+            pxr::GfVec3d(0, 0, 0.1), // Position petals relative to stem top
             pxr::GfVec3d(0.0),
             pxr::GfVec3f(90, 0, 0), // Rotate petals to face outward
             usdex::core::RotationOrder::eXyz,
@@ -249,14 +248,17 @@ int main(int argc, char* argv[])
 
     // Create a reference to the asset
     pxr::GfTransform refTransform;
-    refTransform.SetTranslation(pxr::GfVec3d(-300, -50, 300));
+    refTransform.SetTranslation(pxr::GfVec3d(-3, -3, -0.5));
     refTransform.SetScale(pxr::GfVec3d(5));
 
     pxr::UsdPrim prim = usdex::core::defineReference(defaultPrim, assetStage->GetDefaultPrim(), "FlowerPlanter");
     pxr::UsdGeomXform xform(prim);
     usdex::core::setLocalTransform(xform, refTransform);
 
-    usdex::core::saveStage(stage, "OpenUSD Exchange Samples");
+    if (!samples::saveStage(stage, "OpenUSD Exchange Samples", args.usdzPath))
+    {
+        return -1;
+    }
 
     return 0;
 }

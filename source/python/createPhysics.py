@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-FileCopyrightText: Copyright (c) 2025-2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: MIT
 #
 
@@ -25,8 +25,8 @@ def createPhysicsScene(stage: Usd.Stage):
 
     # Create physics scene, note that we don't have to specify gravity because
     # the default value is derived from the stage's upAxis and linear scale.
-    # In this case the gravity would be (0.0, -981.0, 0.0) since the stage has a
-    # Y upAxis with a centimeter linear scale.
+    # In this case the gravity would be (0.0, 0.0, -9.81) since the stage has a
+    # Z upAxis with a meter linear scale.
     physicsSceneName = usdex.core.getValidChildName(defaultPrim, "PhysicsScene")
     scenePath = defaultPrim.GetPath().AppendChild(physicsSceneName)
     UsdPhysics.Scene.Define(stage, scenePath)
@@ -47,7 +47,7 @@ def createGroundWithCollision(stage: Usd.Stage) -> bool:
                 return True
 
     groundName = usdex.core.getValidChildName(defaultPrim, "ground")
-    plane = usdex.core.definePlane(defaultPrim, groundName, 2.0, 2.0, UsdGeom.GetStageUpAxis(stage))
+    plane = usdex.core.definePlane(defaultPrim, groundName, 0.02, 0.02, UsdGeom.GetStageUpAxis(stage))
     if not plane:
         return False
 
@@ -55,7 +55,7 @@ def createGroundWithCollision(stage: Usd.Stage) -> bool:
     UsdPhysics.CollisionAPI.Apply(plane.GetPrim())
 
     # Set transform.
-    position = Gf.Vec3d(0, -50, 0)
+    position = Gf.Vec3d(0, 0, -0.5)
     pivot = Gf.Vec3d(0)
     rotation = Gf.Vec3f(0, 0, 0)
     scale = Gf.Vec3f(1, 1, 1)
@@ -80,10 +80,10 @@ def simpleRigidBodiesAndCollisions(stage: Usd.Stage, centerPos: Gf.Vec3d):
 
     # Create sphere with rigid body and collision.
     displayColor = Gf.Vec3f(1, 0, 0)
-    position = Gf.Vec3d(0, 200, 0)
+    position = Gf.Vec3d(0, 0, 2)
     rotation = Gf.Vec3f(0)
     scale = Gf.Vec3f(1)
-    sphere = common.usdUtils.createSphere(simpleXform.GetPrim(), "sphere", 30.0, position, rotation, scale, displayColor)
+    sphere = common.usdUtils.createSphere(simpleXform.GetPrim(), "sphere", 0.3, position, rotation, scale, displayColor)
 
     # Set rigid body.
     UsdPhysics.RigidBodyAPI.Apply(sphere.GetPrim())
@@ -93,10 +93,10 @@ def simpleRigidBodiesAndCollisions(stage: Usd.Stage, centerPos: Gf.Vec3d):
 
     # Create cube with rigid body and collision.
     displayColor = Gf.Vec3f(0, 1, 0)
-    position = Gf.Vec3d(120, 250, 0)
-    rotation = Gf.Vec3f(50, 45, 0)
+    position = Gf.Vec3d(1.2, 0, 2.5)
+    rotation = Gf.Vec3f(50, 0, 45)
     scale = Gf.Vec3f(1)
-    cube = common.usdUtils.createCube(simpleXform.GetPrim(), "cube", 50.0, position, rotation, scale, displayColor)
+    cube = common.usdUtils.createCube(simpleXform.GetPrim(), "cube", 0.5, position, rotation, scale, displayColor)
 
     # Set rigid body.
     UsdPhysics.RigidBodyAPI.Apply(cube.GetPrim())
@@ -129,13 +129,13 @@ def simplePhysicsFixedJoints(stage: Usd.Stage, centerPos: Gf.Vec3d, capsuleCount
     capsuleNames = usdex.core.getValidChildNames(baseXform.GetPrim(), srcCapsuleNames)
 
     # Create capsules with rigid body and collision.
-    capsuleWidth = 80.0
-    capsuleRadius = 10.0
-    capsuleMargin = 2.0
+    capsuleWidth = 0.8
+    capsuleRadius = 0.1
+    capsuleMargin = 0.02
     capsuleLengthX = capsuleWidth + capsuleRadius * 2.0 + capsuleMargin
     px = 0.0
-    py = 200.0
-    pz = 0.0
+    py = 0.0
+    pz = 2.0
 
     capsules = []
     for i in range(capsuleCount):
@@ -156,6 +156,9 @@ def simplePhysicsFixedJoints(stage: Usd.Stage, centerPos: Gf.Vec3d, capsuleCount
 
         capsules.append(capsule)
         px += capsuleLengthX
+
+    # Mark the first capsule as the articulation root of the kinematic tree.
+    UsdPhysics.ArticulationRootAPI.Apply(capsules[0].GetPrim())
 
     # Connect the root and the first capsule with a FixedJoint to fix them in place.
     body0 = baseXform.GetPrim()
@@ -222,13 +225,13 @@ def simplePhysicsRevoluteJoints(stage: Usd.Stage, centerPos: Gf.Vec3d, capsuleCo
     capsuleNames = usdex.core.getValidChildNames(baseXform.GetPrim(), srcCapsuleNames)
 
     # Create capsules with rigid body and collision.
-    capsuleWidth = 80.0
-    capsuleRadius = 10.0
-    capsuleMargin = 2.0
+    capsuleWidth = 0.8
+    capsuleRadius = 0.1
+    capsuleMargin = 0.02
     capsuleLengthX = capsuleWidth + capsuleRadius * 2.0 + capsuleMargin
     px = 0.0
-    py = 200.0
-    pz = 0.0
+    py = 0.0
+    pz = 2.0
 
     capsules = []
     for i in range(capsuleCount):
@@ -249,6 +252,9 @@ def simplePhysicsRevoluteJoints(stage: Usd.Stage, centerPos: Gf.Vec3d, capsuleCo
 
         capsules.append(capsule)
         px += capsuleLengthX
+
+    # Mark the first capsule as the articulation root of the kinematic tree.
+    UsdPhysics.ArticulationRootAPI.Apply(capsules[0].GetPrim())
 
     # Connect the root and the first capsule with a FixedJoint to fix them in place.
     body0 = baseXform.GetPrim()
@@ -272,10 +278,10 @@ def simplePhysicsRevoluteJoints(stage: Usd.Stage, centerPos: Gf.Vec3d, capsuleCo
     jointNames = usdex.core.getValidChildNames(jointsXform.GetPrim(), srcJointNames)
 
     # Connect two capsules with physics joints.
-    # The rotation of a RevoluteJoint is primarily about the local Z axis and limits are set in degrees.
+    # The rotation of a RevoluteJoint is primarily about the local Y axis and limits are set in degrees.
     lowerLimit = -45.0
     upperLimit = 20.0
-    axis = Gf.Vec3f(0, 0, 1)
+    axis = Gf.Vec3f(0, -1, 0)
     for i in range(1, capsuleCount):
         name = jointNames[i]
 
@@ -324,18 +330,18 @@ def simplePhysicsPrismaticJoints(stage: Usd.Stage, centerPos: Gf.Vec3d, capsuleC
     jointsXform = usdex.core.defineXform(baseXform.GetPrim(), jointsName)
 
     # Create capsules with rigid body and collision.
-    capsuleWidth = 80.0
-    capsuleRadius = 10.0
-    capsuleMargin = 2.0
+    capsuleWidth = 0.8
+    capsuleRadius = 0.1
+    capsuleMargin = 0.02
     capsuleLengthX = capsuleWidth + capsuleRadius * 2.0 + capsuleMargin
     px = 0.0
-    py = 200.0
-    pz = 0.0
+    py = 0.0
+    pz = 2.0
 
     # Xform tilted slightly downwards.
     tiltTransform = Gf.Transform()
     tiltTransform.SetTranslation(Gf.Vec3d(-(capsuleLengthX * 0.5), 0, 0))
-    tiltTransform.SetRotation(Gf.Rotation(Gf.Vec3d(0, 0, 1), -15.0))
+    tiltTransform.SetRotation(Gf.Rotation(Gf.Vec3d(0, 1, 0), 15.0))
     tiltXform = usdex.core.defineXform(baseXform.GetPrim(), "tilt", tiltTransform)
 
     # Create a vector of capsule names
@@ -362,6 +368,9 @@ def simplePhysicsPrismaticJoints(stage: Usd.Stage, centerPos: Gf.Vec3d, capsuleC
         capsules.append(capsule)
         px += capsuleLengthX
 
+    # Mark the first capsule as the articulation root of the kinematic tree.
+    UsdPhysics.ArticulationRootAPI.Apply(capsules[0].GetPrim())
+
     # Connect the root and the first capsule with a FixedJoint to fix them in place.
     body0 = baseXform.GetPrim()
     body1 = capsules[0].GetPrim()
@@ -384,10 +393,10 @@ def simplePhysicsPrismaticJoints(stage: Usd.Stage, centerPos: Gf.Vec3d, capsuleC
     jointNames = usdex.core.getValidChildNames(jointsXform.GetPrim(), srcJointNames)
 
     # Connect two capsules with physics joints.
-    # The slide of a PrismaticJoint is primarily about the local X axis and limits are set in centimeters.
+    # The slide of a PrismaticJoint is primarily about the local X axis and limits are set in meters.
     axis = Gf.Vec3f(1, 0, 0)
     lowerLimit = 0.0
-    upperLimit = 40.0
+    upperLimit = 0.4
     for i in range(1, capsuleCount):
         name = jointNames[i]
 
@@ -440,13 +449,13 @@ def simplePhysicsSphericalJoints(stage: Usd.Stage, centerPos: Gf.Vec3d, capsuleC
     capsuleNames = usdex.core.getValidChildNames(baseXform.GetPrim(), srcCapsuleNames)
 
     # Create capsules with rigid body and collision.
-    capsuleWidth = 80.0
-    capsuleRadius = 10.0
-    capsuleMargin = 2.0
+    capsuleWidth = 0.8
+    capsuleRadius = 0.1
+    capsuleMargin = 0.02
     capsuleLengthX = capsuleWidth + capsuleRadius * 2.0 + capsuleMargin
     px = 0.0
-    py = 200.0
-    pz = 0.0
+    py = 0.0
+    pz = 2.0
 
     capsules = []
     for i in range(capsuleCount):
@@ -467,6 +476,9 @@ def simplePhysicsSphericalJoints(stage: Usd.Stage, centerPos: Gf.Vec3d, capsuleC
 
         capsules.append(capsule)
         px += capsuleLengthX
+
+    # Mark the first capsule as the articulation root of the kinematic tree.
+    UsdPhysics.ArticulationRootAPI.Apply(capsules[0].GetPrim())
 
     # Connect the root and the first capsule with a FixedJoint to fix them in place.
     body0 = baseXform.GetPrim()
@@ -491,8 +503,9 @@ def simplePhysicsSphericalJoints(stage: Usd.Stage, centerPos: Gf.Vec3d, capsuleC
 
     # Connect two capsules with physics joints.
     # The rotation of a SphericalJoint is primarily about the local X axis and limits are set in degrees.
-    coneAngle0Limit = 45.0
-    coneAngle1Limit = 20.0
+    # For axis X, coneAngle0 limits toward local Y and coneAngle1 toward local Z.
+    coneAngle0Limit = 20.0
+    coneAngle1Limit = 45.0
     axis = Gf.Vec3f(1, 0, 0)
     for i in range(1, capsuleCount):
         name = jointNames[i]
@@ -551,14 +564,14 @@ def physicsMaterials(stage: Usd.Stage, centerPos: Gf.Vec3d):
     ramps = []
     cubes = []
     for i in range(3):
-        pz = -100.0 + i * 100.0
+        py = 1.0 - i * 1.0
         # Create a ramp. This does not assign a rigid body, only collision.
         name = rampNames[i]
         displayColor = Gf.Vec3f(0, 1, 0)
-        position = Gf.Vec3d(20, 20, pz)
-        rotation = Gf.Vec3f(0, 0, -10.0)
-        scale = Gf.Vec3f(2.5, 0.05, 0.8)
-        cube = common.usdUtils.createCube(rampsXform.GetPrim(), name, 100.0, position, rotation, scale, displayColor)
+        position = Gf.Vec3d(0.2, py, 0.2)
+        rotation = Gf.Vec3f(0, 10.0, 0)
+        scale = Gf.Vec3f(2.5, 0.8, 0.05)
+        cube = common.usdUtils.createCube(rampsXform.GetPrim(), name, 1.0, position, rotation, scale, displayColor)
 
         # Set collision.
         UsdPhysics.CollisionAPI.Apply(cube.GetPrim())
@@ -568,10 +581,10 @@ def physicsMaterials(stage: Usd.Stage, centerPos: Gf.Vec3d):
         # Create a cube.
         name = cubeNames[i]
         displayColor = Gf.Vec3f(0, 0, 1)
-        position = Gf.Vec3d(-60, 160, pz)
+        position = Gf.Vec3d(-0.6, py, 1.6)
         rotation = Gf.Vec3f(0, 0, 0)
         scale = Gf.Vec3f(1)
-        cube = common.usdUtils.createCube(cubesXform.GetPrim(), name, 30.0, position, rotation, scale, displayColor)
+        cube = common.usdUtils.createCube(cubesXform.GetPrim(), name, 0.3, position, rotation, scale, displayColor)
 
         # Set rigid body.
         UsdPhysics.RigidBodyAPI.Apply(cube.GetPrim())
@@ -644,21 +657,22 @@ def main(args):
         sys.exit(-1)
 
     # Simple rigid bodies and collisions.
-    simpleRigidBodiesAndCollisions(stage, Gf.Vec3d(-250, 0, -820))
+    simpleRigidBodiesAndCollisions(stage, Gf.Vec3d(-2.5, 8.2, 0))
 
     # Simple FixedJoint.
-    simplePhysicsFixedJoints(stage, Gf.Vec3d(-150, 0, -660))
+    simplePhysicsFixedJoints(stage, Gf.Vec3d(-1.5, 6.6, 0))
     # Simple RevoluteJoint.
-    simplePhysicsRevoluteJoints(stage, Gf.Vec3d(-150, 0, -610))
+    simplePhysicsRevoluteJoints(stage, Gf.Vec3d(-1.5, 6.1, 0))
     # Simple PrismaticJoint.
-    simplePhysicsPrismaticJoints(stage, Gf.Vec3d(-150, 0, -560))
+    simplePhysicsPrismaticJoints(stage, Gf.Vec3d(-1.5, 5.6, 0))
     # Simple SphericalJoint.
-    simplePhysicsSphericalJoints(stage, Gf.Vec3d(-150, 0, -510))
+    simplePhysicsSphericalJoints(stage, Gf.Vec3d(-1.5, 5.1, 0))
 
     # physics materials.
-    physicsMaterials(stage, Gf.Vec3d(200, 0, -820))
+    physicsMaterials(stage, Gf.Vec3d(2, 8.2, 0))
 
-    usdex.core.saveStage(stage, "OpenUSD Exchange Samples")
+    if not common.usdUtils.saveStage(stage, "OpenUSD Exchange Samples", args.usdzPath):
+        sys.exit(-1)
 
 
 if __name__ == "__main__":

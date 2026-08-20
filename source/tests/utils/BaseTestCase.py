@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: Copyright (c) 2024-2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-FileCopyrightText: Copyright (c) 2024-2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: MIT
 #
 
@@ -6,14 +6,18 @@ import difflib
 import filecmp
 import pathlib
 import tempfile
-import unittest
 from abc import abstractmethod
 
+import usdex.test
+import utils.fileFormat
 import utils.shell
+from pxr import Ar
 from utils.ScopedEnvVar import ScopedEnvVar
 
+from source.validateUsd.validateUsdBootstrap import getCoreMaterialsPath
 
-class BaseTestCase(unittest.TestCase):
+
+class BaseTestCase(usdex.test.TestCase):
 
     @property
     @abstractmethod
@@ -27,11 +31,9 @@ class BaseTestCase(unittest.TestCase):
         raise NotImplementedError()
 
     def runAssetValidator(self, stagePath):
-        return_code, output = utils.shell.run_shell_script("omni_asset_validator", stagePath)
-        self.assertEqual(return_code, 0, output)
-        for line in output.splitlines():
-            if line.lower().startswith("warning") or line.lower().startswith("error") or line.lower().startswith("fatal"):
-                self.fail(msg=line)
+        resolverContext = Ar.DefaultResolverContext([getCoreMaterialsPath()])
+        with Ar.ResolverContextBinder(resolverContext):
+            self.assertIsValidUsd(stagePath)
 
     def compareTextOutput(self, cppName, pythonScript):
         with tempfile.TemporaryDirectory() as tempDirStr:
@@ -58,7 +60,7 @@ class BaseTestCase(unittest.TestCase):
             pythonFileNames = [f.name for f in pythonFiles]
             self.assertListEqual(cppFileNames, pythonFileNames)
 
-            ignoreSuffixes = [".png", ".hdr"]
+            ignoreSuffixes = [".png", ".exr"]
             for cppFile, pythonFile in zip(cppFiles, pythonFiles):
                 if cppFile.suffix not in ignoreSuffixes:
                     filecmp.clear_cache()
@@ -66,13 +68,33 @@ class BaseTestCase(unittest.TestCase):
                         filecmp.cmp(cppFile.as_posix(), pythonFile.as_posix()), msg=printUsdFiles([cppFile.as_posix(), pythonFile.as_posix()])
                     )
 
+    def checkUsdzOutput(self, script, programPath):
+        with tempfile.TemporaryDirectory() as tempDirStr:
+            tempDir = pathlib.Path(tempDirStr)
+            stagePath = pathlib.Path(tempDir / "test_stage.usdc")
+            usdzPath = stagePath.with_suffix(".usdz")
+            return_code, output = utils.shell.run_shell_script(script, programPath, "-p", stagePath.as_posix(), "--usdz")
+            self.assertEqual(return_code, 0, output)
+            self.assertNotIn("Error creating USDZ package", output)
+            self.assertNotIn("Failed to resolve reference", output)
+            self.assertTrue(stagePath.exists(), f"Stage {stagePath} does not exist")
+            utils.fileFormat.checkUsdzPackage(self, usdzPath.as_posix(), [stagePath.name])
+
     def testCpp(self):
         self.runSampleOptions("run", self.sampleName)
+
+    def testCppUsdz(self):
+        self.checkUsdzOutput("run", self.sampleName)
 
     def testPython(self):
         # Set PYTHONIOENCODING because subprocess.run() isn't giving a good default code page for the rocket glyph to print
         with ScopedEnvVar("PYTHONIOENCODING", "utf-8", ["Windows"]):
             self.runSampleOptions("python", f"source/python/{self.sampleName}.py")
+
+    def testPythonUsdz(self):
+        # Set PYTHONIOENCODING because subprocess.run() isn't giving a good default code page for the rocket glyph to print
+        with ScopedEnvVar("PYTHONIOENCODING", "utf-8", ["Windows"]):
+            self.checkUsdzOutput("python", f"source/python/{self.sampleName}.py")
 
     def testCompareText(self):
         # Set PYTHONIOENCODING because subprocess.run() isn't giving a good default code page for the rocket glyph to print

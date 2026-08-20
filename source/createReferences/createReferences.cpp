@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright (c) 2024-2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+// SPDX-FileCopyrightText: Copyright (c) 2024-2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 // SPDX-License-Identifier: MIT
 //
 
@@ -51,8 +51,8 @@ pxr::UsdStageRefPtr createComponentStage(const samples::Args& args)
     usdex::core::configureStage(
         /* stage */ componentStage,
         /* defaultPrimName */ componentName,
-        /* upAxis */ pxr::UsdGeomGetFallbackUpAxis(),
-        /* linearUnits */ pxr::UsdGeomLinearUnits::centimeters,
+        /* upAxis */ pxr::UsdGeomTokens->z,
+        /* linearUnits */ pxr::UsdGeomLinearUnits::meters,
         /* authoringMetadata*/ samples::getSamplesAuthoringMetadata()
     );
 
@@ -60,8 +60,8 @@ pxr::UsdStageRefPtr createComponentStage(const samples::Args& args)
     pxr::UsdGeomXform xform = usdex::core::defineXform(componentStage, componentStage->GetDefaultPrim().GetPath());
 
     // Create 8 cubes in a 2x2x2 grid
-    float cubeSize = 25.0f;
-    double cubeSpacing = 30;
+    float cubeSize = 0.25f;
+    double cubeSpacing = 0.3;
     double offset = -(cubeSize + (cubeSpacing - cubeSize) / 2);
     for (int i = 0; i < 2; i++)
     {
@@ -70,11 +70,13 @@ pxr::UsdStageRefPtr createComponentStage(const samples::Args& args)
             for (int k = 0; k < 2; k++)
             {
                 std::string cubeName = pxr::TfStringPrintf("Cube_%i_%i_%i", i, j, k);
+                // Negate the k term so Cube_i_j_k maps to (+X, -Z, +Y) of the
+                // grid indices: i -> X, j -> Z (up), k -> -Y.
                 // clang-format off
                 pxr::GfVec3d pos(
                     i * (cubeSize + cubeSpacing) + offset,
-                    j * (cubeSize + cubeSpacing) + offset,
-                    k * (cubeSize + cubeSpacing) + offset
+                    -(k * (cubeSize + cubeSpacing) + offset),
+                    j * (cubeSize + cubeSpacing) + offset
                 );
                 // clang-format on
                 samples::createCubeMesh(componentStage->GetDefaultPrim(), cubeName, cubeSize, pos);
@@ -134,7 +136,7 @@ int main(int argc, char* argv[])
     // Create a reference prim
     pxr::TfTokenVector primNames = usdex::core::getValidChildNames(defaultPrim, std::vector<std::string>{ "referencePrim", "payloadPrim" });
     pxr::GfTransform refTransform;
-    refTransform.SetTranslation(pxr::GfVec3d(0, 2.5, 300));
+    refTransform.SetTranslation(pxr::GfVec3d(0, -3, 0.025));
     pxr::UsdPrim prim = usdex::core::defineReference(defaultPrim, componentStage->GetDefaultPrim(), primNames[0].GetString());
     pxr::UsdGeomXform xform = pxr::UsdGeomXform(prim);
     usdex::core::setLocalTransform(xform, refTransform);
@@ -149,7 +151,7 @@ int main(int argc, char* argv[])
     }
 
     // Create a payload prim
-    refTransform.SetTranslation(pxr::GfVec3d(300, 2.5, 0));
+    refTransform.SetTranslation(pxr::GfVec3d(3, 0, 0.025));
     prim = usdex::core::definePayload(defaultPrim, componentStage->GetDefaultPrim(), primNames[1].GetString());
     xform = pxr::UsdGeomXform(prim);
     usdex::core::setLocalTransform(xform, refTransform);
@@ -164,7 +166,10 @@ int main(int argc, char* argv[])
     }
 
     // Save the stage to disk
-    usdex::core::saveStage(stage, "OpenUSD Exchange Samples");
+    if (!samples::saveStage(stage, "OpenUSD Exchange Samples", args.usdzPath))
+    {
+        return -1;
+    }
 
     return 0;
 }

@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright (c) 2024-2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+// SPDX-FileCopyrightText: Copyright (c) 2024-2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 // SPDX-License-Identifier: MIT
 //
 
@@ -11,8 +11,8 @@
 #include <cxxopts.hpp>
 
 #include <pxr/usd/sdf/layer.h>
-#include <pxr/usd/usd/usdFileFormat.h>
-#include <pxr/usd/usd/usdaFileFormat.h>
+#include <pxr/usd/sdf/usdFileFormat.h>
+#include <pxr/usd/sdf/usdaFileFormat.h>
 
 #include <algorithm> // std::equal
 #include <cctype> // std::tolower
@@ -26,6 +26,7 @@ struct Args
 {
     std::string stagePath;
     pxr::SdfLayer::FileFormatArguments fileFormatArgs;
+    std::string usdzPath;
 };
 
 bool ichar_equals(char a, char b)
@@ -50,6 +51,7 @@ Args parseCommonOptions(int argc, char* argv[], const char* sampleName, const ch
         ("a,usda", "Output a text stage rather than binary", cxxopts::value<bool>()->default_value("false"))
         ("h,help", "Print usage")
         ("p,path", "Alternate destination stage path", cxxopts::value<std::string>()->default_value(args.stagePath))
+        ("z,usdz", "Package the output stage as USDZ", cxxopts::value<bool>()->default_value("false"))
         ;
     // clang-format on
     try
@@ -64,7 +66,9 @@ Args parseCommonOptions(int argc, char* argv[], const char* sampleName, const ch
         //  --path c:\folder\stage.usdc --usda -> error about invalid arg combo
         //  --path c:\folder\stage.usda --usda -> redundant but silent pass
         //  --path c:\folder\stage.usd --usda -> use file format args to steer the layer format
-        if (result["usda"].as<bool>())
+        const bool useUsda = result["usda"].as<bool>();
+        const bool useUsdz = result["usdz"].as<bool>();
+        if (useUsda)
         {
             args.stagePath = samples::getDefaultStagePath(".usda");
         }
@@ -72,15 +76,21 @@ Args parseCommonOptions(int argc, char* argv[], const char* sampleName, const ch
         {
             args.stagePath = result["path"].as<std::string>();
             std::filesystem::path extension = std::filesystem::path(args.stagePath).extension();
-            if (result["usda"].as<bool>() && iequals(extension.string(), ".usdc"))
+            if (useUsda && iequals(extension.string(), ".usdc"))
             {
                 std::cout << "Error parsing arguments: Inconsistent use of --usda with a .usdc stage" << std::endl;
                 exit(2);
             }
-            if (result["usda"].as<bool>() && iequals(extension.string(), ".usd"))
+            if (useUsda && iequals(extension.string(), ".usd"))
             {
-                args.fileFormatArgs.insert({ pxr::UsdUsdFileFormatTokens->FormatArg, pxr::UsdUsdaFileFormatTokens->Id });
+                args.fileFormatArgs.insert({ pxr::SdfUsdFileFormatTokens->FormatArg, pxr::SdfUsdaFileFormatTokens->Id });
             }
+        }
+        if (useUsdz)
+        {
+            std::filesystem::path usdzPath(args.stagePath);
+            usdzPath.replace_extension(".usdz");
+            args.usdzPath = usdzPath.string();
         }
     }
     catch (const cxxopts::OptionException& e)

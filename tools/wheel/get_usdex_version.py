@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-FileCopyrightText: Copyright (c) 2025-2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: MIT
 #
 
@@ -72,9 +72,9 @@ def get_usdex_version():
     if not os.path.exists(packman_file):
         raise FileNotFoundError(f"Could not find packman file: {packman_file}")
 
-    # The platform and config are required by packmanapi, but unimportant for determining
-    # the usdex wheel version so we can use a valid value for one of the platforms.
-    platform_target_abi = "windows-x86_64"
+    # The platform and config are required by packmanapi but get stripped from the version below, so any currently
+    # published abi works; the windows package is tagged windows_v143_x86_64
+    platform_target_abi = "windows_v143_x86_64"
 
     try:
         # Resolve the usd-exchange dependency using packmanapi

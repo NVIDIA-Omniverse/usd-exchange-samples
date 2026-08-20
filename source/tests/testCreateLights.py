@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: Copyright (c) 2024-2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-FileCopyrightText: Copyright (c) 2024-2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: MIT
 #
 
@@ -10,7 +10,7 @@ import unittest
 import utils.BaseTestCase as BaseTestCaseModule
 import utils.fileFormat
 import utils.shell
-from pxr import Usd, UsdLux
+from pxr import Gf, Usd, UsdGeom, UsdLux
 
 
 class CreateLightsTestCase(BaseTestCaseModule.BaseTestCase):
@@ -40,6 +40,13 @@ class CreateLightsTestCase(BaseTestCaseModule.BaseTestCase):
         typedPrim = UsdLux.RectLight(prim)
         self.assertTrue(typedPrim)
         self.assertIsInstance(typedPrim, UsdLux.RectLight)
+        lightApi = UsdLux.LightAPI(prim)
+        translation = UsdGeom.Xformable(prim).GetLocalTransformation().ExtractTranslation()
+        self.assertTrue(Gf.IsClose(translation, Gf.Vec3d(0.0, 0.0, 0.6), 0.00001))
+        self.assertEqual(typedPrim.GetWidthAttr().Get(), 0.25)
+        self.assertEqual(typedPrim.GetHeightAttr().Get(), 0.25)
+        self.assertEqual(lightApi.GetIntensityAttr().Get(), 500.0)
+        self.assertEqual(lightApi.GetColorAttr().Get(), Gf.Vec3f(0.3, 0.0, 1.0))
 
         # Check the domeLight
         prim = stage.GetPrimAtPath(defaultPrim.GetPath().AppendChild(domeLightPrimName))
@@ -47,6 +54,15 @@ class CreateLightsTestCase(BaseTestCaseModule.BaseTestCase):
         typedPrim = UsdLux.DomeLight(prim)
         self.assertTrue(typedPrim)
         self.assertIsInstance(typedPrim, UsdLux.DomeLight)
+
+        # Check that the dome orientation follows the stage up-axis
+        xformOps = UsdGeom.Xformable(typedPrim).GetOrderedXformOps()
+        self.assertEqual(len(xformOps), 1)
+        self.assertEqual(xformOps[0].GetOpName(), "xformOp:rotateX:orientToStageUpAxis")
+        self.assertEqual(xformOps[0].Get(), 90.0)
+
+        # Check that the guide radius represents the previous 1 km guide size in meter units
+        self.assertEqual(typedPrim.GetGuideRadiusAttr().Get(), 1000.0)
 
         # Check the existance of the domelight texture
         textureFilePath = typedPrim.GetTextureFileAttr().Get()

@@ -2,10 +2,11 @@
 
 These samples demonstrate some key concepts for writing OpenUSD converters. The samples use OpenUSD and the OpenUSD Exchange SDK ([docs](https://docs.omniverse.nvidia.com/usd/code-docs/usd-exchange-sdk/latest/index.html), [github](https://github.com/NVIDIA-Omniverse/usd-exchange)) to demonstrate how to author consistent and correct USD:
 
-- [`Asset Validator`](./source/assetValidator/README.md)
+- [`USD Validation`](./source/validateUsd/README.md)
 - [`createStage`](./source/createStage/README.md)
 - [`createTransforms`](./source/createTransforms/README.md)
 - [`createMesh`](./source/createMesh/README.md)
+- [`createCurves`](./source/createCurves/README.md)
 - [`createMaterials`](./source/createMaterials/README.md)
 - [`createReferences`](./source/createReferences/README.md)
 - [`createAsset`](./source/createAsset/README.md)
@@ -19,25 +20,25 @@ These samples demonstrate some key concepts for writing OpenUSD converters. The 
 ## How to Build and Run Samples
 
 ### Linux
-This project requires "make" and "g++".
+This project builds with CMake and requires "make" and "g++". The build script fetches a pinned CMake automatically (or uses a system `cmake` if one is present), so you only need "make" and "g++" installed:
 
 - Open a terminal.
 - To obtain "make" type `sudo apt install make` (Ubuntu/Debian), or `yum install make` (CentOS/RHEL).
 - For "g++" type `sudo apt install g++` (Ubuntu/Debian), or `yum install gcc-c++` (CentOS/RHEL).
 
-Use the provided build script to download all other dependencies (e.g USD), create the Makefiles, and compile the code.
+Use the provided build script to assemble the OpenUSD Exchange SDK + OpenUSD runtime (via `install_usdex`) and compile the C++ samples with CMake. The samples consume the SDK through `find_package(usd-exchange)`.
 
 ```bash
-./repo.sh build
+./build.sh
 ```
 
-For debug builds, use `./repo.sh build -d`
+For debug builds, use `./build.sh -d`
 
 #### C++ Samples
 
 Use the `run.sh` script (e.g. `./run.sh createStage`) to execute each program with a pre-configured environment.
 
-> Tip: If you prefer to manage the environment yourself, add `<samplesRoot>/_build/linux64-x86_64/release` to your `LD_LIBRARY_PATH`.
+> Tip: If you prefer to manage the environment yourself, add `<samplesRoot>/_install/linux-x86_64/release/lib` to your `LD_LIBRARY_PATH`.
 
 For command line argument help, use `--help`
 ```bash
@@ -46,11 +47,23 @@ For command line argument help, use `--help`
 
 You can also [run all samples together](#running-all-samples-together), saved into a single layer.
 
+#### USDZ Output
+
+Samples can package their output stage as USDZ by passing `--usdz`. The sample still writes its normal USD stage first, then creates an independent `.usdz` package next to that stage using the same filename stem:
+
+```bash
+./run.sh createMesh -p /tmp/sample.usdc --usdz
+```
+
+The `--path` argument remains the writable USD stage path. Passing a `.usdz` path to `--path` is not supported because USDZ packages are not writable stage layers.
+
+USDZ packaging requires every external asset dependency to resolve on disk. When `createMaterials` is run with `--usdz`, it skips the OmniPBR/MDL-specific examples so the package contains only dependencies that can be localized without MDL search-path configuration.
+
 #### Python Samples (with a virtual environment and the USD Exchange wheel)
 
 Setup and activate a virtual environment for USD Exchange using [these directions from the SDK docs](https://docs.omniverse.nvidia.com/usd/code-docs/usd-exchange-sdk/latest/docs/getting-started.html#installation).
 
-To install the optional Asset Validator, use the optional/extra syntax:
+To install the optional `usd-validation-nvidia` package, use the optional/extra syntax:
 
 ```bash
 (usdex-env): python3 -m pip install usd-exchange[test]
@@ -66,14 +79,14 @@ For command line argument help, use `--help`
 
 ### Windows
 #### Building
-This project requires Microsoft Visual Studio 2019 or newer. Download & install [Visual Studio with C++](https://visualstudio.microsoft.com/vs/features/cplusplus).
+This project requires Microsoft Visual Studio 2022 or newer. Download & install [Visual Studio with C++](https://visualstudio.microsoft.com/vs/features/cplusplus). The build script fetches a pinned CMake automatically (or uses a system `cmake` if one is present), so Visual Studio (compiler + MSBuild) is the only manual install.
 
-Use the provided build script to download all dependencies (e.g USD), create the projects, and compile the code.
+Use the provided build script to assemble the OpenUSD Exchange SDK + OpenUSD runtime (via `install_usdex`) and compile the C++ samples with CMake. The samples consume the SDK through `find_package(usd-exchange)`.
 ```bash
-.\repo.bat build
+.\build.bat
 ```
 
-For debug builds, use `.\repo.bat build -d`
+For debug builds, use `.\build.bat -d`
 
 #### C++ Samples
 
@@ -91,7 +104,7 @@ You can also [run all samples together](#running-all-samples-together), saved in
 
 Setup and activate a virtual environment for USD Exchange using [these directions from the SDK docs](https://docs.omniverse.nvidia.com/usd/code-docs/usd-exchange-sdk/latest/docs/getting-started.html#installation).
 
-To install the optional Asset Validator, use the optional/extra syntax:
+To install the optional `usd-validation-nvidia` package, use the optional/extra syntax:
 
 ```bash
 (usdex-env)> python.exe -m pip install usd-exchange[test]
@@ -107,7 +120,7 @@ For command line argument help, use `--help`
 
 #### Building within the Visual Studio IDE
 
-To build within the VS IDE, open the solution found in the `_compiler` folder in Visual Studio.  The sample C++ code can then be tweaked, debugged, rebuilt, etc. from there.
+CMake generates a Visual Studio solution under `_build/cmake/windows-x86_64/release` (run `.\build.bat` once to produce it). Open `usd-exchange-samples.sln` from that folder in Visual Studio to tweak, debug, and rebuild the sample C++ code.
 
 > Note : If the user installs the OpenUSD Exchange Samples into the `%LOCALAPPDATA%` folder, Visual Studio will not "Build" properly when changes are made because there is something wrong with picking up source changes.  Do one of these things to address the issue:
 >  - `Rebuild` the project with every source change rather than `Build`
@@ -139,15 +152,15 @@ Windows:
 python.exe source\python\all.py
 ```
 
-This will output a single layer file after all of the samples have run sequentially. This output layer can be passed as the first command line argument to the `usdview.[bat|sh]` script to view it.
+This will output a single layer file after all of the samples have run sequentially. The output is a standard USD stage that can be opened in any USD viewer.
 
 ### Build and CI/CD Tools
-The Samples repository uses the [Repo Tools Framework (`repo_man`)](https://docs.omniverse.nvidia.com/kit/docs/repo_man) to configure premake, packman, build and runtime dependencies, testing, formatting, and other tools. Packman is used as a dependency manager for packages like OpenUSD, the Omniverse Asset Validator, the OpenUSD Exchange SDK, and other items. The Samples use OpenUSD Exchange SDK's repo_man, premake, and packman tooling as templates for including and linking against OpenUSD, the OpenUSD Exchange SDK, and other dependencies.  These can serve as an example for the build and runtime configuration that a customer's application might require.  Here's a list of interesting files:
+The Samples build with plain CMake, consuming the OpenUSD Exchange SDK through `find_package(usd-exchange)`. The [Repo Tools Framework (`repo_man`)](https://docs.omniverse.nvidia.com/kit/docs/repo_man) and packman are still used to fetch the SDK package (and its OpenUSD), to run `install_usdex`, and for testing/formatting/CI. This is a representative setup for how a customer's CMake application would link against OpenUSD and the OpenUSD Exchange SDK. Here's a list of interesting files:
 
-- [premake5.lua](./premake5.lua) - the build configuration file for the samples
-- [prebuild.toml](./prebuild.toml) - consumed by the repo build tools to specify where runtime dependencies should be copied (beyond what `repo install_usdex` already installs)
-- `_build/target-deps/usd-exchange/release/dev/tools/premake/usdex_build.lua` - the OpenUSD Exchange SDK's premake build configuration template file for including USD, the OpenUSD Exchange SDK itself, and other libraries.
-  - this file isn't available until dependencies are fetched
+- [CMakeLists.txt](./CMakeLists.txt) - the CMake build for the samples; calls `find_package(usd-exchange)` and links each sample
+- [build.sh](./build.sh) / [build.bat](./build.bat) - assemble the SDK + OpenUSD runtime via `install_usdex`, then configure + build with CMake
+- `_build/target-deps/usd-exchange/release/lib/cmake/usd-exchange/` - the SDK's CMake package config (provides the `usdex::core` / `usdex::rtx` targets and the `usdex_target_link_usd()` helper)
+  - this is not available until dependencies are fetched
 
 For details on choosing and installing the OpenUSD Exchange SDK build flavors, features, or versions, see the [install_usdex](https://docs.omniverse.nvidia.com/usd/code-docs/usd-exchange-sdk/latest/docs/devtools.html#install-usdex) tool documentation.
 

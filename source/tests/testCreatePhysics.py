@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-FileCopyrightText: Copyright (c) 2025-2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: MIT
 #
 
@@ -184,8 +184,8 @@ class CreatePhysicsTestCase(BaseTestCaseModule.BaseTestCase):
                 self.assertTrue(joint_prim.IsA(UsdPhysics.FixedJoint))
                 joint = UsdPhysics.FixedJoint(joint_prim)
 
-                localPos0 = Gf.Vec3f(-51, 200, 0)
-                localPos1 = Gf.Vec3f(-51, 0, 0)
+                localPos0 = Gf.Vec3f(-0.51, 0, 2)
+                localPos1 = Gf.Vec3f(-0.51, 0, 0)
                 localRot0 = Gf.Quatf(1, 0, 0, 0)
                 localRot1 = Gf.Quatf(1, 0, 0, 0)
                 self.assertIsPhysicsJoint(joint, localPos0, localRot0, localPos1, localRot1)
@@ -196,8 +196,8 @@ class CreatePhysicsTestCase(BaseTestCaseModule.BaseTestCase):
                 self.assertTrue(joint_prim.IsA(UsdPhysics.FixedJoint))
                 joint = UsdPhysics.FixedJoint(joint_prim)
 
-                localPos0 = Gf.Vec3f(51, 0, 0)
-                localPos1 = Gf.Vec3f(-51, 0, 0)
+                localPos0 = Gf.Vec3f(0.51, 0, 0)
+                localPos1 = Gf.Vec3f(-0.51, 0, 0)
                 localRot0 = Gf.Quatf(1, 0, 0, 0)
                 localRot1 = Gf.Quatf(1, 0, 0, 0)
                 self.assertIsPhysicsJoint(joint, localPos0, localRot0, localPos1, localRot1)
@@ -208,8 +208,8 @@ class CreatePhysicsTestCase(BaseTestCaseModule.BaseTestCase):
                 self.assertTrue(joint_prim.IsA(UsdPhysics.FixedJoint))
                 joint = UsdPhysics.FixedJoint(joint_prim)
 
-                localPos0 = Gf.Vec3f(51, 0, 0)
-                localPos1 = Gf.Vec3f(-51, 0, 0)
+                localPos0 = Gf.Vec3f(0.51, 0, 0)
+                localPos1 = Gf.Vec3f(-0.51, 0, 0)
                 localRot0 = Gf.Quatf(1, 0, 0, 0)
                 localRot1 = Gf.Quatf(1, 0, 0, 0)
                 self.assertIsPhysicsJoint(joint, localPos0, localRot0, localPos1, localRot1)
@@ -242,8 +242,8 @@ class CreatePhysicsTestCase(BaseTestCaseModule.BaseTestCase):
                 self.assertTrue(joint_prim.IsA(UsdPhysics.FixedJoint))
                 joint = UsdPhysics.FixedJoint(joint_prim)
 
-                localPos0 = Gf.Vec3f(-51, 200, 0)
-                localPos1 = Gf.Vec3f(-51, 0, 0)
+                localPos0 = Gf.Vec3f(-0.51, 0, 2)
+                localPos1 = Gf.Vec3f(-0.51, 0, 0)
                 localRot0 = Gf.Quatf(1, 0, 0, 0)
                 localRot1 = Gf.Quatf(1, 0, 0, 0)
                 self.assertIsPhysicsJoint(joint, localPos0, localRot0, localPos1, localRot1)
@@ -254,13 +254,13 @@ class CreatePhysicsTestCase(BaseTestCaseModule.BaseTestCase):
                 self.assertTrue(joint_prim.IsA(UsdPhysics.RevoluteJoint))
                 joint = UsdPhysics.RevoluteJoint(joint_prim)
 
-                localPos0 = Gf.Vec3f(51, 0, 0)
-                localPos1 = Gf.Vec3f(-51, 0, 0)
-                localRot0 = Gf.Quatf(1, 0, 0, 0)
-                localRot1 = Gf.Quatf(1, 0, 0, 0)
+                localPos0 = Gf.Vec3f(0.51, 0, 0)
+                localPos1 = Gf.Vec3f(-0.51, 0, 0)
+                localRot0 = Gf.Quatf(0, -1, 0, 0)
+                localRot1 = Gf.Quatf(0, -1, 0, 0)
                 lowerLimit = -45.0
                 upperLimit = 20.0
-                self.assertIsPhysicsJoint(joint, localPos0, localRot0, localPos1, localRot1, UsdGeom.Tokens.z, lowerLimit, upperLimit)
+                self.assertIsPhysicsJoint(joint, localPos0, localRot0, localPos1, localRot1, UsdGeom.Tokens.y, lowerLimit, upperLimit)
 
                 # Check the RevoluteJoint.
                 joint_prim = stage.GetPrimAtPath(f"{prim.GetPath()}/joints/RevoluteJoint_2")
@@ -268,13 +268,13 @@ class CreatePhysicsTestCase(BaseTestCaseModule.BaseTestCase):
                 self.assertTrue(joint_prim.IsA(UsdPhysics.RevoluteJoint))
                 joint = UsdPhysics.RevoluteJoint(joint_prim)
 
-                localPos0 = Gf.Vec3f(51, 0, 0)
-                localPos1 = Gf.Vec3f(-51, 0, 0)
-                localRot0 = Gf.Quatf(1, 0, 0, 0)
-                localRot1 = Gf.Quatf(1, 0, 0, 0)
+                localPos0 = Gf.Vec3f(0.51, 0, 0)
+                localPos1 = Gf.Vec3f(-0.51, 0, 0)
+                localRot0 = Gf.Quatf(0, -1, 0, 0)
+                localRot1 = Gf.Quatf(0, -1, 0, 0)
                 lowerLimit = -45.0
                 upperLimit = 20.0
-                self.assertIsPhysicsJoint(joint, localPos0, localRot0, localPos1, localRot1, UsdGeom.Tokens.z, lowerLimit, upperLimit)
+                self.assertIsPhysicsJoint(joint, localPos0, localRot0, localPos1, localRot1, UsdGeom.Tokens.y, lowerLimit, upperLimit)
 
             elif primName == "SimplePrismaticJoints":
                 prim = stage.GetPrimAtPath(f"{defaultPrim.GetPath()}/SimplePrismaticJoints")
@@ -304,9 +304,9 @@ class CreatePhysicsTestCase(BaseTestCaseModule.BaseTestCase):
                 self.assertTrue(joint_prim.IsA(UsdPhysics.FixedJoint))
                 joint = UsdPhysics.FixedJoint(joint_prim)
 
-                localPos0 = Gf.Vec3f(-48.49841, 206.38493, 0)
-                localPos1 = Gf.Vec3f(-51, 0, 0)
-                localRot0 = Gf.Quatf(0.9914449, 0, 0, -0.13052619)
+                localPos0 = Gf.Vec3f(-0.4849841, 0, 2.0638493)
+                localPos1 = Gf.Vec3f(-0.51, 0, 0)
+                localRot0 = Gf.Quatf(0.9914449, 0, 0.13052619, 0)
                 localRot1 = Gf.Quatf(1, 0, 0, 0)
                 self.assertIsPhysicsJoint(joint, localPos0, localRot0, localPos1, localRot1)
 
@@ -316,12 +316,12 @@ class CreatePhysicsTestCase(BaseTestCaseModule.BaseTestCase):
                 self.assertTrue(joint_prim.IsA(UsdPhysics.PrismaticJoint))
                 joint = UsdPhysics.PrismaticJoint(joint_prim)
 
-                localPos0 = Gf.Vec3f(51, 0, 0)
-                localPos1 = Gf.Vec3f(-51, 0, 0)
+                localPos0 = Gf.Vec3f(0.51, 0, 0)
+                localPos1 = Gf.Vec3f(-0.51, 0, 0)
                 localRot0 = Gf.Quatf(1, 0, 0, 0)
                 localRot1 = Gf.Quatf(1, 0, 0, 0)
                 lowerLimit = 0.0
-                upperLimit = 40.0
+                upperLimit = 0.4
                 self.assertIsPhysicsJoint(joint, localPos0, localRot0, localPos1, localRot1, UsdGeom.Tokens.x, lowerLimit, upperLimit)
 
                 # Check the PrismaticJoint.
@@ -330,12 +330,12 @@ class CreatePhysicsTestCase(BaseTestCaseModule.BaseTestCase):
                 self.assertTrue(joint_prim.IsA(UsdPhysics.PrismaticJoint))
                 joint = UsdPhysics.PrismaticJoint(joint_prim)
 
-                localPos0 = Gf.Vec3f(51, 0, 0)
-                localPos1 = Gf.Vec3f(-51, 0, 0)
+                localPos0 = Gf.Vec3f(0.51, 0, 0)
+                localPos1 = Gf.Vec3f(-0.51, 0, 0)
                 localRot0 = Gf.Quatf(1, 0, 0, 0)
                 localRot1 = Gf.Quatf(1, 0, 0, 0)
                 lowerLimit = 0.0
-                upperLimit = 40.0
+                upperLimit = 0.4
                 self.assertIsPhysicsJoint(joint, localPos0, localRot0, localPos1, localRot1, UsdGeom.Tokens.x, lowerLimit, upperLimit)
 
             elif primName == "SimpleSphericalJoints":
@@ -366,8 +366,8 @@ class CreatePhysicsTestCase(BaseTestCaseModule.BaseTestCase):
                 self.assertTrue(joint_prim.IsA(UsdPhysics.FixedJoint))
                 joint = UsdPhysics.FixedJoint(joint_prim)
 
-                localPos0 = Gf.Vec3f(-51, 200, 0)
-                localPos1 = Gf.Vec3f(-51, 0, 0)
+                localPos0 = Gf.Vec3f(-0.51, 0, 2)
+                localPos1 = Gf.Vec3f(-0.51, 0, 0)
                 localRot0 = Gf.Quatf(1, 0, 0, 0)
                 localRot1 = Gf.Quatf(1, 0, 0, 0)
                 self.assertIsPhysicsJoint(joint, localPos0, localRot0, localPos1, localRot1)
@@ -378,12 +378,12 @@ class CreatePhysicsTestCase(BaseTestCaseModule.BaseTestCase):
                 self.assertTrue(joint_prim.IsA(UsdPhysics.SphericalJoint))
                 joint = UsdPhysics.SphericalJoint(joint_prim)
 
-                localPos0 = Gf.Vec3f(51, 0, 0)
-                localPos1 = Gf.Vec3f(-51, 0, 0)
+                localPos0 = Gf.Vec3f(0.51, 0, 0)
+                localPos1 = Gf.Vec3f(-0.51, 0, 0)
                 localRot0 = Gf.Quatf(1, 0, 0, 0)
                 localRot1 = Gf.Quatf(1, 0, 0, 0)
-                coneAngle0Limit = 45.0
-                coneAngle1Limit = 20.0
+                coneAngle0Limit = 20.0
+                coneAngle1Limit = 45.0
                 self.assertIsPhysicsJoint(
                     joint, localPos0, localRot0, localPos1, localRot1, UsdGeom.Tokens.x, None, None, coneAngle0Limit, coneAngle1Limit
                 )
@@ -394,12 +394,12 @@ class CreatePhysicsTestCase(BaseTestCaseModule.BaseTestCase):
                 self.assertTrue(joint_prim.IsA(UsdPhysics.SphericalJoint))
                 joint = UsdPhysics.SphericalJoint(joint_prim)
 
-                localPos0 = Gf.Vec3f(51, 0, 0)
-                localPos1 = Gf.Vec3f(-51, 0, 0)
+                localPos0 = Gf.Vec3f(0.51, 0, 0)
+                localPos1 = Gf.Vec3f(-0.51, 0, 0)
                 localRot0 = Gf.Quatf(1, 0, 0, 0)
                 localRot1 = Gf.Quatf(1, 0, 0, 0)
-                coneAngle0Limit = 45.0
-                coneAngle1Limit = 20.0
+                coneAngle0Limit = 20.0
+                coneAngle1Limit = 45.0
                 self.assertIsPhysicsJoint(
                     joint, localPos0, localRot0, localPos1, localRot1, UsdGeom.Tokens.x, None, None, coneAngle0Limit, coneAngle1Limit
                 )

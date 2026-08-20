@@ -43,7 +43,7 @@ This sample is implemented in both C++ and Python.  To run:
 
 ## Hardcoded items
 
-- If a stage is created, it will have a default prim named "World", Y-up axis, 1 cm linear units
+- If a stage is created, it will have a default prim named "World", Z-up axis, 1 m linear units
 - A new flower atomic component asset is created then payloaded into the stage
 
 ## Command Line Arguments
@@ -55,4 +55,5 @@ Usage:
   -a, --usda          Output a text stage rather than binary
   -h, --help          Print usage
   -p, --path arg      Alternate destination stage path (default: c:/Users/username/AppData/Local/Temp/usdex/sample.usdc)
+  -z, --usdz          Package the output stage as USDZ
 ```

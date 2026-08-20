@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: Copyright (c) 2024-2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-FileCopyrightText: Copyright (c) 2024-2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: MIT
 #
 
@@ -61,6 +61,10 @@ class CreateMeshTestCase(BaseTestCaseModule.BaseTestCase):
                     self.assertEqual(return_code, 0, output)
                     self._checkStageContents(args[0], meshName)
                     utils.fileFormat.checkLayerFormat(self, args[0], args[1])
+
+            # A .usdz path is not a writable stage path; USDZ packaging is only enabled by --usdz
+            return_code, output = utils.shell.run_shell_script(script, programPath, "-p", pathlib.Path(tempDir / "test_stage.usdz").as_posix())
+            self.assertNotEqual(return_code, 0, output)
 
             # Test invalid options
             return_code, output = utils.shell.run_shell_script(script, programPath, "-p", pathlib.Path(tempDir / "test_stage.usdc").as_posix(), "-a")
