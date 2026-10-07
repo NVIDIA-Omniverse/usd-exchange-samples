@@ -19,7 +19,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${USDEX_SAMPLES_RUNTIME_DIR}/bin$<0:>")
 set(CMAKE_BUILD_WITH_INSTALL_RPATH ON)
 set(CMAKE_INSTALL_RPATH "$ORIGIN;$ORIGIN/../lib")
 
-find_package(usd-exchange REQUIRED)
+find_package(usdex REQUIRED)
 find_path(SAMPLES_CXXOPTS_INCLUDE_DIR cxxopts.hpp REQUIRED)  # header-only CLI parser
 
 # the OpenUSD modules the samples call directly (linked via the SDK's usdex_target_link_usd helper)

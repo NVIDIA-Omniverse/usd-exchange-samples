@@ -26,7 +26,7 @@ This project builds with CMake and requires "make" and "g++". The build script f
 - To obtain "make" type `sudo apt install make` (Ubuntu/Debian), or `yum install make` (CentOS/RHEL).
 - For "g++" type `sudo apt install g++` (Ubuntu/Debian), or `yum install gcc-c++` (CentOS/RHEL).
 
-Use the provided build script to assemble the OpenUSD Exchange SDK + OpenUSD runtime (via `install_usdex`) and compile the C++ samples with CMake. The samples consume the SDK through `find_package(usd-exchange)`.
+Use the provided build script to assemble the OpenUSD Exchange SDK + OpenUSD runtime (via `install_usdex`) and compile the C++ samples with CMake. The samples consume the SDK through `find_package(usdex)`.
 
 ```bash
 ./build.sh
@@ -36,7 +36,7 @@ For debug builds, use `./build.sh -d`
 
 #### C++ Samples
 
-Use the `run.sh` script (e.g. `./run.sh createStage`) to execute each program with a pre-configured environment.
+Use the `run.sh` script (e.g. `./run.sh createStage`) to execute each program with a pre-configured environment. The runner defaults to Release. To run a Debug build, use `USDEX_SAMPLES_CONFIG=debug ./run.sh createStage`.
 
 > Tip: If you prefer to manage the environment yourself, add `<samplesRoot>/_install/linux-x86_64/release/lib` to your `LD_LIBRARY_PATH`.
 
@@ -55,7 +55,7 @@ Samples can package their output stage as USDZ by passing `--usdz`. The sample s
 ./run.sh createMesh -p /tmp/sample.usdc --usdz
 ```
 
-The `--path` argument remains the writable USD stage path. Passing a `.usdz` path to `--path` is not supported because USDZ packages are not writable stage layers.
+Both relative and absolute output paths are supported. Relative paths are resolved from the repository root when using `run.sh`/`run.bat`, or from the current working directory when running a Python sample directly. The `--path` argument remains the writable USD stage path. Passing a `.usdz` path to `--path` is not supported because USDZ packages are not writable stage layers.
 
 USDZ packaging requires every external asset dependency to resolve on disk. When `createMaterials` is run with `--usdz`, it skips the OmniPBR/MDL-specific examples so the package contains only dependencies that can be localized without MDL search-path configuration.
 
@@ -81,7 +81,7 @@ For command line argument help, use `--help`
 #### Building
 This project requires Microsoft Visual Studio 2022 or newer. Download & install [Visual Studio with C++](https://visualstudio.microsoft.com/vs/features/cplusplus). The build script fetches a pinned CMake automatically (or uses a system `cmake` if one is present), so Visual Studio (compiler + MSBuild) is the only manual install.
 
-Use the provided build script to assemble the OpenUSD Exchange SDK + OpenUSD runtime (via `install_usdex`) and compile the C++ samples with CMake. The samples consume the SDK through `find_package(usd-exchange)`.
+Use the provided build script to assemble the OpenUSD Exchange SDK + OpenUSD runtime (via `install_usdex`) and compile the C++ samples with CMake. The samples consume the SDK through `find_package(usdex)`.
 ```bash
 .\build.bat
 ```
@@ -90,7 +90,14 @@ For debug builds, use `.\build.bat -d`
 
 #### C++ Samples
 
-Use the `run.bat` script (e.g. `.\run.bat createStage`) to execute each program with a pre-configured environment.
+Use the `run.bat` script (e.g. `.\run.bat createStage`) to execute each program with a pre-configured environment. The runner defaults to Release. To run a Debug build in PowerShell:
+
+```powershell
+$env:USDEX_SAMPLES_CONFIG = "debug"
+.\run.bat createStage
+```
+
+Set `USDEX_SAMPLES_CONFIG` to `release` or remove the environment variable to use Release again.
 
 For command line argument help, use `--help`
 
@@ -155,11 +162,11 @@ python.exe source\python\all.py
 This will output a single layer file after all of the samples have run sequentially. The output is a standard USD stage that can be opened in any USD viewer.
 
 ### Build and CI/CD Tools
-The Samples build with plain CMake, consuming the OpenUSD Exchange SDK through `find_package(usd-exchange)`. The [Repo Tools Framework (`repo_man`)](https://docs.omniverse.nvidia.com/kit/docs/repo_man) and packman are still used to fetch the SDK package (and its OpenUSD), to run `install_usdex`, and for testing/formatting/CI. This is a representative setup for how a customer's CMake application would link against OpenUSD and the OpenUSD Exchange SDK. Here's a list of interesting files:
+The Samples build with plain CMake, consuming the OpenUSD Exchange SDK through `find_package(usdex)`. The [Repo Tools Framework (`repo_man`)](https://docs.omniverse.nvidia.com/kit/docs/repo_man) and packman are still used to fetch the SDK package (and its OpenUSD), to run `install_usdex`, and for testing/formatting/CI. This is a representative setup for how a customer's CMake application would link against OpenUSD and the OpenUSD Exchange SDK. Here's a list of interesting files:
 
-- [CMakeLists.txt](./CMakeLists.txt) - the CMake build for the samples; calls `find_package(usd-exchange)` and links each sample
+- [CMakeLists.txt](./CMakeLists.txt) - the CMake build for the samples; calls `find_package(usdex)` and links each sample
 - [build.sh](./build.sh) / [build.bat](./build.bat) - assemble the SDK + OpenUSD runtime via `install_usdex`, then configure + build with CMake
-- `_build/target-deps/usd-exchange/release/lib/cmake/usd-exchange/` - the SDK's CMake package config (provides the `usdex::core` / `usdex::rtx` targets and the `usdex_target_link_usd()` helper)
+- `_build/target-deps/usd-exchange/release/lib/cmake/usdex/` - the SDK's CMake package config (provides the `usdex::core` / `usdex::rtx` targets and the `usdex_target_link_usd()` helper)
   - this is not available until dependencies are fetched
 
 For details on choosing and installing the OpenUSD Exchange SDK build flavors, features, or versions, see the [install_usdex](https://docs.omniverse.nvidia.com/usd/code-docs/usd-exchange-sdk/latest/docs/devtools.html#install-usdex) tool documentation.

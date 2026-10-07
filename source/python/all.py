@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-FileCopyrightText: Copyright (c) 2025-2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: MIT
 #
 
@@ -28,10 +28,12 @@ def main():
         completed = subprocess.run(cmdline, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, encoding="utf-8", env=env)
         if completed.returncode != 0:
             print(f"Error running sample {sample}: {completed.stdout}")
+            return completed.returncode
         else:
             print(completed.stdout)
     print("=== All samples completed ===")
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

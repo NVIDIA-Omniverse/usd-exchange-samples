@@ -38,6 +38,7 @@ aggregated_log_file = "$root/_build/tests/test_results.xml"
 
 [repo_test.suites.main]
 kind = "glob_and_exec"
+env_vars = [["USDEX_SAMPLES_CONFIG", "${config}"]]
 path = "$root/tools/wheel"
 include = [
     "test${shell_ext}",

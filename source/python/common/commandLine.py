@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: MIT
 #
 
+import os
 import pathlib
 import sys
 
@@ -37,6 +38,8 @@ def parseCommonOptions(parser):
             args.fileFormatArgs = {"format": "usda"}
 
     if args.usdz:
+        # Author with absolute layer identifiers so packaging preserves component payload paths.
+        args.path = pathlib.Path(os.path.abspath(args.path)).as_posix()
         args.usdzPath = pathlib.Path(args.path).with_suffix(".usdz").as_posix()
 
     return args

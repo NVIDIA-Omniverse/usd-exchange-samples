@@ -4,8 +4,8 @@ set -e
 
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 source "${SCRIPT_DIR}/configure_python_package_index.sh"
-SOURCE_DIR=${SCRIPT_DIR}/../../source
-export PYTHONPATH=${SOURCE_DIR}/python:${SOURCE_DIR}/tests:${PYTHONPATH}
+SOURCE_DIR="${SCRIPT_DIR}/../../source"
+export PYTHONPATH="${SOURCE_DIR}/python:${SOURCE_DIR}/tests${PYTHONPATH:+:${PYTHONPATH}}"
 
 # Check for --reuse argument and rebuild args without it
 REUSE_VENV=0
@@ -45,11 +45,11 @@ if [[ ${REUSE_VENV} -eq 0 ]]; then
         rm -rf "${VENV}"
     fi
 
-    ${SCRIPT_DIR}/../packman/python.sh -m venv "${VENV}"
+    "${SCRIPT_DIR}/../packman/python.sh" -m venv "${VENV}"
     source "${VENV}/bin/activate"
 
     # Get the usd-exchange version from packman XML
-    USDEX_VERSION=$(${SCRIPT_DIR}/../packman/python.sh "${SCRIPT_DIR}/get_usdex_version.py")
+    USDEX_VERSION=$("${SCRIPT_DIR}/../packman/python.sh" "${SCRIPT_DIR}/get_usdex_version.py")
 
     # Install packages with optional private index
     echo "Installing usd-exchange wheel version ${USDEX_VERSION} from ${PIP_EXTRA_INDEX_URL}"

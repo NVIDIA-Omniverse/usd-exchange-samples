@@ -88,6 +88,8 @@ Args parseCommonOptions(int argc, char* argv[], const char* sampleName, const ch
         }
         if (useUsdz)
         {
+            // Author with absolute layer identifiers so packaging preserves component payload paths.
+            args.stagePath = std::filesystem::absolute(args.stagePath).lexically_normal().generic_string();
             std::filesystem::path usdzPath(args.stagePath);
             usdzPath.replace_extension(".usdz");
             args.usdzPath = usdzPath.string();

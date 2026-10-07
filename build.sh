@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: MIT
 #
 # Assemble the OpenUSD Exchange SDK + OpenUSD runtime and build the C++ samples against it with plain CMake.
-# The SDK is consumed via find_package(usd-exchange).
+# The SDK is consumed via find_package(usdex).
 #
 #   -d, --debug     build the debug config (default is release)
 #   -x, --rebuild   wipe _build and _install (re-fetches deps), then build
@@ -29,7 +29,7 @@ REBUILD=0
 GENERATE=0
 usage() {
     cat <<'EOF'
-Build the OpenUSD Exchange SDK C++ samples against the SDK package (find_package(usd-exchange)).
+Build the OpenUSD Exchange SDK C++ samples against the SDK package (find_package(usdex)).
 
 Usage: ./build.sh [options]
   -d, --debug     build the debug config (default is release)

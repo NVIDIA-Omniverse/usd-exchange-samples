@@ -3,7 +3,6 @@
 #
 
 import pathlib
-import re
 import shutil
 import tempfile
 import unittest
@@ -14,22 +13,15 @@ import usdex.rtx
 import utils.BaseTestCase as BaseTestCaseModule
 import utils.fileFormat
 import utils.shell
-from pxr import Gf, Sdr, Usd, UsdGeom, UsdShade, UsdUtils
+from pxr import Gf, Usd, UsdGeom, UsdShade, UsdUtils
 
-
-def checkMdlSdrComplianceIssue(issue):
-    """Bypass MDL shader compliance issues when the runtime does not provide an MDL parser."""
-    if getattr(issue.rule, "__name__", None) != "ShaderSdrCompliance":
-        return False
-    if "mdl" in Sdr.Registry().GetAllShaderNodeSourceTypes():
-        return False
-    return bool(re.fullmatch(r"sourceType 'mdl' specified on shader prim .* not found in sdrRegistry\.", issue.message))
+from source.validateUsd.validateUsdBootstrap import mdlSdrComplianceIssuePredicate
 
 
 class CreateMaterialsTestCase(BaseTestCaseModule.BaseTestCase):
 
     sampleName = "createMaterials"
-    defaultValidationIssuePredicates = [checkMdlSdrComplianceIssue]
+    defaultValidationIssuePredicates = [mdlSdrComplianceIssuePredicate]
 
     PREVIEW_SURFACE = 0
     OPENPBR = 1

@@ -4,14 +4,15 @@ setlocal enabledelayedexpansion
 
 pushd "%~dp0"
 
-set SCRIPT_DIR=%~dp0
-set RUNTIME_DIR=%SCRIPT_DIR%_install\windows-x86_64\release
-set PATH=%RUNTIME_DIR%\bin;%PATH%
+set "SCRIPT_DIR=%~dp0"
+if not defined USDEX_SAMPLES_CONFIG set "USDEX_SAMPLES_CONFIG=release"
+set "RUNTIME_DIR=%SCRIPT_DIR%_install\windows-x86_64\%USDEX_SAMPLES_CONFIG%"
+set "PATH=%RUNTIME_DIR%\bin;%PATH%"
 
 :: Read samples from allSamples.txt
-set SAMPLES=
+set "SAMPLES="
 for /f "usebackq delims=" %%i in ("%SCRIPT_DIR%allSamples.txt") do (
-    set SAMPLES=!SAMPLES! %%i
+    set "SAMPLES=!SAMPLES! %%i"
 )
 
 :: Check if user wants to run all samples
@@ -26,21 +27,27 @@ if "%1"=="all" (
     for %%s in (%SAMPLES%) do (
         echo.
         echo === Running %%s ===
-        set SAMPLE_PATH=%RUNTIME_DIR%\bin\%%s.exe
+        set "SAMPLE_PATH=%RUNTIME_DIR%\bin\%%s.exe"
         if exist "!SAMPLE_PATH!" (
             call "!SAMPLE_PATH!" !scriptArgs!
+            set "SAMPLE_EXIT_CODE=!ERRORLEVEL!"
+            if not "!SAMPLE_EXIT_CODE!"=="0" (
+                goto :exit
+            )
         ) else (
-            echo WARNING: %%s not found at !SAMPLE_PATH!
+            echo ERROR: %%s not found at !SAMPLE_PATH!
+            set "SAMPLE_EXIT_CODE=3"
+            goto :exit
         )
     )
 
     echo.
     echo === All samples completed ===
-    popd
-    exit /b 0
+    set "SAMPLE_EXIT_CODE=0"
+    goto :exit
 )
 
-set SAMPLE=%RUNTIME_DIR%\bin\%1.exe
+set "SAMPLE=%RUNTIME_DIR%\bin\%1.exe"
 if exist "%SAMPLE%" (
     goto :run_sample
 )
@@ -49,8 +56,8 @@ echo  all (runs all samples in order)
 for %%s in (%SAMPLES%) do (
     echo  %%s
 )
-popd
-exit /b 3
+set "SAMPLE_EXIT_CODE=3"
+goto :exit
 
 :run_sample
 :: capture the remaining args in `scriptArgs`
@@ -58,7 +65,8 @@ if not "%~2"=="" (
     for /f "usebackq tokens=1*" %%i in (`echo %*`) DO @ set scriptArgs=%%j
 )
 call "%SAMPLE%" %scriptArgs%
+set "SAMPLE_EXIT_CODE=%ERRORLEVEL%"
 
+:exit
 popd
-
-EXIT /B %ERRORLEVEL%
+exit /b %SAMPLE_EXIT_CODE%

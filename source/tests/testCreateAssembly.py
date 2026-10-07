@@ -62,6 +62,41 @@ class CreateAssemblyTestCase(BaseTestCaseModule.BaseTestCase):
         payloads = defaultPrim.GetPayloads()
         self.assertTrue(payloads)
 
+    def _checkRelativeUsdzOutput(self, script, programPath):
+        # The shared shell helper runs tests from the repository root, as do the C++ runners.
+        # Keep the temporary directory here so --path is relative to that same root.
+        with tempfile.TemporaryDirectory(dir=pathlib.Path.cwd()) as tempDirStr:
+            tempDir = pathlib.Path(tempDirStr).resolve()
+            (tempDir / "nested").mkdir()
+            for relativePath in ("with spaces/sample.usda", "nested/../parent path/sample.usdc"):
+                with self.subTest(path=relativePath):
+                    stagePath = tempDir / relativePath
+                    argument = stagePath.relative_to(pathlib.Path.cwd()).as_posix()
+                    return_code, output = utils.shell.run_shell_script(script, programPath, "-p", argument, "--usdz")
+                    self.assertEqual(return_code, 0, output)
+                    self.assertNotIn("Skipping export of dependency", output)
+                    stagePath = stagePath.resolve()
+                    usdzPath = stagePath.with_suffix(".usdz")
+                    utils.fileFormat.checkUsdzPackage(self, usdzPath.as_posix(), [stagePath.name])
+                    self._checkStageContents(stagePath.as_posix(), None)
+                    looseStage = packagedStage = None
+                    try:
+                        looseStage = Usd.Stage.Open(stagePath.as_posix())
+                        packagedStage = Usd.Stage.Open(usdzPath.as_posix())
+                        self.assertEqual(
+                            [(prim.GetPath(), prim.GetTypeName()) for prim in looseStage.Traverse()],
+                            [(prim.GetPath(), prim.GetTypeName()) for prim in packagedStage.Traverse()],
+                        )
+                    finally:
+                        # Release memory-mapped binary layers before TemporaryDirectory removes them on Windows.
+                        looseStage = packagedStage = None
+
+    def testCppRelativeUsdz(self):
+        self._checkRelativeUsdzOutput("run", self.sampleName)
+
+    def testPythonRelativeUsdz(self):
+        self._checkRelativeUsdzOutput("python", f"source/python/{self.sampleName}.py")
+
     def runSampleOptions(self, script, programPath):
         with tempfile.TemporaryDirectory() as tempDirStr:
             tempDir = pathlib.Path(tempDirStr)

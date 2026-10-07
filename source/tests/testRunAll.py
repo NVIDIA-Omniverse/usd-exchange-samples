@@ -35,6 +35,13 @@ class RunAllTestCase(unittest.TestCase):
                 self.assertEqual(return_code, 0, output)
                 self._checkStage(stagePath)
 
+    def testRunAllCppMissingExecutable(self):
+        with ScopedEnvVar("USDEX_SAMPLES_CONFIG", "missing-test-config", ["Windows", "Linux"]):
+            return_code, output = utils.shell.run_shell_script("run", "all")
+        self.assertEqual(return_code, 3, output)
+        self.assertIn("missing-test-config", output)
+        self.assertNotIn("=== All samples completed ===", output)
+
     def testRunAllPython(self):
         with ScopedEnvVar("PYTHONIOENCODING", "utf-8", ["Windows"]):
             pySampleBaseDir = "source/python/"
@@ -51,6 +58,15 @@ class RunAllTestCase(unittest.TestCase):
                     return_code, output = utils.shell.run_shell_script("python", f"{pySampleBaseDir}all.py", "-p", stagePath)
                     self.assertEqual(return_code, 0, output)
                     self._checkStage(stagePath)
+
+    def testRunAllPythonFailure(self):
+        samples = common.sysUtils.getAllSamples()
+        return_code, output = utils.shell.run_shell_script("python", "source/python/all.py", "--invalid-test-argument")
+        self.assertEqual(return_code, 2, output)
+        self.assertIn("unrecognized arguments: --invalid-test-argument", output)
+        self.assertIn(f"Error running sample {samples[0]}", output)
+        self.assertNotIn(f"=== Running {samples[1]} ===", output)
+        self.assertNotIn("=== All samples completed ===", output)
 
     def testAllSamplesConsistency(self):
         samples = common.sysUtils.getAllSamples()

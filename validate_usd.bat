@@ -2,11 +2,11 @@
 
 setlocal enabledelayedexpansion
 
-set SCRIPT_DIR=%~dp0
+set "SCRIPT_DIR=%~dp0"
 call "%SCRIPT_DIR%tools\wheel\configure_python_package_index.bat"
-set PYTHONPATH=%SCRIPT_DIR%source\python
-set PACKMAN_PYTHON=%SCRIPT_DIR%tools\packman\python.bat
-set VENV=%SCRIPT_DIR%_build\usdex_env
+set "PYTHONPATH=%SCRIPT_DIR%source\python"
+set "PACKMAN_PYTHON=%SCRIPT_DIR%tools\packman\python.bat"
+set "VENV=%SCRIPT_DIR%_build\usdex_env"
 
 if exist "%VENV%" (
     echo Using existing venv: %VENV%
@@ -14,11 +14,11 @@ if exist "%VENV%" (
     if %errorlevel% neq 0 ( exit /b %errorlevel% )
 ) else (
     echo Building venv: %VENV%
-    call %PACKMAN_PYTHON% -m venv "%VENV%"
+    call "%PACKMAN_PYTHON%" -m venv "%VENV%"
     if %errorlevel% neq 0 ( exit /b %errorlevel% )
 
     REM Get the usd-exchange version from packman XML
-    for /f "delims=" %%i in ('call %PACKMAN_PYTHON% "%SCRIPT_DIR%\tools\wheel\get_usdex_version.py"') do set USDEX_VERSION=%%i
+    for /f "delims=" %%i in ('call "%PACKMAN_PYTHON%" "%SCRIPT_DIR%tools\wheel\get_usdex_version.py"') do set "USDEX_VERSION=%%i"
 
     call "%VENV%\Scripts\activate.bat"
     if %errorlevel% neq 0 ( exit /b %errorlevel% )
@@ -29,6 +29,6 @@ if exist "%VENV%" (
     if !errorlevel! neq 0 ( exit /b !errorlevel! )
 )
 
-python.exe %SCRIPT_DIR%\source\validateUsd\validateUsdBootstrap.py %*
+python.exe "%SCRIPT_DIR%source\validateUsd\validateUsdBootstrap.py" %*
 
 EXIT /B %ERRORLEVEL%

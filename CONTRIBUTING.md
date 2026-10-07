@@ -25,14 +25,14 @@ If you want to implement a feature, or change the logic of existing features, yo
 
 To build the samples yourself, use `build.bat` or `build.sh`, depending on your local platform.
 
-The build script assembles the OpenUSD Exchange SDK + OpenUSD runtime (via `install_usdex`) and then compiles the C++ samples with CMake, consuming the SDK through `find_package(usd-exchange)`. Pass `-d`/`--debug` for a debug build. See [CMakeLists.txt](./CMakeLists.txt) to learn how the samples are compiled and linked.
+The build script assembles the OpenUSD Exchange SDK + OpenUSD runtime (via `install_usdex`) and then compiles the C++ samples with CMake, consuming the SDK through `find_package(usdex)`. Pass `-d`/`--debug` for a debug build. See [CMakeLists.txt](./CMakeLists.txt) to learn how the samples are compiled and linked.
 
 If the required Python packages are hosted on an additional package index, set `USDEX_PYPI_EXTRA_INDEX_URL` before building, testing, or running `validate_usd`. The samples translate this USD Exchange-specific setting to the native pip and uv environment variables used by each workflow. Explicit `PIP_EXTRA_INDEX_URL` or `UV_EXTRA_INDEX_URL` values take precedence for their respective installer.
 
 
 ## Testing
 
-To run all of the sample tests, use `repo test`. The tests run in a single `main` suite, which contains all of the sample tests and is run within a virtual environment.
+To run all of the sample tests, use `repo test`. The tests run in a single `main` suite, which contains all of the sample tests and is run within a virtual environment. Use `repo test --config debug` to select the Debug C++ samples on Linux or Windows; the test configuration is passed to `run.sh` or `run.bat` through `USDEX_SAMPLES_CONFIG`. The Python samples continue to use the wheel in the test virtual environment.
 
 To run only certain sample tests the test scripts must be run directly. For instance, the following command will reuse the existing test virtual environment and run just the `createAsset` tests, run:
 

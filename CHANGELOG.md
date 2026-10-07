@@ -1,3 +1,27 @@
+3.0.1
+-----
+Release: October 2026
+
+OpenUSD Exchange SDK v3.0.1
+
+* Samples
+    * Fixed the Python all-samples runner to stop on a failed sample and return its exit code
+    * Fixed Windows sample launchers to propagate failures and the C++ all-samples runners to report missing executables
+    * Fixed USDZ packaging with relative output paths to preserve component payload references
+    * Fixed sample, USD Traverse, and validation launchers to support paths containing spaces
+
+* Build
+    * Use `find_package(usdex)` for the SDK CMake package
+    * Run the selected Debug or Release C++ samples when testing on Linux and Windows
+
+* Validation
+    * Filter MDL shader registry validation issues when the runtime has no MDL parser
+
+* Dependencies
+    * OpenUSD [v26.08](https://github.com/PixarAnimationStudios/OpenUSD/blob/v26.08/CHANGELOG.md)
+    * OpenUSD Exchange SDK [v3.0.1](https://docs.omniverse.nvidia.com/usd/code-docs/usd-exchange-sdk)
+    * USD Validation NVIDIA [v1.22.0](https://github.com/NVIDIA-Omniverse/usd-validation-nvidia)
+
 3.0.0
 -----
 Release: August 2026
